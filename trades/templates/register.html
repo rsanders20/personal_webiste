@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+  <form method=post>
+
+    <div>
+      {{ form.csrf_token }}
+    </div>
+
+    {% for field in form if field.name != 'csrf_token' %}
+      <div>
+        {{ field.label() }}
+        {{ field() }}
+        {% for error in field.errors %}
+          {{ error }}
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div>
+      {{ form.message }}
+    </div>
+
+    <div>
+      <input class="btn btn-default" type="submit" value="Submit">
+    </div>
+
+
+  </form>
+
+{% endblock %}
+
+
+
