@@ -51,10 +51,12 @@ def flatten_df(df, ticker_symbol, value_list):
         return df
 
     df_list = []
-    for ticker in ticker_symbol:
+    for ticker, value in zip(ticker_symbol, value_list):
         # TODO:  Add in value list
-        individual_df = df[ticker]
+        individual_df = df[ticker].copy()
         individual_df['ticker'] = ticker
+        value_factor = float(value)/individual_df['Close'][0]
+        individual_df['Close'] = individual_df['Close']*value_factor
         df_list.append(individual_df)
     pxdf = pd.concat(df_list)
     return pxdf

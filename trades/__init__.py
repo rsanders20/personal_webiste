@@ -65,9 +65,12 @@ def register_portfolio_dashapp(server):
         html.Div(id='page_content')
     ])
 
+    #TODO:  Make the chosen portfolio part of the header...header div does not change.
     @app.callback(Output('portfolio_graph', 'figure'),
                   [Input('security_input', 'value')])
     def update_graph(security_list):
+        if not security_list:
+            return px.line()
         ticker_list = []
         start_dates = []
         value_list = []
@@ -82,15 +85,36 @@ def register_portfolio_dashapp(server):
         security_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates[-1], now_time)
         return security_graph
 
+    @app.callback(Output('portfolio_entries', 'data'),
+                  [Input('portfolio_input', 'value')])
+    def update_list(portfolio_name):
+        print(portfolio_name)
+        from trades.models import User, Trade, Portfolio
+        if not portfolio_name:
+            return []
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+        portfolio = Portfolio.query.filter_by(user_id = user.id, name=portfolio_name).one_or_none()
+        trades = Trade.query.filter_by(portfolio_id = portfolio.id).all()
+        data = []
+        for trade in trades:
+            data.append({'portfolio': portfolio.name,
+                         'security': trade.security,
+                         'value': trade.value,
+                         'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d')})
+
+        return data
+
     @app.callback([Output('manage_alert', 'children'),
                    Output('manage_alert', 'color')],
                   [Input('submit_input', 'n_clicks')],
-                  [State('security_input', 'value'),
+                  [State('portfolio_input', 'value'),
+                   State('security_input', 'value'),
                    State('value_input', 'value'),
                    State('purchase_date_input', 'date')])
-    def add_to_portfolio(_, security, value, purchase_date):
-        from trades.models import User, Trade
-        if not security or not value or not purchase_date:
+    def add_to_portfolio(_, portfolio, security, value, purchase_date):
+        from trades.models import User, Trade, Portfolio
+        if not portfolio or not security or not value or not purchase_date:
             return "All fields must be filled in", "danger"
 
         print(purchase_date)
@@ -98,7 +122,8 @@ def register_portfolio_dashapp(server):
         print(purchase_datetime)
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
-        trade = Trade(user_id = user.id,
+        portfolio = Portfolio.query.filter_by(user_id = user.id, name=portfolio).one_or_none()
+        trade = Trade(portfolio_id = portfolio.id,
                       security=security,
                       value=value,
                       purchase_date = purchase_datetime)
@@ -106,27 +131,53 @@ def register_portfolio_dashapp(server):
         db.session.commit()
         return "Portfolio Updated", "success"
 
+    @app.callback([Output('create_alert', 'children'),
+                   Output('create_alert', 'color')],
+                  [Input('create_input', 'n_clicks')],
+                  [State('name_input', 'value'),
+                   State('strategy_input', 'value')])
+    def create_portfolio(_, name, strategy):
+        from trades.models import User, Trade, Portfolio
+        if not name or not strategy:
+            return "All fields must be filled in", "danger"
+
+        print(name)
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+        portfolio = Portfolio(
+            user_id=user.id,
+            name=name,
+            strategy = strategy)
+        db.session.add(portfolio)
+        db.session.commit()
+        return "Portfolio Updated", "success"
+
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        from trades.models import User, Trade
+        from trades.models import User, Trade, Portfolio
 
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
-        trade_list = Trade.query.filter_by().all()
-        data = []
-        for trade in trade_list:
-            data.append({'user': trade.user_id,
-                         'security': trade.security,
-                         'value': trade.value,
-                         'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d')})
+        portfolio_list = []
+        trade_list = []
+        if user:
+            portfolio_list = Portfolio.query.filter_by(user_id = user.id).all()
+        # data = []
+        # for trade in trade_list:
+        #     data.append({'user': trade.user_id,
+        #                  'security': trade.security,
+        #                  'value': trade.value,
+        #                  'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d')})
 
         if pathname == "/manage/":
-            return dash_layouts.make_manage_layout("Manage Portfolio")
-        elif pathname == "/view/":
-            return dash_layouts.make_view_layout("View Portfolio", data)
+            return dash_layouts.make_manage_layout("Manage Portfolio", portfolio_list)
+        elif pathname == "/list/":
+            return dash_layouts.make_list_layout("List Portfolio", portfolio_list)
         elif pathname == '/graph/':
-            return dash_layouts.make_graph_layout('Graph Portfolio', data)
+            return dash_layouts.make_graph_layout('Graph Portfolio', portfolio_list)
+        elif pathname == '/create/':
+            return dash_layouts.make_create_layout("Create Portfolio")
 
 
 # def register_dashapp2(server):
