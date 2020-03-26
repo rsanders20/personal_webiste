@@ -1,4 +1,8 @@
 import os
+from datetime import datetime
+from datetime import timedelta
+
+import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.express as px
@@ -6,7 +10,7 @@ import plotly.express as px
 
 def get_securities_list():
     dirpath = os.getcwd()
-    file_path = os.path.join(dirpath, "assets","sp500.csv")
+    file_path = os.path.join(dirpath, "assets", "sp500.csv")
     ticker_df = pd.read_csv(file_path)
     ticker_df.columns = ['value', 'label']
     return ticker_df.to_dict("rows")
@@ -40,32 +44,54 @@ def make_ticker_string(ticker_symbol):
     return ticker_symbol_str
 
 
-def flatten_df(df, ticker_symbol, value_list):
+def make_np_date(date_str):
+    np_date = np.array(pd.to_datetime(date_str, format='%Y-%m-%d'), dtype=np.datetime64)
+    return np_date
+
+
+def flatten_df(df, ticker_symbol, value_list, start_time_list):
     if len(ticker_symbol) == 0:
         return df
 
     if len(ticker_symbol) == 1:
         df['ticker'] = ticker_symbol[0]
+        np_date = make_np_date(start_time_list[0])
+        df = df.loc[df.index.values >= np_date]
         value_factor = float(value_list[0])/df['Close'][0]
         df['Close'] = df['Close']*value_factor
         return df
 
     df_list = []
-    for ticker, value in zip(ticker_symbol, value_list):
-        # TODO:  Add in value list
+    for ticker, value, start_time in zip(ticker_symbol, value_list, start_time_list):
         individual_df = df[ticker].copy()
         individual_df['ticker'] = ticker
+        np_date = make_np_date(start_time)
+        individual_df = individual_df.loc[individual_df.index.values >= np_date]
         value_factor = float(value)/individual_df['Close'][0]
         individual_df['Close'] = individual_df['Close']*value_factor
         df_list.append(individual_df)
+        if start_time == min(start_time_list):
+            total_time_list = individual_df.index.values
     pxdf = pd.concat(df_list)
-    return pxdf
+
+    total_list = []
+    for total_time in total_time_list:
+        total_sum = pxdf.loc[pxdf.index.values == total_time, 'Close'].sum()
+        s = pd.Series(dict(zip(pxdf.columns, [0, total_sum, 0, 0, 0, 0, 'Total']))).rename(total_time)
+        total_list.append(s)
+
+    total = pd.DataFrame(total_list)
+    total.index.name = 'Date'
+    return pd.concat([pxdf, total])
 
 
-def plot_stocks(ticker_symbol, value_list, start_time, end_time):
-    # df = get_alpha_stock_data(ticker_symbol)
+def plot_stocks(ticker_symbol, value_list, start_time_list, end_time):
+    start_time = min([datetime.strptime(sti, '%Y-%m-%d') for sti in start_time_list])
+    print(ticker_symbol, value_list, start_time, end_time)
     df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
-    pxdf = flatten_df(df, ticker_symbol, value_list)
+    print(df)
+
+    pxdf = flatten_df(df, ticker_symbol, value_list, start_time_list)
     if not pxdf.empty:
         pxdf.reset_index(level=0, inplace=True)
         graph = px.line(pxdf, x='Date', y='Close', color='ticker')

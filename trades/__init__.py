@@ -49,6 +49,13 @@ def create_app():
 
 
 def register_portfolio_dashapp(server):
+    # Add in the ability to visualize the sell date
+    # Add in a plot of money added to the portfolio
+    # Add in a way to specify if the purchase is from the portfolio or from cash
+    # Add in USD to keep track of cash in and out of portfolio
+    # Add in a way to track the total invested and total gains taken
+    # Add in the ability to delete purchases or sales
+    # Add in a way to track dividend payments
     from . import dash_layouts
 
     external_stylesheets = [dbc.themes.BOOTSTRAP]
@@ -61,47 +68,72 @@ def register_portfolio_dashapp(server):
 
     protect_dash_route(app)
     app.layout = html.Div([
-        dcc.Location(id='url', refresh=False, pathname='/manage/'),
+        dcc.Location(id='url', refresh=False, pathname='/visualize/'),
         html.Div(id='page_content')
     ])
 
-    #TODO:  Make the chosen portfolio part of the header...header div does not change.
+    @app.callback(Output('security_input', 'options'),
+                   [Input('portfolio_input', 'value')])
+    def update_company_dd(portfolio_name):
+        from trades.models import User, Trade, Portfolio
+        if not portfolio_name:
+            return []
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+        security_options = []
+        for stock in trades:
+            stock_string = stock.security + ", " + datetime.strftime(stock.purchase_date, '%Y-%m-%d') + ", " + str(stock.value)
+            security_options.append({'label': stock_string, 'value': stock_string})
+
+        return security_options
+
+    # TODO:  Make the chosen portfolio part of the header...header div does not change.
     @app.callback(Output('portfolio_graph', 'figure'),
-                  [Input('security_input', 'value')])
-    def update_graph(security_list):
-        if not security_list:
+                  [Input('portfolio_entries', 'data'),
+                   Input('portfolio_entries', 'selected_rows')])
+    def update_graph( data, selected_rows):
+        if not selected_rows:
             return px.line()
+        print(selected_rows)
         ticker_list = []
         start_dates = []
         value_list = []
-        for security in security_list:
-            stock_info = security.split(", ")
-            print(stock_info)
-            ticker_list.append(stock_info[0])
-            start_dates.append(stock_info[1])
-            value_list.append(stock_info[2])
-        print(start_dates)
+        for row in selected_rows:
+            ticker_list.append(data[row]['security'])
+            start_dates.append(data[row]['purchase_date'])
+            value_list.append(data[row]['value'])
         now_time = datetime.strftime(datetime.now(), '%Y-%m-%d')
-        security_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates[-1], now_time)
+
+        security_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, now_time)
         return security_graph
 
     @app.callback(Output('portfolio_entries', 'data'),
-                  [Input('portfolio_input', 'value')])
-    def update_list(portfolio_name):
+                  [Input('portfolio_input', 'value'),
+                   Input('sell_alert', 'children')])
+    def update_list(portfolio_name, _):
         print(portfolio_name)
         from trades.models import User, Trade, Portfolio
         if not portfolio_name:
             return []
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio = Portfolio.query.filter_by(user_id = user.id, name=portfolio_name).one_or_none()
-        trades = Trade.query.filter_by(portfolio_id = portfolio.id).all()
+        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
         data = []
         for trade in trades:
-            data.append({'portfolio': portfolio.name,
+            if trade.sell_date:
+                sell_date = datetime.strftime(trade.sell_date, '%Y-%m-%d')
+            else:
+                sell_date = None
+            data.append({'id': trade.id,
+                         'portfolio': portfolio.name,
                          'security': trade.security,
                          'value': trade.value,
-                         'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d')})
+                         'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d'),
+                         'sell_date': sell_date
+                         })
 
         return data
 
@@ -109,17 +141,14 @@ def register_portfolio_dashapp(server):
                    Output('manage_alert', 'color')],
                   [Input('submit_input', 'n_clicks')],
                   [State('portfolio_input', 'value'),
-                   State('security_input', 'value'),
+                   State('manage_security_input', 'value'),
                    State('value_input', 'value'),
                    State('purchase_date_input', 'date')])
     def add_to_portfolio(_, portfolio, security, value, purchase_date):
         from trades.models import User, Trade, Portfolio
         if not portfolio or not security or not value or not purchase_date:
             return "All fields must be filled in", "danger"
-
-        print(purchase_date)
-        purchase_datetime = datetime.strptime(purchase_date,'%Y-%m-%d')
-        print(purchase_datetime)
+        purchase_datetime = datetime.strptime(purchase_date, '%Y-%m-%d')
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id = user.id, name=portfolio).one_or_none()
@@ -141,7 +170,6 @@ def register_portfolio_dashapp(server):
         if not name or not strategy:
             return "All fields must be filled in", "danger"
 
-        print(name)
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio(
@@ -160,24 +188,65 @@ def register_portfolio_dashapp(server):
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio_list = []
-        trade_list = []
         if user:
             portfolio_list = Portfolio.query.filter_by(user_id = user.id).all()
-        # data = []
-        # for trade in trade_list:
-        #     data.append({'user': trade.user_id,
-        #                  'security': trade.security,
-        #                  'value': trade.value,
-        #                  'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d')})
 
-        if pathname == "/manage/":
-            return dash_layouts.make_manage_layout("Manage Portfolio", portfolio_list)
-        elif pathname == "/list/":
-            return dash_layouts.make_list_layout("List Portfolio", portfolio_list)
-        elif pathname == '/graph/':
-            return dash_layouts.make_graph_layout('Graph Portfolio', portfolio_list)
+        print(pathname)
+
+        if pathname == "/purchase/":
+            return dash_layouts.make_manage_layout("Purchase Securities", portfolio_list)
+        elif pathname == "/sell/":
+            return dash_layouts.make_sell_layout("Sell Securities", portfolio_list)
+        elif pathname == '/visualize/':
+            return dash_layouts.make_graph_layout('Visualize Portfolio', portfolio_list)
         elif pathname == '/create/':
             return dash_layouts.make_create_layout("Create Portfolio")
+
+    @app.callback([Output('sell_alert', 'children'),
+                   Output('sell_alert', 'color')],
+                  [Input('sell_input', 'n_clicks'),
+                   Input('delete_input', 'n_clicks')],
+                  [State('sell_input', 'n_clicks_timestamp'),
+                   State('delete_input', 'n_clicks_timestamp'),
+                      State('sell_date', 'date'),
+                   State('portfolio_entries', 'data'),
+                   State('portfolio_entries', 'selected_rows')])
+    def update_sell_list(n_input, n_delete, input_time, delete_time, sell_date, data, selected_rows):
+        from trades.models import User, Trade, Portfolio
+        if n_delete:
+            if not input_time or delete_time > input_time:
+                if selected_rows is None:
+                    return "Select a row to delete", "danger"
+
+                sell_row = data[selected_rows[0]]
+                trade = Trade.query.filter_by(id=sell_row['id']).one_or_none()
+                db.session.delete(trade)
+                db.session.commit()
+                return "Entry Deleted", "success"
+
+        if sell_date is None:
+            return "Select a date of sale", "danger"
+
+        if datetime.strptime(sell_date, '%Y-%m-%d') > datetime.now():
+            return "Sell date cannot be in the future", "danger"
+
+        if selected_rows is None:
+            return "Select a row to sell", "danger"
+
+        sell_row = data[selected_rows[0]]
+
+        if sell_row['purchase_date'] >= sell_date:
+            return "The sell date must be after the purchase date", "danger"
+
+        trade = Trade.query.filter_by(id=sell_row['id']).one_or_none()
+
+        if trade.sell_date is not None:
+            return "The Stock has already been sold", "danger"
+
+        trade.sell_date = datetime.strptime(sell_date, '%Y-%m-%d')
+        db.session.commit()
+
+        return "Stock Sold", "success"
 
 
 # def register_dashapp2(server):

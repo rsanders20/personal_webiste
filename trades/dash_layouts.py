@@ -15,11 +15,11 @@ def make_nav():
         [
             dbc.NavItem(dbc.NavLink("Create Portfolio", active=True, href='/create/',
                                     style={'margin-top': '5px'})),
-            dbc.NavItem(dbc.NavLink("Manage Portfolio", active=True, href='/manage/',
+            dbc.NavItem(dbc.NavLink("Purchase Securities", active=True, href='/purchase/',
                                     style={'margin-top': '5px'})),
-            dbc.NavItem(dbc.NavLink("List Portfolio", active=True, href='/list/',
+            dbc.NavItem(dbc.NavLink("Sell Securities", active=True, href='/sell/',
                                     style={'margin-top': '5px'})),
-            dbc.NavItem(dbc.NavLink("Graph Portfolio", active=True, href='/graph/',
+            dbc.NavItem(dbc.NavLink("Visualize Portfolio", active=True, href='/visualize/',
                                     style={'margin-top': '5px'}))
         ],
         vertical='md',
@@ -42,30 +42,49 @@ def make_graph_layout(brand_name, portfolio_list):
         dbc.FormText("Select the portfolio to graph"),
     ])
 
-    # security_options = []
-    # for stock in data:
-    #     stock_string = stock['security'] + ", " + stock['purchase_date'] + ", " + str(stock["value"])
-    #     security_options.append({'label': stock_string, 'value': stock_string})
+    security_input = dbc.FormGroup([
+        dbc.Label("Company"),
+        dcc.Dropdown(
+            id='security_input',
+            options=[],
+            multi=True,
+        ),
+        dbc.FormText("Select the security to graph"),
+    ])
+
+    table_input = dbc.FormGroup([
+        dash_table.DataTable(id='portfolio_entries',
+                             columns=(
+                                 [{'id': 'security', 'name': 'Company'},
+                                  {'id': 'value', 'name': 'Value'},
+                                  {'id': 'purchase_date', 'name': 'Purchase Date'},
+                                  {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
+                                  ]),
+                             row_selectable='multi'),
+        dbc.FormText("Select the Security to Sell, or Delete"),
+    ])
+
     graph = px.line()
 
     graph_div = html.Div([
         dbc.Row([
             dbc.Col([
+                html.Div(dbc.Alert(id='sell_alert'), style={'display': 'none'})
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
                 portfolio_input,
             ])
         ]),
-        # dbc.Row([
-        #     dbc.Col([
-        #         dcc.Dropdown(
-        #             id='security_input',
-        #             options=security_options,
-        #             multi=True,
-        #             value=[security_options[-1]['value']],
-        #         ),
-        #     ]),
-        # ]),
         dbc.Row([
-
+            dbc.Col([
+                table_input,
+            ],
+                style={'margin-left': '15px', 'margin-right': '15px'},
+            ),
+        ]),
+        dbc.Row([
             dbc.Col([
                 dcc.Graph(id='portfolio_graph',
                           figure=graph)
@@ -104,7 +123,7 @@ def make_manage_layout(brand_name, portfolio_list):
     security_input = dbc.FormGroup([
         dbc.Label("Company"),
         dcc.Dropdown(
-            id='security_input',
+            id='manage_security_input',
             options=securities_list,
             value='CVX',
         ),
@@ -142,9 +161,13 @@ def make_manage_layout(brand_name, portfolio_list):
     return manage_div
 
 
-def make_list_layout(brand_name, portfolio_list):
+def make_sell_layout(brand_name, portfolio_list):
 
     nav_portfolio = make_nav()
+
+    sell_alert = dbc.Alert(id='sell_alert',
+                           children="Sell or Delete Stocks from the Selected Portfolio",
+                           color='success')
 
     portfolio_input = dbc.FormGroup([
         dbc.Label("Portfolio"),
@@ -155,16 +178,40 @@ def make_list_layout(brand_name, portfolio_list):
         dbc.FormText("Select the portfolio to manage"),
     ])
 
-    display_table = dash_table.DataTable(id='portfolio_entries',
-                                         columns=(
-                                             [{'id': 'portfolio', 'name': 'Portfolio'},
-                                              {'id': 'security', 'name': 'Company'},
-                                              {'id': 'value', 'name': 'Value'},
-                                              {'id': 'purchase_date', 'name': 'Purchase Date'}
-                                              ]),
-                                         )
+    table_input = dbc.FormGroup([
+        dash_table.DataTable(id='portfolio_entries',
+                             columns=(
+                                 [{'id': 'portfolio', 'name': 'Portfolio'},
+                                  {'id': 'security', 'name': 'Company'},
+                                  {'id': 'value', 'name': 'Value'},
+                                  {'id': 'purchase_date', 'name': 'Purchase Date'},
+                                  {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
+                                  ]),
+                             row_selectable='single'),
+        dbc.FormText("Select the Secruity to Sell, or Delete"),
+    ])
+
+    sell_input = dbc.FormGroup([
+        html.Button(id='sell_input', children="Sell"),
+        dbc.FormText("Sell Selected")
+    ])
+
+    sell_date = dbc.FormGroup([
+        dcc.DatePickerSingle(id='sell_date'),
+        dbc.FormText("Select the date of the sale")
+    ])
+
+    delete_input = dbc.FormGroup([
+        html.Button(id='delete_input', children="Delete"),
+        dbc.FormText("Delete Selected")
+    ])
 
     data_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                sell_alert,
+            ])
+        ]),
         dbc.Row([
             dbc.Col([
                 portfolio_input,
@@ -172,10 +219,22 @@ def make_list_layout(brand_name, portfolio_list):
         ]),
         dbc.Row([
             dbc.Col([
-                display_table
+                table_input,
+            ],
+                style={'margin-left': '15px', 'margin-right': '15px'},
+            )
+        ]),
+        dbc.Row([
+            dbc.Col([
+                sell_date
+            ]),
+            dbc.Col([
+                sell_input
+            ]),
+            dbc.Col([
+                delete_input
             ])
-        ])
-
+        ]),
     ],
         style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'})
 
