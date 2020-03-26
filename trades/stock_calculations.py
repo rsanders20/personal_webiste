@@ -61,18 +61,38 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list):
         df['Close'] = df['Close']*value_factor
         return df
 
-    df_list = []
+    ticker_dict_list = []
     for ticker, value, start_time in zip(ticker_symbol, value_list, start_time_list):
-        individual_df = df[ticker].copy()
-        individual_df['ticker'] = ticker
-        np_date = make_np_date(start_time)
-        individual_df = individual_df.loc[individual_df.index.values >= np_date]
-        value_factor = float(value)/individual_df['Close'][0]
-        individual_df['Close'] = individual_df['Close']*value_factor
-        df_list.append(individual_df)
-        if start_time == min(start_time_list):
-            total_time_list = individual_df.index.values
-    pxdf = pd.concat(df_list)
+        if ticker_dict_list:
+            is_duplicate = False
+            for i, ticker_dict in enumerate(ticker_dict_list):
+                if ticker == ticker_dict['ticker']:
+                    ticker_dict_list[i]['values'].append(value)
+                    ticker_dict_list[i]['start_times'].append(start_time)
+                    is_duplicate = True
+                    break
+            if is_duplicate is False:
+                ticker_dict_list.append({'ticker': ticker, 'values': [value], 'start_times':[start_time], 'end_times':[]})
+        else:
+            ticker_dict_list.append({'ticker': ticker, 'values': [value], 'start_times':[start_time], 'end_times':[]})
+
+    print(ticker_dict_list)
+
+    df_list = []
+    for ticker_dict in ticker_dict_list:
+        index = 0
+        for value, start_time in zip(ticker_dict['values'], ticker_dict['start_times']):
+            individual_df = df[ticker_dict['ticker']].copy()
+            individual_df['ticker'] = ticker_dict['ticker'] + "-" + str(index)
+            index = index + 1
+            np_date = make_np_date(start_time)
+            individual_df = individual_df.loc[individual_df.index.values >= np_date]
+            value_factor = float(value)/individual_df['Close'][0]
+            individual_df['Close'] = individual_df['Close']*value_factor
+            df_list.append(individual_df)
+            if start_time == min(start_time_list):
+                total_time_list = individual_df.index.values
+        pxdf = pd.concat(df_list)
 
     total_list = []
     for total_time in total_time_list:
@@ -89,7 +109,6 @@ def plot_stocks(ticker_symbol, value_list, start_time_list, end_time):
     start_time = min([datetime.strptime(sti, '%Y-%m-%d') for sti in start_time_list])
     print(ticker_symbol, value_list, start_time, end_time)
     df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
-    print(df)
 
     pxdf = flatten_df(df, ticker_symbol, value_list, start_time_list)
     if not pxdf.empty:
