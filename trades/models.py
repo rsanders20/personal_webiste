@@ -37,3 +37,14 @@ class Trade(db.Model):
     purchase_date = db.Column(db.DateTime, default = datetime.utcnow)
     sell_date = db.Column(db.DateTime, default = None)
 
+
+class Dollar(db.Model):
+    __tablename__ = 'dollars'
+    id = db.Column(db.Integer, primary_key=True)
+    portfolio_id = db.Column(db.Integer, db.ForeignKey('portfolios.id'), nullable=False)
+    purchase_date = db.Column(db.DateTime, default = datetime.utcnow)
+    value = db.Column(db.Float)
+    added = db.Column(db.Boolean, default = False)
+    de_invested = db.Column(db.Boolean, default = False)
+    invested = db.Column(db.Boolean, default = False)
+

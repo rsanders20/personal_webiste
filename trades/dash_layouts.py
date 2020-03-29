@@ -145,13 +145,25 @@ def make_manage_layout(brand_name, portfolio_list):
         dbc.FormText("Select the value of the security being added to your portfolio"),
     ])
 
+    source_input = dbc.FormGroup([
+        dbc.Label("Source"),
+        dbc.RadioItems(id="source_input",
+                       options=[{'label': "Re-invest existing cash", 'value':'re-invest'},
+                                {'label': 'Use all money from outside the portfolio', 'value': 'add'}],
+                       value = 'add'),
+        dbc.FormText("Choose if the invested money will use existing cash first or not")
+
+
+    ])
+
     submit_input = dbc.FormGroup([
         dbc.Button(id='submit_input',
                    children="Add to Portfolio")
     ])
 
     form_div = html.Div([
-        dbc.Form([manage_alert, portfolio_input, security_input, value_input, purchase_date_input, submit_input])
+        dbc.Form([manage_alert, portfolio_input, security_input, value_input,
+                  purchase_date_input, source_input, submit_input])
     ],
         style={'width': '100%', 'margin-top': '5px'}
     )
@@ -201,10 +213,6 @@ def make_sell_layout(brand_name, portfolio_list):
         dbc.FormText("Select the date of the sale")
     ])
 
-    delete_input = dbc.FormGroup([
-        html.Button(id='delete_input', children="Delete"),
-        dbc.FormText("Delete Selected")
-    ])
 
     data_div = html.Div([
         dbc.Row([
@@ -231,9 +239,6 @@ def make_sell_layout(brand_name, portfolio_list):
             dbc.Col([
                 sell_input
             ]),
-            dbc.Col([
-                delete_input
-            ])
         ]),
     ],
         style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'})
