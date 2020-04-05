@@ -43,20 +43,54 @@ def create_app():
 
     server.register_blueprint(routes.bp)
 
-    register_portfolio_dashapp(server)
+    register_photography_dashapp(server)
+    register_travel_dashapp(server)
+    register_stock_dashapp(server)
+    register_home_dashapp(server)
 
     return server
 
 
-def register_portfolio_dashapp(server):
+def register_photography_dashapp(server):
+    external_stylesheets = [dbc.themes.LUX]
+    app = dash.Dash(__name__,
+                    server=server,
+                    url_base_pathname='/dash/photography/',
+                    external_stylesheets=external_stylesheets,
+                    suppress_callback_exceptions=True)
+
+    app.layout = html.Div([
+        dbc.Alert(children="This Page is Coming Soon", color="danger")
+    ])
+
+
+def register_travel_dashapp(server):
+    external_stylesheets = [dbc.themes.LUX]
+    app = dash.Dash(__name__,
+                    server=server,
+                    url_base_pathname='/dash/travel/',
+                    external_stylesheets=external_stylesheets,
+                    suppress_callback_exceptions=True)
+
+    app.layout = html.Div([
+        dbc.Alert(children="This Page is Coming Soon", color="danger")
+    ])
+
+
+def register_stock_dashapp(server):
+    # TODO: Build the Home Page
     # TODO: Add in a way to track dividend payments
+    # Break up visualization graphs
+    # Clean up and refactor code
+    # Imporve login view to make it a personal website
+    # Launch on digital ocean server
     from . import dash_layouts
 
     external_stylesheets = [dbc.themes.BOOTSTRAP]
 
     app = dash.Dash(__name__,
                     server=server,
-                    url_base_pathname='/dash/portfolio/',
+                    url_base_pathname='/dash/stocks/',
                     external_stylesheets=external_stylesheets,
                     suppress_callback_exceptions=True)
 
@@ -309,27 +343,76 @@ def register_portfolio_dashapp(server):
         return "Stock Sold", "success"
 
 
-# def register_dashapp2(server):
-#     external_stylesheets = [dbc.themes.BOOTSTRAP]
-#
-#     app = dash.Dash(__name__,
-#                     server=server,
-#                     url_base_pathname='/dash/home/',
-#                     external_stylesheets=external_stylesheets)
-#
-#     protect_dash_route(app)
-#     app.layout = html.Div([
-#         html.A(id='welcome', children="Nice Stock Graph  "),
-#         html.A(id='name')
-#     ])
-#
-#     @app.callback(
-#         Output('name', 'children'),
-#         [Input('welcome', 'children')]
-#     )
-#     def get_names(_):
-#         user_name = session.get('user_name', None)
-#         return user_name
+def register_home_dashapp(server):
+    from . import dash_layouts
+
+    external_stylesheets = [dbc.themes.LUX]
+
+    app = dash.Dash(__name__,
+                    server=server,
+                    url_base_pathname='/dash/home/',
+                    external_stylesheets=external_stylesheets)
+
+    photo_card = dbc.Card(
+        [
+            dbc.CardImg(src="/static/images/IMG_0590.JPG", top=True),
+            dbc.CardBody(
+                [
+                    html.H4("Photography", className="card-title"),
+                    html.P("View Photographs", className="card-text"),
+                    dbc.Button("Photos", color="primary", href='/photography', external_link=True, target='_top'),
+                ]
+            ),
+        ],
+        style={"margin-right": "5px", "margin-left": "5px"},
+    )
+
+    travel_card = dbc.Card(
+        [
+            dbc.CardImg(src="/static/images/IMG_0589.JPG", top=True),
+            dbc.CardBody(
+                [
+                    html.H4("Travels", className="card-title"),
+                    html.P("View Travel Log", className="card-text"),
+                    dbc.Button("Travel Log", color="primary", href='/travel', external_link=True, target='_top'),
+                ]
+            ),
+        ],
+        style={"margin-right": "5px", "margin-left": "5px"},
+    )
+
+    stock_card = dbc.Card(
+        [
+            dbc.CardImg(src="/static/images/Stocks5.png", top=True),
+            dbc.CardBody(
+                [
+                    html.H4("Stocks", className="card-title"),
+                    html.P("View Stock Analytics", className="card-text"),
+                    dbc.Button("Analytics", color="primary", href='/stocks', external_link = True, target='_top'),
+                ]
+            ),
+        ],
+        style={"margin-right": "5px", "margin-left": "5px"},
+    )
+
+    home_cards = dbc.CardGroup([
+                photo_card,
+                travel_card,
+                stock_card,
+    ])
+
+    app.layout = html.Div([
+        home_cards,
+        html.A(id='name', style={'display': 'None'})
+    ])
+
+    # @app.callback(
+    #     Output('name', 'children'),
+    #     [Input('welcome', 'children')]
+    # )
+    # def get_names(_):
+    #     user_name = session.get('user_name', None)
+    #     return user_name
 
 
 def protect_dash_route(app):

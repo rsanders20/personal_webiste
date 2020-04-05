@@ -14,8 +14,8 @@ bp = Blueprint('routes', __name__)
 
 
 class RegisterForm(FlaskForm):
-    user_name = StringField('user_name', [validators.InputRequired()])
-    password = StringField('password', [validators.InputRequired()])
+    user_name = StringField('User Name', [validators.InputRequired()], render_kw = {"placeholder": "User Name"})
+    password = StringField('Password', [validators.InputRequired()], render_kw = {"placeholder": "Password"})
 
 
 @bp.route('/register/', methods=('GET', 'POST'))
@@ -45,7 +45,7 @@ def register():
 def logout():
     print('starting logout')
     session.clear()
-    return redirect(url_for('routes.login'))
+    return redirect(url_for('routes.home'))
 
 
 @bp.route('/login/', methods=('GET', 'POST'))
@@ -58,7 +58,7 @@ def login():
             return render_template('register.html', form=login_form, message="User name or password not correct")
 
         session['user_name'] = login_form.user_name.data
-        return redirect(url_for('routes.portfolio'))
+        return redirect(url_for('routes.home'))
 
     return render_template('register.html', form=login_form, message="Enter your user name and password")
 
@@ -82,19 +82,33 @@ def login_required(route_function):
     return decorated_function
 
 
-@bp.route('/portfolio/', methods=('GET', 'POST'))
+@bp.route('/stocks/', methods=('GET', 'POST'))
 @login_required
-def portfolio():
-    url = '/dash/portfolio'
-    print("This is portfolio:  "+session.get('user_name', None))
+def stocks():
+    url = '/dash/stocks'
+    print("This is stocks:  "+session.get('user_name', None))
+    return render_template('dash_iframe.html', url=url)
+
+
+@bp.route('/travel/', methods=('GET', 'POST'))
+@login_required
+def travel():
+    url = '/dash/travel'
+    print("This is travel:  "+session.get('user_name', None))
+    return render_template('dash_iframe.html', url=url)
+
+
+@bp.route('/photography/', methods=('GET', 'POST'))
+@login_required
+def photography():
+    url = '/dash/photography'
+    print("This is photography:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 
 @bp.route("/", methods=('GET', 'POST'))
-@login_required
 def home():
     url = '/dash/home'
-    print("This is home:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 
