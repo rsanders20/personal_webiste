@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,7 +5,7 @@ import dash_bootstrap_components as dbc
 
 import plotly.express as px
 
-from . import stock_calculations
+from trades.stocks import stock_calculations
 
 
 def make_nav():
