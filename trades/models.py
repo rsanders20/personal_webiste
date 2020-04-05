@@ -1,4 +1,4 @@
-from . import db
+from trades import db
 from datetime import datetime
 
 

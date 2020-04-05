@@ -4,8 +4,6 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from trades.stocks import stock_calculations
-
 db = SQLAlchemy()
 migrate = Migrate()
 

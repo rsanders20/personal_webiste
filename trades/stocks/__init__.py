@@ -9,8 +9,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
-from trades.stocks import dash_layouts, stock_calculations
 from trades import db
+from trades.stocks import dash_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
 from trades import protect_dash_route
