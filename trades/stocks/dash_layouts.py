@@ -11,14 +11,16 @@ from trades.stocks import stock_calculations
 def make_nav():
     nav_portfolio = dbc.Nav(
         [
-            dbc.NavItem(dbc.NavLink("Create Portfolio", active=True, href='/create/',
-                                    style={'margin-top': '5px'})),
+            dbc.NavItem(dbc.NavLink("About", active=True, href='/about/',
+                                    style={'margin-top': '5px', 'text-align': 'left'})),
+            dbc.NavItem(dbc.NavLink("New Portfolio", active=True, href='/create/',
+                                    style={'margin-top': '5px', 'text-align': 'left'})),
             dbc.NavItem(dbc.NavLink("Purchase Securities", active=True, href='/purchase/',
-                                    style={'margin-top': '5px'})),
+                                    style={'margin-top': '5px', 'text-align': 'left'})),
             dbc.NavItem(dbc.NavLink("Sell Securities", active=True, href='/sell/',
-                                    style={'margin-top': '5px'})),
-            dbc.NavItem(dbc.NavLink("Visualize Portfolio", active=True, href='/visualize/',
-                                    style={'margin-top': '5px'}))
+                                    style={'margin-top': '5px', 'text-align': 'left'})),
+            dbc.NavItem(dbc.NavLink("Visualize", active=True, href='/visualize/',
+                                    style={'margin-top': '5px', 'text-align': 'left'}))
         ],
         vertical='md',
         pills=True,
@@ -28,27 +30,40 @@ def make_nav():
     return nav_portfolio
 
 
-def make_graph_layout(brand_name, portfolio_list):
+def make_about_layout(brand_name, portfolio_list):
     nav_portfolio = make_nav()
 
-    portfolio_input = dbc.FormGroup([
-        dbc.Label("Portfolio"),
-        dcc.Dropdown(
-            id='portfolio_input',
-            options=[{'label': i.name, 'value': i.name} for i in portfolio_list],
-        ),
-        dbc.FormText("Select the portfolio to graph"),
-    ])
+    jumbotron = dbc.Jumbotron(
+        [
+            html.H1("Welcome to the stock plotting tool", className="display-8"),
+            html.P(
+                "Asses investment strategies by creating multiple portfolios and comparing their performance",
+                className="lead",
+            ),
+            html.Hr(className="my-2"),
+            html.P("Start by creating a New Portfolio"),
+            html.Hr(className="my-2"),
+            html.P("Choose the portfolio type.  Manual to make all buying and selling decisions,"
+                   " or automatic to assign rules for when to buy and sell"),
+            html.Hr(className="my-2"),
+            html.P("Manage your portfolio with the \"Purcahse\" and \"Sell\" Pages"),
+            html.Hr(className="my-2"),
+            html.P("View portfolio value and ROI with the \"Visualize\" tab"),
+            html.Hr(className="my-2"),
+            html.P("For questions or comments contact rsanders20@gmail.com"),
+            html.P(dbc.Button("Create Portfolio", color="primary", href='/create/'), className="lead"),
+        ]
+    )
 
-    security_input = dbc.FormGroup([
-        dbc.Label("Company"),
-        dcc.Dropdown(
-            id='security_input',
-            options=[],
-            multi=True,
-        ),
-        dbc.FormText("Select the security to graph"),
-    ])
+    about_layout_div = get_base_layout(brand_name, nav_portfolio, jumbotron, portfolio_list)
+
+    return about_layout_div
+
+
+
+
+def make_graph_layout(brand_name, portfolio_list):
+    nav_portfolio = make_nav()
 
     table_input = dbc.FormGroup([
         dash_table.DataTable(id='portfolio_entries',
@@ -59,7 +74,6 @@ def make_graph_layout(brand_name, portfolio_list):
                                   {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
                                   ]),
                              row_selectable='multi'),
-        dbc.FormText("Select the Security to Sell, or Delete"),
     ])
 
     graph = px.line()
@@ -67,12 +81,7 @@ def make_graph_layout(brand_name, portfolio_list):
     graph_div = html.Div([
         dbc.Row([
             dbc.Col([
-                html.Div(dbc.Alert(id='sell_alert'), style={'display': 'none'})
-            ])
-        ]),
-        dbc.Row([
-            dbc.Col([
-                portfolio_input,
+                html.Div(dbc.Alert(id='sell_alert', children="Select Securities to Visualize", color="warning"))
             ])
         ]),
         dbc.Row([
@@ -93,11 +102,11 @@ def make_graph_layout(brand_name, portfolio_list):
         style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'}
     )
 
-    graph_layout_div = get_base_layout(brand_name, nav_portfolio, graph_div)
+    graph_layout_div = get_base_layout(brand_name, nav_portfolio, graph_div, portfolio_list)
     return graph_layout_div
 
 
-def make_manage_layout(brand_name, portfolio_list):
+def make_purchase_layout(brand_name, portfolio_list):
 
     nav_portfolio = make_nav()
 
@@ -105,15 +114,6 @@ def make_manage_layout(brand_name, portfolio_list):
         dbc.Alert(id = 'manage_alert',
                   children="No new security has been added",
                   color="warning")
-    ])
-
-    portfolio_input = dbc.FormGroup([
-        dbc.Label("Portfolio"),
-        dcc.Dropdown(
-            id='portfolio_input',
-            options=[{'label': i.name, 'value': i.name} for i in portfolio_list],
-        ),
-        dbc.FormText("Select the portfolio to manage"),
     ])
 
     securities_list = stock_calculations.get_securities_list()
@@ -160,13 +160,13 @@ def make_manage_layout(brand_name, portfolio_list):
     ])
 
     form_div = html.Div([
-        dbc.Form([manage_alert, portfolio_input, security_input, value_input,
+        dbc.Form([manage_alert, security_input, value_input,
                   purchase_date_input, source_input, submit_input])
     ],
         style={'width': '100%', 'margin-top': '5px'}
     )
 
-    manage_div = get_base_layout(brand_name, nav_portfolio, form_div)
+    manage_div = get_base_layout(brand_name, nav_portfolio, form_div, portfolio_list)
 
     return manage_div
 
@@ -177,16 +177,7 @@ def make_sell_layout(brand_name, portfolio_list):
 
     sell_alert = dbc.Alert(id='sell_alert',
                            children="Sell or Delete Stocks from the Selected Portfolio",
-                           color='success')
-
-    portfolio_input = dbc.FormGroup([
-        dbc.Label("Portfolio"),
-        dcc.Dropdown(
-            id='portfolio_input',
-            options=[{'label': i.name, 'value': i.name} for i in portfolio_list],
-        ),
-        dbc.FormText("Select the portfolio to manage"),
-    ])
+                           color='warning')
 
     table_input = dbc.FormGroup([
         dash_table.DataTable(id='portfolio_entries',
@@ -220,11 +211,6 @@ def make_sell_layout(brand_name, portfolio_list):
         ]),
         dbc.Row([
             dbc.Col([
-                portfolio_input,
-            ])
-        ]),
-        dbc.Row([
-            dbc.Col([
                 table_input,
             ],
                 style={'margin-left': '15px', 'margin-right': '15px'},
@@ -241,11 +227,11 @@ def make_sell_layout(brand_name, portfolio_list):
     ],
         style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'})
 
-    view_div = get_base_layout(brand_name, nav_portfolio, data_div)
+    view_div = get_base_layout(brand_name, nav_portfolio, data_div, portfolio_list)
     return view_div
 
 
-def make_create_layout(brand_name):
+def make_create_layout(brand_name, portfolio_list):
     nav_portfolio = make_nav()
 
     create_alert = dbc.FormGroup([
@@ -267,7 +253,7 @@ def make_create_layout(brand_name):
         dbc.Label("Strategy"),
         dcc.Dropdown(
             id='strategy_input',
-            options=[{'label': i, 'value': i} for i in ['Buy Low', 'Sell High']],
+            options=[{'label': i, 'value': i} for i in ['Manual', 'Automatic', 'Manual+Automatic']],
         ),
         dbc.FormText("Select a strategy for this portfolio"),
     ])
@@ -283,36 +269,50 @@ def make_create_layout(brand_name):
         style={'width': '100%', 'margin-top': '5px'}
     )
 
-    manage_div = get_base_layout(brand_name, nav_portfolio, form_div)
+    manage_div = get_base_layout(brand_name, nav_portfolio, form_div, portfolio_list)
 
     return manage_div
 
 
-def get_base_layout(brand_name, nav_div, content_div):
+def get_base_layout(brand_name, nav_div, content_div, portfolio_list):
+
     view_portfolio_div = html.Div([
-        dbc.Row([
-            dbc.Col([
-                dbc.NavbarSimple(
-                    brand=brand_name,
-                    color="primary",
-                    dark=True, )
-            ],
-                width=12)
-        ]),
         dbc.Row([
             dbc.Col([
                 nav_div,
             ],
-                width=4),
+                width=3),
             dbc.Col([
                 content_div
             ],
                 style={'display': 'flex', 'justify-content': 'center'},
-                width=8),
+                width=9),
         ]),
     ])
 
     return view_portfolio_div
+
+
+def make_navbar_view():
+    navbar_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                dbc.NavbarSimple(
+                    id='stock_navbar',
+                    children=[
+                        dcc.Dropdown(
+                            id='portfolio_input',
+                            placeholder="Select Portfolio",
+                            style={'min-width': '200px'})
+                    ],
+                    color="primary",
+                    dark=True)
+            ],
+                width=12)
+        ]),
+    ])
+    return navbar_div
+
 
 
 

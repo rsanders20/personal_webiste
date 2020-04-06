@@ -16,6 +16,16 @@ from trades.models import User, Trade, Portfolio, Dollar
 from trades import protect_dash_route
 
 
+def get_portfolios():
+    user_name = session.get('user_name', None)
+    user = User.query.filter_by(user_name=user_name).one_or_none()
+    portfolio_list = []
+    if user:
+        portfolio_list = Portfolio.query.filter_by(user_id=user.id).all()
+
+    return portfolio_list
+
+
 def register_stock_dashapp(server):
     # TODO: Add in a way to track dividend payments
     # Break up visualization graphs
@@ -23,7 +33,7 @@ def register_stock_dashapp(server):
     # Imporve login view to make it a personal website
     # Launch on digital ocean server
 
-    external_stylesheets = [dbc.themes.BOOTSTRAP]
+    external_stylesheets = [dbc.themes.LUX]
 
     app = dash.Dash(__name__,
                     server=server,
@@ -33,31 +43,40 @@ def register_stock_dashapp(server):
 
     protect_dash_route(app)
 
+    page_nav = dash_layouts.make_navbar_view()
+
     app.layout = html.Div([
-        dcc.Location(id='url', refresh=False, pathname='/visualize/'),
-        html.Div(id='page_content')
+        dcc.Location(id='url', refresh=False, pathname='/about/'),
+        page_nav,
+        html.Div(id='page_content'),
     ])
 
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio_list = []
-        if user:
-            portfolio_list = Portfolio.query.filter_by(user_id=user.id).all()
+        portfolio_list = get_portfolios()
 
         print(pathname)
 
-        if pathname == "/purchase/":
-            return dash_layouts.make_manage_layout("Purchase Securities", portfolio_list)
+        if pathname == '/about/':
+            return dash_layouts.make_about_layout("About", portfolio_list)
+        elif pathname == '/create/':
+            return dash_layouts.make_create_layout("New Portfolio", portfolio_list)
+        elif pathname == "/purchase/":
+            return dash_layouts.make_purchase_layout("Purchase Securities", portfolio_list)
         elif pathname == "/sell/":
             return dash_layouts.make_sell_layout("Sell Securities", portfolio_list)
         elif pathname == '/visualize/':
-            return dash_layouts.make_graph_layout('Visualize Portfolio', portfolio_list)
-        elif pathname == '/create/':
-            return dash_layouts.make_create_layout("Create Portfolio")
+            return dash_layouts.make_graph_layout('Visualize', portfolio_list)
+
+    @app.callback([Output('portfolio_input', 'options'),
+                   Output('stock_navbar', 'brand')],
+                  [Input('url', 'pathname')])
+    def display_nav(pathname):
+        portfolio_list = get_portfolios()
+        options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
+        brand_name = "Stock Analytics"
+        return options, brand_name
 
     @app.callback(Output('security_input', 'options'),
                    [Input('portfolio_input', 'value')])
