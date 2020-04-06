@@ -3,7 +3,7 @@ from dash import dash
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
-from trades import protect_dash_route
+from pages import protect_dash_route
 
 
 def register_photography_dashapp(server):

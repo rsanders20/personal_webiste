@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 
 import plotly.express as px
 
-from trades.stocks import stock_calculations
+from pages.stocks import stock_calculations
 
 
 def make_nav():

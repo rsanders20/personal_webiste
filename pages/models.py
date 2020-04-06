@@ -1,4 +1,4 @@
-from trades import db
+from pages import db
 from datetime import datetime
 
 
@@ -24,11 +24,11 @@ class Portfolio(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(50))
     strategy = db.Column(db.String(50))
-    trades = db.relationship('Trade', backref='trades', lazy=True)
+    trades = db.relationship('Trade', backref='pages', lazy=True)
 
 
 class Trade(db.Model):
-    __tablename__ = 'trades'
+    __tablename__ = 'pages'
     id = db.Column(db.Integer, primary_key=True)
     portfolio_id = db.Column(db.Integer, db.ForeignKey('portfolios.id'), nullable=False)
     security = db.Column(db.String(10))
