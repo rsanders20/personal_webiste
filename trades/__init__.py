@@ -47,7 +47,7 @@ def create_app():
 
 
 def protect_dash_route(app):
-    from pages.routes import login_required
+    from trades.routes import login_required
 
     for view_func in app.server.view_functions:
         if view_func.startswith(app.config.url_base_pathname):

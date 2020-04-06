@@ -3,14 +3,14 @@ from dash import dash
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
-from pages import protect_dash_route
+from trades import protect_dash_route
 
 
-def register_photography_dashapp(server):
+def register_travel_dashapp(server):
     external_stylesheets = [dbc.themes.LUX]
     app = dash.Dash(__name__,
                     server=server,
-                    url_base_pathname='/dash/photography/',
+                    url_base_pathname='/dash/travel/',
                     external_stylesheets=external_stylesheets,
                     suppress_callback_exceptions=True)
 

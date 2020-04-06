@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 
 import plotly.express as px
 
-from pages.stocks import stock_calculations
+from trades.stocks import stock_calculations
 
 
 def make_nav():
@@ -58,8 +58,6 @@ def make_about_layout(brand_name, portfolio_list):
     about_layout_div = get_base_layout(brand_name, nav_portfolio, jumbotron, portfolio_list)
 
     return about_layout_div
-
-
 
 
 def make_graph_layout(brand_name, portfolio_list):
