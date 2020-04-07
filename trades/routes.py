@@ -4,7 +4,7 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
 from flask_wtf import FlaskForm
-from wtforms import StringFieldp
+from wtforms import StringField
 from wtforms import validators
 
 from . import db
