@@ -60,8 +60,6 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
         df = df.loc[(df.index.values <= np_end_date) & (df.index.values >= np_start_date)]
         value_factor = float(value_list[0])/df['Close'][0]
         df['Close'] = df['Close']*value_factor
-
-
         return df
 
     ticker_dict_list = []
@@ -123,8 +121,8 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
                     cash_value = cash_value - row.value
                 elif row.de_invested:
                     cash_value = cash_value + row.value
-        tcl = pd.Series(dict(zip(pxdf.columns, [0, cash_value, 0, 0, 0, 0, 'Cash']))).rename(total_time)
-        icl = pd.Series(dict(zip(pxdf.columns, [0, invested_value, 0, 0, 0, 0, 'Invested']))).rename(total_time)
+        tcl = pd.Series(dict(zip(pxdf.columns, [0, 0, 0, cash_value, 0, 0, 'Cash']))).rename(total_time)
+        icl = pd.Series(dict(zip(pxdf.columns, [0, 0, 0, invested_value, 0, 0, 'Invested']))).rename(total_time)
         invested_cash_list.append(icl)
         total_cash_list.append(tcl)
     cash = pd.DataFrame(total_cash_list)
