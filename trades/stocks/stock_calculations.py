@@ -136,8 +136,8 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
     for total_time in total_time_list:
         total_sum = pxdf.loc[pxdf.index.values == total_time, 'Close'].sum()
         invested_sum = invested.loc[invested.index.values == total_time, 'Close'].sum()
-        s = pd.Series(dict(zip(pxdf.columns, [0, total_sum, 0, 0, 0, 0, 'Total']))).rename(total_time)
-        roi = pd.Series(dict(zip(pxdf.columns, [0, total_sum/invested_sum, 0, 0, 0, 0, 'ROI']))).rename(total_time)
+        s = pd.Series(dict(zip(pxdf.columns, [0, 0, 0, total_sum, 0, 0, 'Total']))).rename(total_time)
+        roi = pd.Series(dict(zip(pxdf.columns, [0, 0, 0, total_sum/invested_sum, 0, 0, 'ROI']))).rename(total_time)
         total_list.append(s)
         roi_list.append(roi)
     total = pd.DataFrame(total_list)
