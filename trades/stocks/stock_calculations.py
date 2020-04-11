@@ -53,14 +53,14 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
     if len(ticker_symbol) == 0:
         return df
 
-    if len(ticker_symbol) == 1:
-        df['ticker'] = ticker_symbol[0]
-        np_start_date = make_np_date(start_time_list[0])
-        np_end_date = make_np_date(end_time_list[0])
-        df = df.loc[(df.index.values <= np_end_date) & (df.index.values >= np_start_date)]
-        value_factor = float(value_list[0])/df['Close'][0]
-        df['Close'] = df['Close']*value_factor
-        return df
+    # if len(ticker_symbol) == 1:
+    #     df['ticker'] = ticker_symbol[0]
+    #     np_start_date = make_np_date(start_time_list[0])
+    #     np_end_date = make_np_date(end_time_list[0])
+    #     df = df.loc[(df.index.values <= np_end_date) & (df.index.values >= np_start_date)]
+    #     value_factor = float(value_list[0])/df['Close'][0]
+    #     df['Close'] = df['Close']*value_factor
+    #     return df
 
     ticker_dict_list = []
     for ticker, value, start_time, end_time in zip(ticker_symbol, value_list, start_time_list, end_time_list):
@@ -127,8 +127,10 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
         total_cash_list.append(tcl)
     cash = pd.DataFrame(total_cash_list)
     invested = pd.DataFrame(invested_cash_list)
+
     cash.index.name = 'Date'
     invested.index.name = 'Date'
+
     pxdf = pd.concat(([pxdf, cash]))
 
     total_list = []
@@ -140,24 +142,46 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
         roi = pd.Series(dict(zip(pxdf.columns, [0, 0, 0, total_sum/invested_sum, 0, 0, 'ROI']))).rename(total_time)
         total_list.append(s)
         roi_list.append(roi)
+
     total = pd.DataFrame(total_list)
     total.index.name = 'Date'
 
     roi = pd.DataFrame(roi_list)
     roi.index.name = 'Date'
 
-    return pd.concat([pxdf, total, invested, roi])
+    ti_df = pd.concat([total, invested])
+    ti_df.index.name='Date'
+
+    return pxdf, ti_df, roi
 
 
 def plot_stocks(ticker_symbol, value_list, start_time_list, end_time_list, all_cash):
+    start_time = min([sti for sti in start_time_list])
+    end_time = max([eti for eti in end_time_list])
+    df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
+    pxdf, total, roi = flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, all_cash)
+    if not pxdf.empty:
+        pxdf.reset_index(level=0, inplace=True)
+        i_graph = px.line(pxdf, x='Date', y='Close', color='ticker')
+        i_graph.update_layout(title="Individual Closing Values")
+
+        t_graph = px.line(total, x=total.index, y='Close', color='ticker')
+        t_graph.update_layout(title="Total Portfolio Value", xaxis_title='Date')
+
+        r_graph = px.line(roi, x=roi.index, y='Close', color='ticker')
+        r_graph.update_layout(title="Return on Investment", xaxis_title='Date')
+
+        return i_graph, t_graph, r_graph
+    else:
+        return px.line(), px.line(), px.line()
+
+
+def plot_individual_stocks(ticker_symbol, value_list, start_time_list, end_time_list, all_cash):
     start_time = min([datetime.strptime(sti, '%Y-%m-%d') for sti in start_time_list])
     end_time = max([datetime.strptime(sti, '%Y-%m-%d') for sti in end_time_list])
     df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
-    pxdf = flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, all_cash)
-    if not pxdf.empty:
-        pxdf.reset_index(level=0, inplace=True)
-        graph = px.line(pxdf, x='Date', y='Close', color='ticker')
-
+    if not df.empty:
+        graph = px.line(df, x=df.index, y='Close')
         return graph
     else:
         return px.line()

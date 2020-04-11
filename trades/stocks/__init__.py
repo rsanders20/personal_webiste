@@ -28,10 +28,7 @@ def get_portfolios():
 
 def register_stock_dashapp(server):
     # TODO: Add in a way to track dividend payments
-    # Break up visualization graphs
-    # Clean up and refactor code
-    # Imporve login view to make it a personal website
-    # Launch on digital ocean server
+    # TODO:  Update the register and login pages
 
     external_stylesheets = [dbc.themes.LUX]
 
@@ -46,7 +43,7 @@ def register_stock_dashapp(server):
     page_nav = dash_layouts.make_navbar_view()
 
     app.layout = html.Div([
-        dcc.Location(id='url', refresh=False, pathname='/about/'),
+        dcc.Location(id='url', refresh=False, pathname='/visualize_total/'),
         page_nav,
         html.Div(id='page_content'),
     ])
@@ -66,8 +63,20 @@ def register_stock_dashapp(server):
             return dash_layouts.make_purchase_layout("Purchase Securities", portfolio_list)
         elif pathname == "/sell/":
             return dash_layouts.make_sell_layout("Sell Securities", portfolio_list)
-        elif pathname == '/visualize/':
-            return dash_layouts.make_graph_layout('Visualize', portfolio_list)
+        elif pathname == '/visualize_individual/':
+            return dash_layouts.make_individual_graph_layout('Visualize Individual', portfolio_list)
+        elif pathname == '/visualize_total/':
+            return dash_layouts.make_total_graph_layout('Visualize Total', portfolio_list)
+
+    @app.callback(
+        Output('collapse', 'is_open'),
+        [Input('collapse_button', 'n_clicks')],
+        [State('collapse', 'is_open')]
+    )
+    def open_visualize_tab(n_clicks, is_open):
+        if is_open:
+            return False
+        return True
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand')],
@@ -94,12 +103,11 @@ def register_stock_dashapp(server):
 
         return security_options
 
-    # TODO:  Make the chosen portfolio part of the header...header div does not change.
     @app.callback(Output('portfolio_graph', 'figure'),
                   [Input('portfolio_entries', 'data'),
                    Input('portfolio_entries', 'selected_rows')],
                   [State('portfolio_input', 'value')])
-    def update_graph( data, selected_rows, portfolio_name):
+    def update_individual_graph( data, selected_rows, portfolio_name):
         if not portfolio_name:
             return px.line()
         user_name = session.get('user_name', None)
@@ -127,8 +135,39 @@ def register_stock_dashapp(server):
             else:
                 sell_dates.append(now_time)
 
-        security_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
+        security_graph = stock_calculations.plot_individual_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
         return security_graph
+
+    @app.callback(
+        [Output('individual_graph', 'figure'),
+         Output('total_graph', 'figure'),
+         Output('roi_graph', 'figure')],
+        [Input('portfolio_input', 'value'), Input('location', 'pathname')]
+    )
+    def update_total_graph(portfolio_name):
+        if not portfolio_name:
+            return px.line()
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+        all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
+        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+        now_time = datetime.now()
+        ticker_list = []
+        start_dates = []
+        value_list = []
+        sell_dates = []
+        for trade in trades:
+            ticker_list.append(trade.security)
+            start_dates.append(trade.purchase_date)
+            value_list.append(trade.value)
+            if trade.sell_date:
+                sell_dates.append(trade.sell_date)
+            else:
+                sell_dates.append(now_time)
+
+        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
+        return i_graph, t_graph, r_graph
 
     @app.callback(Output('portfolio_entries', 'data'),
                   [Input('portfolio_input', 'value'),

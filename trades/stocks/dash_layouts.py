@@ -19,8 +19,18 @@ def make_nav():
                                     style={'margin-top': '5px', 'text-align': 'left'})),
             dbc.NavItem(dbc.NavLink("Sell Securities", active=True, href='/sell/',
                                     style={'margin-top': '5px', 'text-align': 'left'})),
-            dbc.NavItem(dbc.NavLink("Visualize", active=True, href='/visualize/',
-                                    style={'margin-top': '5px', 'text-align': 'left'}))
+            dbc.NavItem(dbc.NavLink(children="Visualize", id = 'collapse_button', active=True,
+                                    style={'margin-top': '5px', 'text-align': 'left'})),
+            dbc.Collapse(
+                id='collapse',
+                is_open=True,
+                children=[
+                    dbc.NavItem(dbc.NavLink("Individual", active=True, href='/visualize_individual/',
+                                            style={'margin-top': '5px', 'margin-left': '15px', 'text-align': 'left'})),
+                    dbc.NavItem(dbc.NavLink("Total", active=True, href='/visualize_total/',
+                                            style={'margin-top': '5px', 'margin-left': '15px', 'text-align': 'left'}))
+                ]
+            )
         ],
         vertical='md',
         pills=True,
@@ -60,7 +70,7 @@ def make_about_layout(brand_name, portfolio_list):
     return about_layout_div
 
 
-def make_graph_layout(brand_name, portfolio_list):
+def make_individual_graph_layout(brand_name, portfolio_list):
     nav_portfolio = make_nav()
 
     table_input = dbc.FormGroup([
@@ -71,7 +81,7 @@ def make_graph_layout(brand_name, portfolio_list):
                                   {'id': 'purchase_date', 'name': 'Purchase Date'},
                                   {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
                                   ]),
-                             row_selectable='multi'),
+                             row_selectable='single'),
     ])
 
     graph = px.line()
@@ -79,7 +89,7 @@ def make_graph_layout(brand_name, portfolio_list):
     graph_div = html.Div([
         dbc.Row([
             dbc.Col([
-                html.Div(dbc.Alert(id='sell_alert', children="Select Securities to Visualize", color="warning"))
+                html.Div(dbc.Alert(id='sell_alert', children="Select Individual Securities", color="warning"))
             ])
         ]),
         dbc.Row([
@@ -102,6 +112,45 @@ def make_graph_layout(brand_name, portfolio_list):
 
     graph_layout_div = get_base_layout(brand_name, nav_portfolio, graph_div, portfolio_list)
     return graph_layout_div
+
+
+def make_total_graph_layout(brand_name, portfolio_list):
+    nav_portfolio = make_nav()
+
+    graph = px.line()
+
+    graph_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.Div(dbc.Alert(id='sell_alert', children="Select Portfolio", color="warning"))
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='individual_graph',
+                          figure=graph)
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='total_graph',
+                          figure=graph)
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='roi_graph',
+                          figure=graph)
+            ])
+        ])
+
+    ],
+        style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'}
+    )
+
+    graph_layout_div = get_base_layout(brand_name, nav_portfolio, graph_div, portfolio_list)
+    return graph_layout_div
+
 
 
 def make_purchase_layout(brand_name, portfolio_list):
