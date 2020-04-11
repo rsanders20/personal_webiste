@@ -1,53 +1,69 @@
-
 <html>
-  <head>
+<head>
     <title>Ryan Sanders</title>
     <link href="{{ url_for('static', filename='css/bootstrap-theme.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
-  </head>
+</head>
 
 
-  <body>
-<!--     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">-->
-     <nav class="navbar navbar-default">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="true">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/">Ryan Sanders</a>
+<body>
+<div class="container-fluid" style="height:100%">
+    <div class="row" style="height: 10%">
+        <div class="col">
+            <nav class="navbar navbar-default" style="margin-bottom: 0px">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                                data-target="#bs-example-navbar-collapse-1" aria-expanded="true">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="/">Ryan Sanders</a>
+                    </div>
+
+                    <div class="navbar-collapse collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav">
+                            <li><a href="/photography">Photography</a></li>
+                            <li><a href="/travel">Travel</a></li>
+                            <li><a href="/stocks">Stocks</a></li>
+                        </ul>
+
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><a href="/login">Login</a></li>
+                            <li><a href="/register">Register</a></li>
+                            <li><a href="/logout">Logout</a></li>
+                        </ul>
+
+                    </div>
+                </div>
+            </nav>
         </div>
-
-        <div class="navbar-collapse collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav">
-            <li><a href="/photography">Photography</a></li>
-            <li><a href="/travel">Travel</a></li>
-            <li><a href="/stocks">Stocks</a></li>
-          </ul>
-
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="/login">Login</a></li>
-            <li><a href="/register">Register</a></li>
-            <li><a href="/logout">Logout</a></li>
-          </ul>
-
-        </div>
-      </div>
-<!--    </nav>-->
-
-    <div class="container-fluid">
-      <div class = "row no-gutters">
-<!--        <div class="col-md-12">-->
-          {% block content %}
-          {% endblock %}
-<!--        </div>-->
-      </div>
     </div>
-  <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
-  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-  </body>
+
+
+    <div class="row" style="height: 90%">
+        <div class="col" style="height: 100%">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+</div>
+
+
+<!--      <div class="container-fluid d-flex flex-column">-->
+<!--    <div  class="container-fluid d-flex flex-column" >-->
+<!--      <div class = "row no-gutters">-->
+<!--        <div class="col-md-12">-->
+
+<!--        </div>-->
+<!--      </div>-->
+<!--      </div>-->
+
+<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+</body>
 
 </html>

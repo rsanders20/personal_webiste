@@ -27,8 +27,13 @@ def get_portfolios():
 
 
 def register_stock_dashapp(server):
-    # TODO: Add in a way to track dividend payments
-    # TODO:  Update the register and login pages
+    # TODO: Update the register and login pages
+    # TODO: Implement the option to create an automatic portfolio
+    # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
+    # Start with getting SPY information
+    # Add in a way to specify following a portfolio or DCA or lump-sum
+    # Add in rules to Buy
+    # Add in rules to sell
 
     external_stylesheets = [dbc.themes.LUX]
 
@@ -142,11 +147,12 @@ def register_stock_dashapp(server):
         [Output('individual_graph', 'figure'),
          Output('total_graph', 'figure'),
          Output('roi_graph', 'figure')],
-        [Input('portfolio_input', 'value'), Input('location', 'pathname')]
+        [Input('portfolio_input', 'value'),
+         Input('sell_alert', 'children')]
     )
-    def update_total_graph(portfolio_name):
+    def update_total_graph(portfolio_name, sell_alert):
         if not portfolio_name:
-            return px.line()
+            return px.line(), px.line(), px.line()
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
