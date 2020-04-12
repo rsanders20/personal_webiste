@@ -55,12 +55,12 @@ def login():
         existing_user = User.query.filter_by(user_name = login_form.user_name.data,
                                              password = login_form.password.data).one_or_none()
         if existing_user is None:
-            return render_template('register.html', form=login_form, message="User name or password not correct")
+            return render_template('login.html', form=login_form, message="User name or password not correct")
 
         session['user_name'] = login_form.user_name.data
         return redirect(url_for('routes.home'))
 
-    return render_template('register.html', form=login_form, message="Enter your user name and password")
+    return render_template('login.html', form=login_form, message="Enter your user name and password")
 
 
 def login_required(route_function):
