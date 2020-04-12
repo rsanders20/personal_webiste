@@ -27,7 +27,6 @@ def get_portfolios():
 
 
 def register_stock_dashapp(server):
-    # TODO: Update the register and login pages
     # TODO: Implement the option to create an automatic portfolio
     # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
     # Start with getting SPY information
@@ -48,7 +47,7 @@ def register_stock_dashapp(server):
     page_nav = dash_layouts.make_navbar_view()
 
     app.layout = html.Div([
-        dcc.Location(id='url', refresh=False, pathname='/visualize_total/'),
+        dcc.Location(id='url', refresh=False, pathname='/create/'),
         page_nav,
         html.Div(id='page_content'),
     ])
