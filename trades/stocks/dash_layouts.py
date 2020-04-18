@@ -305,86 +305,86 @@ def make_create_layout(brand_name, portfolio_list):
         dbc.FormText("Select a strategy for this portfolio"),
     ])
 
-    # TODO:  Add this view to the purchase layout, allow many rules to be created
-    # Show the rules in tables backed by db
-    # Create a button to generate the individual buying and selling
-    auto_dates_input = dbc.FormGroup([
-        dbc.Label("Dates"),
-        dcc.DatePickerRange(id='auto_dates_input', style={'width': '99%'}),
-        dbc.FormText("Select the start and end dates for the automatic portfolio"),
-    ],
-    style={'margin-bottom': '30px'})
-
-    auto_purchase_rule = dbc.FormGroup([
-        dbc.Label("Set the Value and Frequency of each purchase"),
-        dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(id='auto_purchase_target',
-                             options=[{'label': i, 'value': i} for i in ['Target Rule', 'Individual', 'ETF']],
-                             placeholder='Purchase Target')
-            ],
-            width=4),
-            dbc.Col([
-                dcc.Dropdown(id='auto_purchase_frequency',
-                             options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
-                             placeholder='Purchase Frequency (days)')
-            ],
-            width=4),
-            dbc.Col([
-                dcc.Dropdown(id='auto_purchase_value',
-                             options=[{'label': i, 'value': i} for i in [100, 200, 300, 400, 500, 1000]],
-                             placeholder='Purchase Value ($)')
-            ],
-            width=4),
-        ]),
-        dbc.FormText("Select the logic for making purchases"),
-    ],
-        style={'margin-bottom': '30px'}
-    )
-
-    auto_select_rule = dbc.FormGroup([
-        dbc.Label("Select Which Stock or ETF to Purchase"),
-        dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(id='auto_select_type',
-                             options=[{'label': i, 'value': i} for i in
-                                      ['Best', 'Worst', 'Moving Average Up-Crossing', 'Moving Average Down-Crossing']],
-                             placeholder='Performance Criteria')
-            ],
-            width=6),
-            dbc.Col([
-                dcc.Dropdown(id='auto_select_frequency',
-                             options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
-                             placeholder='Performance Duration in Days'),
-            ],
-            width=6),
-        ]),
-        dbc.FormText("Create the logic for selecting the targets of the purchases and sales"),
-    ],
-        style={'margin-bottom': '30px'}
-    )
-
-    auto_sell_rule = dbc.FormGroup([
-        dbc.Label("Select Which Stock or ETF to Sell"),
-        dbc.Row([
-            dbc.Col([
-                dcc.Dropdown(id='auto_sell_type',
-                             options=[{'label': i, 'value': i} for i in
-                                      ['Best', 'Worst', 'Moving Average Up-Crossing', 'Moving Average Down-Crossing']],
-                             placeholder='Performance Criteria')
-            ],
-            width=6),
-            dbc.Col([
-                dcc.Dropdown(id='auto_sell_frequency',
-                             options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
-                             placeholder='Performance Duration in Days'),
-            ],
-            width=6),
-        ]),
-        dbc.FormText("Create the logic for deciding when to sell a previous purchase"),
-    ],
-        style={'margin-bottom': '30px'}
-    )
+    # # TODO:  Add this view to the purchase layout, allow many rules to be created
+    # # Show the rules in tables backed by db
+    # # Create a button to generate the individual buying and selling
+    # auto_dates_input = dbc.FormGroup([
+    #     dbc.Label("Dates"),
+    #     dcc.DatePickerRange(id='auto_dates_input', style={'width': '99%'}),
+    #     dbc.FormText("Select the start and end dates for the automatic portfolio"),
+    # ],
+    # style={'margin-bottom': '30px'})
+    #
+    # auto_purchase_rule = dbc.FormGroup([
+    #     dbc.Label("Set the Value and Frequency of each purchase"),
+    #     dbc.Row([
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_purchase_target',
+    #                          options=[{'label': i, 'value': i} for i in ['Target Rule', 'Individual', 'ETF']],
+    #                          placeholder='Purchase Target')
+    #         ],
+    #         width=4),
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_purchase_frequency',
+    #                          options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
+    #                          placeholder='Purchase Frequency (days)')
+    #         ],
+    #         width=4),
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_purchase_value',
+    #                          options=[{'label': i, 'value': i} for i in [100, 200, 300, 400, 500, 1000]],
+    #                          placeholder='Purchase Value ($)')
+    #         ],
+    #         width=4),
+    #     ]),
+    #     dbc.FormText("Select the logic for making purchases"),
+    # ],
+    #     style={'margin-bottom': '30px'}
+    # )
+    #
+    # auto_select_rule = dbc.FormGroup([
+    #     dbc.Label("Select Which Stock or ETF to Purchase"),
+    #     dbc.Row([
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_select_type',
+    #                          options=[{'label': i, 'value': i} for i in
+    #                                   ['Best', 'Worst', 'Moving Average Up-Crossing', 'Moving Average Down-Crossing']],
+    #                          placeholder='Performance Criteria')
+    #         ],
+    #         width=6),
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_select_frequency',
+    #                          options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
+    #                          placeholder='Performance Duration in Days'),
+    #         ],
+    #         width=6),
+    #     ]),
+    #     dbc.FormText("Create the logic for selecting the targets of the purchases and sales"),
+    # ],
+    #     style={'margin-bottom': '30px'}
+    # )
+    #
+    # auto_sell_rule = dbc.FormGroup([
+    #     dbc.Label("Select Which Stock or ETF to Sell"),
+    #     dbc.Row([
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_sell_type',
+    #                          options=[{'label': i, 'value': i} for i in
+    #                                   ['Best', 'Worst', 'Moving Average Up-Crossing', 'Moving Average Down-Crossing']],
+    #                          placeholder='Performance Criteria')
+    #         ],
+    #         width=6),
+    #         dbc.Col([
+    #             dcc.Dropdown(id='auto_sell_frequency',
+    #                          options=[{'label': i, 'value': i} for i in [1, 5, 7, 20, 50, 100, 365]],
+    #                          placeholder='Performance Duration in Days'),
+    #         ],
+    #         width=6),
+    #     ]),
+    #     dbc.FormText("Create the logic for deciding when to sell a previous purchase"),
+    # ],
+    #     style={'margin-bottom': '30px'}
+    # )
 
 
 
@@ -422,10 +422,6 @@ def make_create_layout(brand_name, portfolio_list):
         dbc.Form([create_alert,
                  name_input,
                  strategy_input,
-                 auto_dates_input,
-                  auto_purchase_rule,
-                  auto_select_rule,
-                  auto_sell_rule,
                  create_input])
     ],
         style={'width': '100%', 'margin-top': '5px'}
