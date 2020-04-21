@@ -84,8 +84,6 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
                                      'start_times':[start_time],
                                      'end_times':[end_time]})
 
-    print(ticker_dict_list)
-
     df_list = []
     for ticker_dict in ticker_dict_list:
         index = 0

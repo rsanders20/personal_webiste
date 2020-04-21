@@ -1,93 +1,219 @@
 import datetime
+import os
+
 from trades.stocks import stock_calculations
 import matplotlib.pyplot as plt
 import pandas as pd
-from trades.models import Portfolio
-from trades.stocks.stock_calculations import flatten_df
+from trades.models import Portfolio, Dollar
+from trades.stocks.stock_calculations import flatten_df, make_np_date
+import plotly.express as px
+import pathlib
+import numpy as np
 import scipy
 
 
-def make_portfolio(purchase_date, sell_date):
-    spy_trade = {
-        'ticker_sybmol': 'SPY',
-        'value': 100.00,
-        'purchase_date': purchase_date,
-        'sell_date': sell_date,
-    }
+def make_simple_portfolio(all_weeks, spy_full_df):
+    weekly_value = []
 
-    return spy_trade
+    for i, week in enumerate(all_weeks):
+        if i ==0:
+            weekly_value.append([100])
+        else:
+            week_length = len(weekly_value[0])
+            start_time = make_np_date(week-datetime.timedelta(days=7))
+            end_time = make_np_date(week)
+            week_data = spy_full_df.loc[(spy_full_df.index.values <= end_time) & (spy_full_df.index.values >= start_time)]
+            starting_close = week_data['Close'][0]
+            ending_close = week_data['Close'][-1]
+            week_roi = ending_close/starting_close
+            new_week = [0 for i in range(week_length)]
+            new_week.append(100)
+            for week_value in weekly_value:
+                week_value.append(week_value[-1]*week_roi)
+            weekly_value.append(new_week)
+
+    weekly_array = np.array(weekly_value)
+    weekly_df = pd.DataFrame.from_records(weekly_array)
+    weekly_df.index = all_weeks
+    weekly_df.columns = all_weeks
+
+    return weekly_df
 
 
-def get_total_value(pf):
-    df = stock_calculations.get_yahoo_stock_data([pf['ticker_symbol']], pf['purchase_date'], pf['sell_date'])
+def roi_indicator(spy_full_df, week, n_days):
+    start_time = make_np_date(week - datetime.timedelta(days=n_days))
+    if start_time < make_np_date(spy_full_df.index[0]):
+        start_time = make_np_date(spy_full_df.index[0])
 
-    pxdf, total, roi = flatten_df(df,
-                                  [pf['ticker_symbol']],
-                                  [pf['value']],
-                                  [pf['purchase_date']],
-                                  [pf['sell_date']],
-                                  [])
+    end_time = make_np_date(week)
 
-    return pxdf, total, roi
+    week_data = spy_full_df.loc[(spy_full_df.index.values <= end_time) & (spy_full_df.index.values >= start_time)]
+    starting_close = week_data['Close'][0]
+    ending_close = week_data['Close'][-1]
+    week_roi = ending_close / starting_close
+
+    # ROI Indicator
+    if week_roi > 1.0:
+        indicator = True
+    else:
+        indicator = False
+
+    return indicator
 
 
-def get_historic_data():
-    base_time = datetime.datetime.strptime("2000-01-01", "%Y-%m-%d")
-    all_times = [base_time+datetime.timedelta(days=x) for x in range(5)]
+def make_strategic_portfolio(all_weeks, spy_full_df):
+    weekly_value = []
+    weekly_choice = []
 
-    interval = 1
+    for i, week in enumerate(all_weeks):
+        if i ==0:
+            weekly_value.append([100])
+            weekly_choice.append(['invest'])
+        else:
+            week_length = len(weekly_value[0])
+            start_time = make_np_date(week-datetime.timedelta(days=7))
+            end_time = make_np_date(week)
+            week_data = spy_full_df.loc[(spy_full_df.index.values <= end_time) & (spy_full_df.index.values >= start_time)]
+            starting_close = week_data['Close'][0]
+            ending_close = week_data['Close'][-1]
+            week_roi = ending_close/starting_close
+
+            new_week = [0 for i in range(week_length)]
+            new_week_choice = ['nothing' for i in range(week_length)]
+
+            # If the current week was positive, do nothing with the new week
+            # update the existing weeks, and sell
+            roi_pos_4 = roi_indicator(spy_full_df, week, 28)
+            roi_pos_3 = roi_indicator(spy_full_df, week, 21)
+            roi_pos_2 = roi_indicator(spy_full_df, week, 14)
+            roi_pos_1 = roi_indicator(spy_full_df, week, 7)
+
+            if roi_pos_1 and not roi_pos_3:
+                new_week.append(100)
+                new_week_choice.append('nothing')
+
+                for i, week_value in enumerate(weekly_value):
+                    if weekly_choice[i][-1] == 'invest':
+                        week_value.append(week_value[-1] * week_roi)
+                    elif weekly_choice[i][-1] == 'nothing':
+                        week_value.append(week_value[-1])
+                    elif weekly_choice[i][-1] == 'sell':
+                        week_value.append(week_value[-1])
+
+                for week_choice in weekly_choice:
+                    week_choice.append('sell')
+
+                weekly_value.append(new_week)
+                weekly_choice.append(new_week_choice)
+
+            # If the current week was negative, invest the new week
+            # update the existing weeks, and stay invested
+            else:
+                new_week.append(100)
+                new_week_choice.append('invest')
+                for j, week_value in enumerate(weekly_value):
+                    if weekly_choice[j][-1] == 'invest':
+                        week_value.append(week_value[-1] * week_roi)
+                    elif weekly_choice[j][-1] == 'nothing':
+                        week_value.append(week_value[-1])
+                    elif weekly_choice[j][-1] == 'sell':
+                        week_value.append(week_value[-1])
+
+                for week_choice in weekly_choice:
+                    week_choice.append('invest')
+
+                weekly_value.append(new_week)
+                weekly_choice.append(new_week_choice)
+
+    weekly_array = np.array(weekly_value)
+    weekly_df = pd.DataFrame.from_records(weekly_array)
+    weekly_df.index = all_weeks
+    weekly_df.columns = all_weeks
+
+    return weekly_df
+
+
+def get_spy_roi():
+    # TODO:  Save SPY data to avoid network calls
+    # TODO: add in data from 1990 to allow for longer term strategies
+    # TODO:  add in a buffer year for easier looking backward calcs.
+
+    base_time = datetime.datetime.strptime("2000-01-03", "%Y-%m-%d")
+    now_time = datetime.datetime.strptime("2020-04-13", "%Y-%m-%d")
+    spy_full_df = stock_calculations.get_yahoo_stock_data(['SPY'], base_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    n_days = (now_time-base_time).days
+    n_weeks = np.round(n_days/7)+1
+    print(n_weeks)
+    all_weeks = [base_time+datetime.timedelta(days=7*i_days) for i_days in range(int(n_weeks))]
+
+    weekly_strategic_df = make_strategic_portfolio(all_weeks, spy_full_df)
+    weekly_df = make_simple_portfolio(all_weeks, spy_full_df)
+
     spy_statistics = []
-    for time in all_times:
-        pf = make_portfolio(time, time+datetime.timedelta(days=interval))
-        pxdf, total, roi = get_total_value(pf)
-        statistics_dict = {
-            'interval': interval,
-            'roi': roi[-1],
-        }
-        spy_statistics.append(statistics_dict)
+    for interval in [364*(i+1) for i in range(10)]:
+        print(interval)
+        for i, week in enumerate(all_weeks):
+            if week + datetime.timedelta(interval) < now_time:
+                end_time = week+datetime.timedelta(interval)
 
+                # Dollar Cost Averaging (Simple)
+                interval_df = weekly_df.iloc[(weekly_df.index >= week) & (weekly_df.index < end_time), (weekly_df.columns>=week) & (weekly_df.columns <= end_time)]
+                interval_sum = interval_df.iloc[:, -1].sum()
+                interval_invested = 100*len(interval_df.index)
+                interval_roi = interval_sum/interval_invested
 
-    #         day_change_1 = 100*(row[3] - df_array[i-1][3])/df_array[i-1][3]
-    #         day_change_5 = 100*(row[3] - df_array[i-5][3])/df_array[i-5][3]
-    #         day_change_10 = 100*(row[3] - df_array[i-10][3])/df_array[i-10][3]
-    #         day_change_20 = 100*(row[3] - df_array[i-20][3])/df_array[i-20][3]
-    #         day_change_50 = 100*(row[3] - df_array[i-50][3])/df_array[i-50][3]
-    #         day_change_100 = 100*(row[3] - df_array[i-100][3])/df_array[i-100][3]
-    #         day_change_200 = 100*(row[3] - df_array[i-200][3])/df_array[i-200][3]
-    #
-    #         year_change_1 = 100*(row[3] - df_array[i-260][3])/df_array[i-260][3]
-    #         year_change_2 = 100*(row[3] - df_array[i-520][3])/df_array[i-520][3]
-    #         year_change_5 = 100*(row[3] - df_array[i-2600][3])/df_array[i-2600][3]
-    #         year_change_10 = 100*(row[3] - df_array[i-5200][3])/df_array[i-5200][3]
-    #
-    #
-    #         dict = {'Ticker': 'SPY',
-    #                 'Dates': row[6],
-    #                 'Close': row[3],
-    #                 'Day-Change-1': day_change_1,
-    #                 'Day-Change-5': day_change_5,
-    #                 'Day-Change-10': day_change_10,
-    #                 'Day-Change-20': day_change_20,
-    #                 'Day-Change-50': day_change_50,
-    #                 'Day-Change-100': day_change_100,
-    #                 'Day-Change-200': day_change_200,
-    #                 'Year-Change-1': year_change_1,
-    #                 'Year-Change-2': year_change_2,
-    #                 'Year-Change-5': year_change_5,
-    #                 'Year-Change-10': year_change_10}
-    #         spy_performance.append(dict)
+                roi_dict = {
+                    'interval': interval,
+                    'roi': interval_roi,
+                    'start_time': week,
+                    'end_time': end_time,
+                    'invested_value': interval_invested,
+                    'interval_sum': interval_sum,
+                    'strategy': 'DCA'
+                }
+                spy_statistics.append(roi_dict)
 
-    spy_df = pd.DataFrame.from_records(spy_performance)
+                # Lump Sum Investing
+                # lump_sum_invested = 100
+                # lump_sum_value = interval_df.iloc[0, -1]
+                # lump_sum_roi = lump_sum_value/lump_sum_invested
+                #
+                # roi_dict = {
+                #     'interval': interval,
+                #     'roi': lump_sum_roi,
+                #     'start_time': week,
+                #     'end_time': end_time,
+                #     'invested_value': lump_sum_invested,
+                #     'interval_sum': lump_sum_value,
+                #     'strategy': 'Lump Sum'
+                # }
+                # spy_statistics.append(roi_dict)
 
-    # spy_df.plot(kind="line", use_index=True, y=['Day-Change-100'])
-    # ax1 = spy_df.plot.kde(y=['Year-Change-5'])
-    # spy_df.plot.hist(bins=20, y=['Year-Change-1', 'Year-Change-2', 'Year-Change-5'], alpha=0.5, density=True, ax=ax1)
-    spy_df.plot.hist(bins=20, y=['Year-Change-1', 'Year-Change-2', 'Year-Change-5'], alpha=0.5, density=True)
+                # Dollar Cost Averaging (Strategic)
+                interval_df = weekly_strategic_df.iloc[(weekly_strategic_df.index >= week) & (weekly_strategic_df.index < end_time), (weekly_strategic_df.columns>=week) & (weekly_strategic_df.columns <= end_time)]
+                interval_sum = interval_df.iloc[:, -1].sum()
+                interval_invested = 100*len(interval_df.index)
+                interval_roi = interval_sum/interval_invested
 
-    # Stocks purchased in 1990, held for 1-day to 10-years.
-    # Save histograms, mean, max, min, std
-    plt.savefig('mygraph.png')
+                roi_dict = {
+                    'interval': interval,
+                    'roi': interval_roi,
+                    'start_time': week,
+                    'end_time': end_time,
+                    'invested_value': interval_invested,
+                    'interval_sum': interval_sum,
+                    'strategy': 'Strategic'
+                }
+                spy_statistics.append(roi_dict)
+
+                # Only buy if the value the current monday is higher than last monday
+
+    spy_df = pd.DataFrame.from_records(spy_statistics)
+    print(spy_df.iloc[spy_df['roi'].idxmax()])
+    fig = px.box(spy_df, x='interval', y='roi', color='strategy')
+    fig.show()
 
 
 if __name__ == "__main__":
-    get_historic_data()
+    # get_spy_lump_roi()
+    get_spy_roi()

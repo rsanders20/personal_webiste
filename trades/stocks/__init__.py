@@ -29,6 +29,14 @@ def get_portfolios():
 def register_stock_dashapp(server):
     # TODO: Implement the option to create an automatic portfolio
     # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
+    # TODO:  Add delete portfolio button
+    # TODO:  Add way to delete securities, and to see cash values.
+    # TODO:  It doesn't to todya if you are in all cash...
+    # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
+    # TODO:  Change the sell or delete message
+    # TODO:  Purchase is mispelled in the about page
+    # TODO:  Add a footer, with copyright protection.
+    # TODO:  Consider putting ROI on the y-axis.
     # Start with getting SPY information
     # Add in a way to specify following a portfolio or DCA or lump-sum
     # Add in rules to Buy
@@ -171,6 +179,7 @@ def register_stock_dashapp(server):
             else:
                 sell_dates.append(now_time)
 
+        print(ticker_list, value_list, start_dates, sell_dates, all_cash)
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
         return i_graph, t_graph, r_graph
 
