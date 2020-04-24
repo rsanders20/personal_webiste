@@ -10,7 +10,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 from trades import db
-from trades.manual import dash_layouts, stock_calculations
+from trades.manual import manual_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
 from trades import protect_dash_route
@@ -52,7 +52,7 @@ def register_manual(server):
 
     protect_dash_route(app)
 
-    page_nav = dash_layouts.make_navbar_view()
+    page_nav = manual_layouts.make_navbar_view()
 
     app.layout = html.Div([
         dcc.Location(id='url', refresh=False, pathname='/purchase/'),
@@ -66,7 +66,7 @@ def register_manual(server):
         portfolio_list = get_portfolios()
 
         if pathname == "/purchase/":
-            return dash_layouts.make_manual_dashboard(portfolio_list)
+            return manual_layouts.make_manual_dashboard(portfolio_list)
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand')],
@@ -94,38 +94,22 @@ def register_manual(server):
         return security_options
 
     @app.callback(Output('portfolio_graph', 'figure'),
-                  [Input('portfolio_entries', 'data'),
-                   Input('portfolio_entries', 'selected_rows')],
-                  [State('portfolio_input', 'value')])
-    def update_individual_graph( data, selected_rows, portfolio_name):
-        if not portfolio_name:
-            return px.line()
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+                  [Input('manage_security_input', 'value'),
+                   Input('purchase_date_input', 'date')]
+                  )
+    def update_individual_graph(company_name, purchase_date):
+        now_time = datetime.now()
+        if not purchase_date:
+            start_dates = []
+        else:
+            print(purchase_date)
+            start_dates = [purchase_date]
+            # start_dates = []
+        print(start_dates)
+        ticker_list = [company_name]
+        sell_dates = [datetime.strftime(now_time, '%Y-%m-%d')]
 
-        all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
-        if all_cash is None:
-            return px.line()
-
-        if not selected_rows:
-            return px.line()
-        now_time = datetime.strftime(datetime.now(), '%Y-%m-%d')
-        print(selected_rows)
-        ticker_list = []
-        start_dates = []
-        value_list = []
-        sell_dates = []
-        for row in selected_rows:
-            ticker_list.append(data[row]['security'])
-            start_dates.append(data[row]['purchase_date'])
-            value_list.append(data[row]['value'])
-            if data[row]['sell_date']:
-                sell_dates.append(data[row]['sell_date'])
-            else:
-                sell_dates.append(now_time)
-
-        security_graph = stock_calculations.plot_individual_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
+        security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
         return security_graph
 
     @app.callback(
@@ -133,9 +117,10 @@ def register_manual(server):
          Output('total_graph', 'figure'),
          Output('roi_graph', 'figure')],
         [Input('portfolio_input', 'value'),
-         Input('sell_alert', 'children')]
+         Input('sell_alert', 'children'),
+         Input('purchase_alert', 'children')]
     )
-    def update_total_graph(portfolio_name, sell_alert):
+    def update_total_graph(portfolio_name, sell_alert, purchase_alert):
         if not portfolio_name:
             return px.line(), px.line(), px.line()
         user_name = session.get('user_name', None)
@@ -163,8 +148,9 @@ def register_manual(server):
 
     @app.callback(Output('portfolio_entries', 'data'),
                   [Input('portfolio_input', 'value'),
-                   Input('sell_alert', 'children')])
-    def update_list(portfolio_name, _):
+                   Input('sell_alert', 'children'),
+                   Input('purchase_alert', 'children')])
+    def update_sell_list(portfolio_name, n_sell, n_purchase):
         print(portfolio_name)
         if not portfolio_name:
             return []
@@ -188,8 +174,9 @@ def register_manual(server):
 
         return data
 
-    @app.callback([Output('manage_alert', 'children'),
-                   Output('manage_alert', 'color')],
+    @app.callback([Output('purchase_alert', 'children'),
+                   Output('purchase_alert', 'color'),
+                   Output('purchase_alert', 'is_open')],
                   [Input('submit_input', 'n_clicks')],
                   [State('portfolio_input', 'value'),
                    State('manage_security_input', 'value'),
@@ -198,7 +185,7 @@ def register_manual(server):
                    State('source_input', 'value')])
     def add_to_portfolio(_, portfolio, security, value, purchase_date, source):
         if not portfolio or not security or not value or not purchase_date:
-            return "All fields must be filled in", "danger"
+            return "All fields must be filled in", "danger", True
         purchase_datetime = datetime.strptime(purchase_date, '%Y-%m-%d')
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
@@ -222,11 +209,11 @@ def register_manual(server):
             db.session.add(cash_dd)
             db.session.add(cash_invested)
             db.session.commit()
-            return "Portfolio Updated", "success"
+            return "Portfolio Updated", "success", True
         else:
             all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
             if not all_cash:
-                return "No cash is currently in the portfolio.  Sell manual or add more", "danger"
+                return "No cash is currently in the portfolio.  Sell manual or add more", "danger", True
 
             added_cash = Dollar.query.filter(
                 Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.added == True).all()
@@ -241,7 +228,7 @@ def register_manual(server):
 
             available_cash = ac_sum-ic_sum+di_sum
             if available_cash < value:
-                return "Only ${:.2f} cash.  Please add more funds.".format(available_cash), "danger"
+                return "Only ${:.2f} cash.  Please add more funds.".format(available_cash), "danger", True
 
             cash_invested = Dollar(portfolio_id=portfolio.id,
                                    value=value,
@@ -249,16 +236,17 @@ def register_manual(server):
                                    invested=True)
             db.session.add(cash_invested)
             db.session.commit()
-            return "Portfolio Updated", "success"
+            return "Portfolio Updated", "success", True
 
     @app.callback([Output('sell_alert', 'children'),
-                   Output('sell_alert', 'color')],
+                   Output('sell_alert', 'color'),
+                   Output('sell_alert','is_open')],
                   [Input('sell_input', 'n_clicks')],
                   [State('sell_date', 'date'),
                    State('portfolio_entries', 'data'),
                    State('portfolio_entries', 'selected_rows'),
                    State('portfolio_input', 'value')])
-    def update_sell_list(n_input, sell_date, data, selected_rows, portfolio_name):
+    def sell_from_portfolio(n_input, sell_date, data, selected_rows, portfolio_name):
 
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
@@ -266,23 +254,23 @@ def register_manual(server):
         sell_datetime = datetime.strptime(sell_date, '%Y-%m-%d')
 
         if sell_date is None:
-            return "Select a date of sale", "danger"
+            return "Select a date of sale", "danger", True
 
         if datetime.strptime(sell_date, '%Y-%m-%d') > datetime.now():
-            return "Sell date cannot be in the future", "danger"
+            return "Sell date cannot be in the future", "danger", True
 
         if selected_rows is None:
-            return "Select a row to sell", "danger"
+            return "Select a row to sell", "danger", True
 
         sell_row = data[selected_rows[0]]
 
         if sell_row['purchase_date'] >= sell_date:
-            return "The sell date must be after the purchase date", "danger"
+            return "The sell date must be after the purchase date", "danger", True
 
         trade = Trade.query.filter_by(id=sell_row['id']).one_or_none()
 
         if trade.sell_date is not None:
-            return "The Stock has already been sold", "danger"
+            return "The Stock has already been sold", "danger", True
 
         trade.sell_date = datetime.strptime(sell_date, '%Y-%m-%d')
 
@@ -298,4 +286,4 @@ def register_manual(server):
         db.session.add(de_invested)
         db.session.commit()
 
-        return "Stock Sold", "success"
+        return "Stock Sold", "success", True

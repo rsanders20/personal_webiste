@@ -174,7 +174,9 @@ def plot_stocks(ticker_symbol, value_list, start_time_list, end_time_list, all_c
         return px.line(), px.line(), px.line()
 
 
-def plot_individual_stocks(ticker_symbol, value_list, start_time_list, end_time_list, all_cash):
+def plot_individual_stocks(ticker_symbol, start_time_list, end_time_list):
+    if not start_time_list:
+        return px.line()
     start_time = min([datetime.strptime(sti, '%Y-%m-%d') for sti in start_time_list])
     end_time = max([datetime.strptime(sti, '%Y-%m-%d') for sti in end_time_list])
     df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)

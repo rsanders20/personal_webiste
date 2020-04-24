@@ -9,7 +9,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
 
 
-from trades.manual import dash_layouts
+from trades.manual import manual_layouts
 
 
 def get_dashboard_layout(content_div):
