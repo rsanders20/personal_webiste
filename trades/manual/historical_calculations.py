@@ -1,11 +1,11 @@
 import datetime
 import os
 
-from trades.stocks import stock_calculations
+from trades.manual import stock_calculations
 import matplotlib.pyplot as plt
 import pandas as pd
 from trades.models import Portfolio, Dollar
-from trades.stocks.stock_calculations import flatten_df, make_np_date
+from trades.manual.stock_calculations import flatten_df, make_np_date
 import plotly.express as px
 import pathlib
 import numpy as np

@@ -34,14 +34,11 @@ def create_app():
     from . import home
     home.register_home_dashapp(server)
 
-    from . import photography
-    photography.register_photography_dashapp(server)
+    from . import automatic
+    automatic.register_automatic(server)
 
-    from . import travel
-    travel.register_travel_dashapp(server)
-
-    from . import stocks
-    stocks.register_stock_dashapp(server)
+    from . import manual
+    manual.register_manual(server)
 
     return server
 

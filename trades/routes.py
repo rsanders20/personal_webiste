@@ -82,27 +82,19 @@ def login_required(route_function):
     return decorated_function
 
 
-@bp.route('/stocks/', methods=('GET', 'POST'))
+@bp.route('/manual/', methods=('GET', 'POST'))
 @login_required
-def stocks():
-    url = '/dash/stocks'
-    print("This is stocks:  "+session.get('user_name', None))
+def manual():
+    url = '/dash/manual'
+    print("This is manual:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 
-@bp.route('/travel/', methods=('GET', 'POST'))
+@bp.route('/automatic/', methods=('GET', 'POST'))
 @login_required
-def travel():
-    url = '/dash/travel'
+def automatic():
+    url = '/dash/automatic'
     print("This is travel:  "+session.get('user_name', None))
-    return render_template('dash_iframe.html', url=url)
-
-
-@bp.route('/photography/', methods=('GET', 'POST'))
-@login_required
-def photography():
-    url = '/dash/photography'
-    print("This is photography:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 

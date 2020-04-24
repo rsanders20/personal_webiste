@@ -10,7 +10,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 from trades import db
-from trades.stocks import dash_layouts, stock_calculations
+from trades.manual import dash_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
 from trades import protect_dash_route
@@ -26,7 +26,7 @@ def get_portfolios():
     return portfolio_list
 
 
-def register_stock_dashapp(server):
+def register_manual(server):
     # TODO: Implement the option to create an automatic portfolio
     # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
     # TODO:  Add delete portfolio button
@@ -42,11 +42,11 @@ def register_stock_dashapp(server):
     # Add in rules to Buy
     # Add in rules to sell
 
-    external_stylesheets = [dbc.themes.LUX]
+    external_stylesheets = [dbc.themes.FLATLY]
 
     app = dash.Dash(__name__,
                     server=server,
-                    url_base_pathname='/dash/stocks/',
+                    url_base_pathname='/dash/manual/',
                     external_stylesheets=external_stylesheets,
                     suppress_callback_exceptions=True)
 
@@ -55,7 +55,7 @@ def register_stock_dashapp(server):
     page_nav = dash_layouts.make_navbar_view()
 
     app.layout = html.Div([
-        dcc.Location(id='url', refresh=False, pathname='/create/'),
+        dcc.Location(id='url', refresh=False, pathname='/purchase/'),
         page_nav,
         html.Div(id='page_content'),
     ])
@@ -65,30 +65,8 @@ def register_stock_dashapp(server):
     def display_page(pathname):
         portfolio_list = get_portfolios()
 
-        print(pathname)
-
-        if pathname == '/about/':
-            return dash_layouts.make_about_layout("About", portfolio_list)
-        elif pathname == '/create/':
-            return dash_layouts.make_create_layout("New Portfolio", portfolio_list)
-        elif pathname == "/purchase/":
-            return dash_layouts.make_purchase_layout("Purchase Securities", portfolio_list)
-        elif pathname == "/sell/":
-            return dash_layouts.make_sell_layout("Sell Securities", portfolio_list)
-        elif pathname == '/visualize_individual/':
-            return dash_layouts.make_individual_graph_layout('Visualize Individual', portfolio_list)
-        elif pathname == '/visualize_total/':
-            return dash_layouts.make_total_graph_layout('Visualize Total', portfolio_list)
-
-    @app.callback(
-        Output('collapse', 'is_open'),
-        [Input('collapse_button', 'n_clicks')],
-        [State('collapse', 'is_open')]
-    )
-    def open_visualize_tab(n_clicks, is_open):
-        if is_open:
-            return False
-        return True
+        if pathname == "/purchase/":
+            return dash_layouts.make_manual_dashboard(portfolio_list)
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand')],
@@ -96,7 +74,7 @@ def register_stock_dashapp(server):
     def display_nav(pathname):
         portfolio_list = get_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
-        brand_name = "Stock Analytics"
+        brand_name = "Manual Portfolio"
         return options, brand_name
 
     @app.callback(Output('security_input', 'options'),
@@ -248,7 +226,7 @@ def register_stock_dashapp(server):
         else:
             all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
             if not all_cash:
-                return "No cash is currently in the portfolio.  Sell stocks or add more", "danger"
+                return "No cash is currently in the portfolio.  Sell manual or add more", "danger"
 
             added_cash = Dollar.query.filter(
                 Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.added == True).all()
@@ -272,29 +250,6 @@ def register_stock_dashapp(server):
             db.session.add(cash_invested)
             db.session.commit()
             return "Portfolio Updated", "success"
-
-    @app.callback([Output('create_alert', 'children'),
-                   Output('create_alert', 'color')],
-                  [Input('create_input', 'n_clicks')],
-                  [State('name_input', 'value'),
-                   State('strategy_input', 'value')])
-    def create_portfolio(_, name, strategy):
-        if not name or not strategy:
-            return "All fields must be filled in", "danger"
-
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        is_portfolio = Portfolio.query.filter_by(user_id= user.id, name=name).one_or_none()
-        if is_portfolio:
-            return "Please select a new Portfolio Name", "danger"
-
-        portfolio = Portfolio(
-            user_id=user.id,
-            name=name,
-            strategy = strategy)
-        db.session.add(portfolio)
-        db.session.commit()
-        return "Portfolio Updated", "success"
 
     @app.callback([Output('sell_alert', 'children'),
                    Output('sell_alert', 'color')],
