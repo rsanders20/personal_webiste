@@ -124,7 +124,7 @@ def make_rules_form():
 
     buy_or_sell = dbc.FormGroup([
         dbc.Label("Buy/Sell"),
-        dbc.RadioItems(id="buy_or_sell_input",
+        dbc.RadioItems(id="buy_or_sell",
                        options=[{'label': "Buy", 'value': 'buy'},
                                 {'label': 'Sell', 'value': 'sell'}],
                        value='sell'),
@@ -156,7 +156,7 @@ def make_rules_form():
         dcc.Dropdown(
             id='negative_rule',
             options=[{'label': i, 'value': i} for i in [1, 2, 3, 4]],
-            value=1,
+            value=3,
         ),
     ])
 

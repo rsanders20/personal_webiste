@@ -61,7 +61,7 @@ def roi_indicator(spy_full_df, week, n_days):
     return indicator
 
 
-def make_strategic_portfolio(all_weeks, spy_full_df):
+def make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, positive_rule, and_or, negative_rule):
     weekly_value = []
     weekly_choice = []
 
@@ -81,14 +81,42 @@ def make_strategic_portfolio(all_weeks, spy_full_df):
             new_week = [0 for i in range(week_length)]
             new_week_choice = ['nothing' for i in range(week_length)]
 
+            # roi_pos_4 = roi_indicator(spy_full_df, week, 28)
+            # roi_pos_3 = roi_indicator(spy_full_df, week, 21)
+            # roi_pos_2 = roi_indicator(spy_full_df, week, 14)
+            # roi_pos_1 = roi_indicator(spy_full_df, week, 7)
+            # roi_pos_list = [roi_pos_1, roi_pos_2, roi_pos_3, roi_pos_4]
+
+            roi_pos = roi_indicator(spy_full_df, week, 7*positive_rule)
+            roi_neg = roi_indicator(spy_full_df, week, 7*negative_rule)
+
             # If the current week was positive, do nothing with the new week
             # update the existing weeks, and sell
-            roi_pos_4 = roi_indicator(spy_full_df, week, 28)
-            roi_pos_3 = roi_indicator(spy_full_df, week, 21)
-            roi_pos_2 = roi_indicator(spy_full_df, week, 14)
-            roi_pos_1 = roi_indicator(spy_full_df, week, 7)
+            #if roi_pos_1 and not roi_pos_3:
+            if buy_or_sell == "sell":
+                if and_or == "and":
+                    if roi_pos and not roi_neg:
+                        action = "sell"
+                    else:
+                        action = "buy"
+                else:
+                    if roi_pos or not roi_neg:
+                        action = "sell"
+                    else:
+                        action = "buy"
+            else:
+                if and_or == "and":
+                    if roi_pos and not roi_neg:
+                        action = "buy"
+                    else:
+                        action = "sell"
+                else:
+                    if roi_pos or not roi_neg:
+                        action = "buy"
+                    else:
+                        action = "sell"
 
-            if roi_pos_1 and not roi_pos_3:
+            if action=="sell":
                 new_week.append(100)
                 new_week_choice.append('nothing')
 
@@ -133,7 +161,7 @@ def make_strategic_portfolio(all_weeks, spy_full_df):
     return weekly_df
 
 
-def get_spy_roi():
+def get_spy_roi(buy_or_sell, positive_rule, and_or, negative_rule):
     # TODO:  Save SPY data to avoid network calls
     # TODO: add in data from 1990 to allow for longer term strategies
     # TODO:  add in a buffer year for easier looking backward calcs.
@@ -146,11 +174,11 @@ def get_spy_roi():
     print(n_weeks)
     all_weeks = [base_time+datetime.timedelta(days=7*i_days) for i_days in range(int(n_weeks))]
 
-    weekly_strategic_df = make_strategic_portfolio(all_weeks, spy_full_df)
+    weekly_strategic_df = make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, positive_rule, and_or, negative_rule)
     weekly_df = make_simple_portfolio(all_weeks, spy_full_df)
 
     spy_statistics = []
-    for interval in [364*(i+1) for i in range(10)]:
+    for interval in [364*i for i in [1, 5, 10]]:
         print(interval)
         for i, week in enumerate(all_weeks):
             if week + datetime.timedelta(interval) < now_time:
@@ -173,22 +201,6 @@ def get_spy_roi():
                 }
                 spy_statistics.append(roi_dict)
 
-                # Lump Sum Investing
-                # lump_sum_invested = 100
-                # lump_sum_value = interval_df.iloc[0, -1]
-                # lump_sum_roi = lump_sum_value/lump_sum_invested
-                #
-                # roi_dict = {
-                #     'interval': interval,
-                #     'roi': lump_sum_roi,
-                #     'start_time': week,
-                #     'end_time': end_time,
-                #     'invested_value': lump_sum_invested,
-                #     'interval_sum': lump_sum_value,
-                #     'strategy': 'Lump Sum'
-                # }
-                # spy_statistics.append(roi_dict)
-
                 # Dollar Cost Averaging (Strategic)
                 interval_df = weekly_strategic_df.iloc[(weekly_strategic_df.index >= week) & (weekly_strategic_df.index < end_time), (weekly_strategic_df.columns>=week) & (weekly_strategic_df.columns <= end_time)]
                 interval_sum = interval_df.iloc[:, -1].sum()
@@ -206,14 +218,10 @@ def get_spy_roi():
                 }
                 spy_statistics.append(roi_dict)
 
-                # Only buy if the value the current monday is higher than last monday
-
     spy_df = pd.DataFrame.from_records(spy_statistics)
     print(spy_df.iloc[spy_df['roi'].idxmax()])
     fig = px.box(spy_df, x='interval', y='roi', color='strategy')
-    fig.show()
+    fig.update_layout(title='ROI from 1-1-2000 to 4-13-2020')
 
+    return fig
 
-if __name__ == "__main__":
-    # get_spy_lump_roi()
-    get_spy_roi()

@@ -10,7 +10,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 from trades import db
-from trades.automatic import automatic_layouts
+from trades.automatic import automatic_layouts, historical_calculations
 from trades.manual import manual_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
@@ -61,3 +61,15 @@ def register_automatic(server):
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Automatic Portfolio"
         return options, brand_name
+
+    @app.callback(Output('historic_roi', 'figure'),
+                  [Input('historic_input', 'n_clicks')],
+                  [State('buy_or_sell', 'value'),
+                   State('positive_rule', 'value'),
+                   State('and_or', 'value'),
+                   State('negative_rule', 'value')]
+    )
+    def display_nav(_, buy_or_sell, positive_rule, and_or, negative_rule):
+        print("here")
+        historic_figure = historical_calculations.get_spy_roi(buy_or_sell,positive_rule, and_or, negative_rule)
+        return historic_figure
