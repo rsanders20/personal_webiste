@@ -158,23 +158,28 @@ def make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, positive_rule,
     weekly_df.index = all_weeks
     weekly_df.columns = all_weeks
 
-    return weekly_df
+    weekly_choice_array = np.array(weekly_choice)
+    weekly_choice_df = pd.DataFrame.from_records(weekly_choice_array)
+    weekly_choice_df.index = all_weeks
+    weekly_choice_df.columns = all_weeks
+
+    return weekly_df, weekly_choice_df
 
 
-def get_spy_roi(buy_or_sell, positive_rule, and_or, negative_rule):
+def get_spy_roi(base_time, now_time, buy_or_sell, positive_rule, and_or, negative_rule):
     # TODO:  Save SPY data to avoid network calls
     # TODO: add in data from 1990 to allow for longer term strategies
     # TODO:  add in a buffer year for easier looking backward calcs.
 
-    base_time = datetime.datetime.strptime("2000-01-03", "%Y-%m-%d")
-    now_time = datetime.datetime.strptime("2020-04-13", "%Y-%m-%d")
+    # base_time = datetime.datetime.strptime("2000-01-03", "%Y-%m-%d")
+    # now_time = datetime.datetime.strptime("2020-04-13", "%Y-%m-%d")
     spy_full_df = stock_calculations.get_yahoo_stock_data(['SPY'], base_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
     n_days = (now_time-base_time).days
     n_weeks = np.round(n_days/7)+1
     print(n_weeks)
     all_weeks = [base_time+datetime.timedelta(days=7*i_days) for i_days in range(int(n_weeks))]
 
-    weekly_strategic_df = make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, positive_rule, and_or, negative_rule)
+    weekly_strategic_df, weekly_choice_df = make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, positive_rule, and_or, negative_rule)
     weekly_df = make_simple_portfolio(all_weeks, spy_full_df)
 
     spy_statistics = []
@@ -219,9 +224,11 @@ def get_spy_roi(buy_or_sell, positive_rule, and_or, negative_rule):
                 spy_statistics.append(roi_dict)
 
     spy_df = pd.DataFrame.from_records(spy_statistics)
-    print(spy_df.iloc[spy_df['roi'].idxmax()])
+    if spy_df.empty:
+        return weekly_strategic_df, weekly_choice_df, px.line()
+
     fig = px.box(spy_df, x='interval', y='roi', color='strategy')
     fig.update_layout(title='ROI from 1-1-2000 to 4-13-2020')
 
-    return fig
+    return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, fig
 

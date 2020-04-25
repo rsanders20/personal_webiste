@@ -16,23 +16,29 @@ def make_automatic_dashboard(portfolio_list):
     weekly_progress = make_weekly_progress()
     historic_roi = make_historic_roi_graph()
     weekly_roi = make_weekly_graph()
+    spy_graph = make_spy_graph()
 
     dashboard_div = html.Div([
         dbc.Row([
             dbc.Col([
                 weekly_roi
-            ]),
+            ],
+            width=6),
             dbc.Col([
-                weekly_progress
-            ])
+                weekly_progress,
+                rules_div,
+            ],
+            width=6)
         ]),
         dbc.Row([
             dbc.Col([
-                historic_roi
-            ]),
+                spy_graph
+            ],
+            width=6),
             dbc.Col([
-                rules_div
-            ])
+                historic_roi
+            ],
+            width=6)
         ]),
     ])
 
@@ -41,11 +47,22 @@ def make_automatic_dashboard(portfolio_list):
 
 
 def make_historic_roi_graph():
-    historic_roi = html.Div([
-        dcc.Graph(id='historic_roi')
-        ])
+
+    historic_roi = dcc.Loading(
+        type='circle',
+        fullscreen=True,
+        children = [html.Div([dcc.Graph(id='historic_roi')])]
+    )
 
     return historic_roi
+
+
+def make_spy_graph():
+    spy_graph = html.Div([
+        dcc.Graph(id = 'spy_graph')
+    ])
+
+    return spy_graph
 
 
 def make_weekly_graph():
@@ -70,24 +87,24 @@ def make_weekly_progress():
 
     buy_and_sell = dbc.FormGroup([
         dbc.Button(id='advance_input',
-                   children="Buy and Sell",
+                   children="Advance 1 Yr. ->",
                    block=True),
     ])
 
     date_range = dbc.FormGroup([
         dcc.DatePickerRange(id='date_range',
-                            start_date = datetime.datetime.now()-datetime.timedelta(days=61),
-                            end_date = datetime.datetime.now()-datetime.timedelta(days=1)),
+                            start_date = datetime.datetime.strptime('2000-01-01', '%Y-%m-%d'),
+                            end_date = datetime.datetime.strptime('2001-01-01', '%Y-%m-%d')),
     ])
 
     data_div = html.Div([
-        dbc.Row([
-            dbc.Col([
-                table_input,
-            ],
-            style={'margin-left': '15px', 'margin-right': '15px'}
-            )
-        ]),
+        # dbc.Row([
+        #     dbc.Col([
+        #         table_input,
+        #     ],
+        #     style={'margin-left': '15px', 'margin-right': '15px'}
+        #     )
+        # ]),
         dbc.Row([
             dbc.Col([
                 date_range,
