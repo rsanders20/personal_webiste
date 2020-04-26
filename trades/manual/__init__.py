@@ -31,16 +31,10 @@ def register_manual(server):
     # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
     # TODO:  Add delete portfolio button
     # TODO:  Add way to delete securities, and to see cash values.
-    # TODO:  It doesn't to todya if you are in all cash...
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
     # TODO:  Change the sell or delete message
-    # TODO:  Purchase is mispelled in the about page
     # TODO:  Add a footer, with copyright protection.
-    # TODO:  Consider putting ROI on the y-axis.
     # Start with getting SPY information
-    # Add in a way to specify following a portfolio or DCA or lump-sum
-    # Add in rules to Buy
-    # Add in rules to sell
 
     external_stylesheets = [dbc.themes.FLATLY]
 
@@ -58,7 +52,8 @@ def register_manual(server):
         dcc.Location(id='url', refresh=False, pathname='/purchase/'),
         page_nav,
         html.Div(id='page_content'),
-    ])
+    ],
+    style={'width': '97%'})
 
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])

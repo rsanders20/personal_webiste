@@ -9,10 +9,9 @@ from trades.manual import stock_calculations
 
 
 def make_manual_dashboard(portfolio_list):
-    purchase_div = make_purchase_layout("Purchase", portfolio_list)
-    sell_div = make_sell_layout("Sell", portfolio_list)
     individual_graph, total_graph, roi_graph = make_total_graph_layout("Total", portfolio_list)
     single_graph = make_individual_graph_layout("Individual", portfolio_list)
+    controls = make_manual_controls()
 
     dashboard_div = html.Div([
         dbc.Row([
@@ -20,8 +19,7 @@ def make_manual_dashboard(portfolio_list):
                 individual_graph
             ]),
             dbc.Col([
-                sell_div,
-                purchase_div,
+                controls
             ])
         ]),
         dbc.Row([
@@ -90,7 +88,7 @@ def make_total_graph_layout(brand_name, portfolio_list):
     return individual_graph, total_graph, roi_graph
 
 
-def make_purchase_layout(brand_name, portfolio_list):
+def make_purchase_layout():
 
     purchase_alert = dbc.FormGroup([
         dbc.Alert(id = 'purchase_alert',
@@ -174,7 +172,49 @@ def make_purchase_layout(brand_name, portfolio_list):
     return form_div
 
 
-def make_sell_layout(brand_name, portfolio_list):
+def make_manual_controls():
+    purchase_div = make_purchase_layout()
+    sell_div = make_sell_layout()
+    sell_input, sell_date = make_sell_controls()
+
+    controls = dbc.Form([
+        dbc.FormGroup([
+            dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
+            sell_div
+        ],
+        style={'margin-top': '15px'},
+        ),
+        dbc.FormGroup([
+            dbc.Label("Choose the date to sell the selected Stocks", color="success"),
+            dbc.Row([
+                dbc.Col([sell_date]),
+                dbc.Col([sell_input])
+            ])
+        ]),
+        dbc.FormGroup([
+            dbc.Label("Purchase New Stocks from the S&P500", color="success"),
+            purchase_div
+        ])
+    ])
+
+    return controls
+
+
+
+
+def make_sell_controls():
+    sell_input = dbc.FormGroup([
+        dbc.Button(id='sell_input', children="Sell", block=True),
+    ])
+
+    sell_date = dbc.FormGroup([
+        dcc.DatePickerSingle(id='sell_date'),
+    ])
+
+    return sell_input, sell_date
+
+
+def make_sell_layout():
 
     sell_alert = dbc.Alert(id='sell_alert',
                            children="Sell or Delete Stocks from the Selected Portfolio",
@@ -195,29 +235,12 @@ def make_sell_layout(brand_name, portfolio_list):
         dbc.FormText("Select the Secruity to Sell, or Delete"),
     ])
 
-    sell_input = dbc.FormGroup([
-        dbc.Button(id='sell_input', children="Sell", block=True),
-    ])
-
-    sell_date = dbc.FormGroup([
-        dcc.DatePickerSingle(id='sell_date'),
-        dbc.FormText("Select the date of the sale")
-    ])
-
     data_div = html.Div([
         dbc.Row([
             dbc.Col([
                 table_input,
             ],
             style={'margin-left': '15px', 'margin-right': '15px'}),
-            dbc.Col([
-                sell_date
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                sell_input,
-            ])
         ]),
         dbc.Row([
             dbc.Col([
