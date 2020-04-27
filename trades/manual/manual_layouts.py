@@ -178,22 +178,34 @@ def make_manual_controls():
     sell_input, sell_date = make_sell_controls()
 
     controls = dbc.Form([
-        dbc.FormGroup([
-            dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
-            sell_div
-        ],
-        style={'margin-top': '15px'},
-        ),
-        dbc.FormGroup([
-            dbc.Label("Choose the date to sell the selected Stocks", color="success"),
-            dbc.Row([
-                dbc.Col([sell_date]),
-                dbc.Col([sell_input])
+        dbc.Row([
+            dbc.Col([
+                dbc.FormGroup([
+                    dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
+                    sell_div
+                ],
+                    style={'margin-top': '15px'},
+                )
+            ]),
+            dbc.Col([
+                dbc.FormGroup([
+                    dbc.Label("Choose the date to sell the selected Stocks", color="success"),
+                    dbc.Row([
+                        dbc.Col([sell_date]),
+                        dbc.Col([sell_input])
+                    ])
+                ],
+                    style={'margin-top': '15px'},
+                ),
             ])
         ]),
-        dbc.FormGroup([
-            dbc.Label("Purchase New Stocks from the S&P500", color="success"),
-            purchase_div
+        dbc.Row([
+            dbc.Col([
+                dbc.FormGroup([
+                    dbc.Label("Purchase New Stocks from the S&P500", color="success"),
+                    purchase_div
+                ])
+            ])
         ])
     ])
 

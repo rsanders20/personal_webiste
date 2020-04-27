@@ -50,7 +50,6 @@ def register_automatic(server):
     style={'width': '97%'})
 
     # TODO:  Add in explanation of theory behind charts
-    # TODO:  Add in loading box around left side graphs
     # TODO:  Add in a database and table to keep track of portfolio rules
     # TODO:  Add in a view with statistics on performance (and score)
     # TODO:  Consider next steps:  higher frequency, machine learning, multiple stocks.
