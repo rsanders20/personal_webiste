@@ -48,6 +48,7 @@ def register_automatic(server):
         html.Div(id='page_content'),
     ],
     style={'width': '97%'})
+
     # TODO:  Add in explanation of theory behind charts
     # TODO:  Add in loading box around left side graphs
     # TODO:  Add in a database and table to keep track of portfolio rules
@@ -78,7 +79,7 @@ def register_automatic(server):
                    State('and_or', 'value'),
                    State('rule_2', 'value')]
     )
-    def historic_roi(_, buy_or_sell, rule_1_index, and_or, rule_2_index):
+    def historic_roi(n_clicks, buy_or_sell, rule_1_index, and_or, rule_2_index):
         base_time = datetime.strptime("2000-01-03", "%Y-%m-%d")
         now_time = datetime.strptime("2020-04-13", "%Y-%m-%d")
         value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
@@ -87,6 +88,9 @@ def register_automatic(server):
                                                               rule_1_index,
                                                               and_or,
                                                               rule_2_index)
+
+        fig.update_layout(xaxis=dict(title='Time Invested (Days)'),
+                          yaxis=dict(title='Return on Investment (ROI)'))
         return fig
 
     @app.callback([Output('weekly_roi_graph', 'figure'),
@@ -130,7 +134,9 @@ def register_automatic(server):
         portfolio_return.add_trace(go.Scatter(
             x=time_values, y=total_return, name='Strategic'
         ))
-        portfolio_return.update_layout(title="Portfolio Return by Week", legend_orientation='h')
+        portfolio_return.update_layout(title="Portfolio Return by Week",
+                                       legend_orientation='h',
+                                       yaxis=dict(title='Change in Portfolio Value ($)'))
 
         portfolio_value = go.Figure()
         portfolio_value.add_trace(go.Scatter(
@@ -142,7 +148,9 @@ def register_automatic(server):
         portfolio_value.add_trace(go.Scatter(
             x=time_values, y=cash_values, name='Cash'
         ))
-        portfolio_value.update_layout(title="Portfolio Value by Week", legend_orientation='h')
+        portfolio_value.update_layout(title="Portfolio Value by Week",
+                                      legend_orientation='h',
+                                      yaxis=dict(title='Portfolio Value ($)'))
 
         buy_correct = []
         buy_wrong = []
@@ -208,8 +216,11 @@ def register_automatic(server):
             x=spy_full_df.index, y=spy_full_df['50'], name='50 Day'
         ))
 
-        spy_value.update_layout(title='SPY Daily Closing Value', showlegend=True, legend_orientation='h')
-        spy_value.update_layout(xaxis=dict(range=[spy_full_df.index[0], spy_full_df.index[-1]]))
+        spy_value.update_layout(title='SPY Daily Closing Value',
+                                showlegend=True,
+                                legend_orientation='h',
+                                xaxis=dict(range=[spy_full_df.index[0], spy_full_df.index[-1]]),
+                                yaxis=dict(title='SPY Closing Value ($)'))
 
         if weekly_roi_radio == 1:
             return portfolio_value, spy_value

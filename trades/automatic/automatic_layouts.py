@@ -49,7 +49,8 @@ def make_historic_roi_graph():
     historic_roi = dcc.Loading(
         type='circle',
         fullscreen=True,
-        children = [html.Div([dcc.Graph(id='historic_roi')])]
+        children = [html.Div([dcc.Graph(id='historic_roi')])
+        ]
     )
 
     return historic_roi

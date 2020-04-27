@@ -27,14 +27,11 @@ def get_portfolios():
 
 
 def register_manual(server):
-    # TODO: Implement the option to create an automatic portfolio
-    # TODO: Fix the height of the navbar and block content to scale with window not be 10-90
     # TODO:  Add delete portfolio button
     # TODO:  Add way to delete securities, and to see cash values.
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
     # TODO:  Change the sell or delete message
     # TODO:  Add a footer, with copyright protection.
-    # Start with getting SPY information
 
     external_stylesheets = [dbc.themes.FLATLY]
 
@@ -105,6 +102,9 @@ def register_manual(server):
         sell_dates = [datetime.strftime(now_time, '%Y-%m-%d')]
 
         security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
+        security_graph.update_layout(xaxis=dict(title='Date'),
+                                     yaxis=dict(title='Closing Value ($)'),
+                                     title='Closing Value of {}'.format(company_name))
         return security_graph
 
     @app.callback(
@@ -139,6 +139,8 @@ def register_manual(server):
 
         print(ticker_list, value_list, start_dates, sell_dates, all_cash)
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
+        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
+        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
         return i_graph, t_graph, r_graph
 
     @app.callback(Output('portfolio_entries', 'data'),
@@ -243,13 +245,13 @@ def register_manual(server):
                    State('portfolio_input', 'value')])
     def sell_from_portfolio(n_input, sell_date, data, selected_rows, portfolio_name):
 
+        if sell_date is None:
+            return "Select a date of sale", "danger", True
+
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
         sell_datetime = datetime.strptime(sell_date, '%Y-%m-%d')
-
-        if sell_date is None:
-            return "Select a date of sale", "danger", True
 
         if datetime.strptime(sell_date, '%Y-%m-%d') > datetime.now():
             return "Sell date cannot be in the future", "danger", True

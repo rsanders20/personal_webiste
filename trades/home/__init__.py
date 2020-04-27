@@ -25,10 +25,11 @@ def get_dashboard_layout(content_div):
 
     return view_portfolio_div
 
+
 def make_about_layout():
     jumbotron = dbc.Jumbotron(
         [
-            html.H1("Welcome to the stock plotting tool", className="display-8"),
+            html.H1("Stock Plotting Tool", className="display-8"),
             html.P(
                 "Asses investment strategies by creating multiple portfolios and comparing their performance",
                 className="lead",
@@ -36,12 +37,9 @@ def make_about_layout():
             html.Hr(className="my-2"),
             html.P("Start by creating a New Portfolio"),
             html.Hr(className="my-2"),
-            html.P("Choose the portfolio type.  Manual to make all buying and selling decisions,"
-                   " or automatic to assign rules for when to buy and sell"),
+            html.P("Select when to Buy and Sell using the Automatic Portfolio tools"),
             html.Hr(className="my-2"),
-            html.P("Manage your portfolio with the \"Purchase\" and \"Sell\" Pages"),
-            html.Hr(className="my-2"),
-            html.P("View portfolio value and ROI with the \"Visualize\" tab"),
+            html.P("Monitor portfolio performance with the Manual Portfolio options"),
             html.Hr(className="my-2"),
         ]
     )
@@ -66,7 +64,7 @@ def make_about_layout():
         dbc.Label("Strategy"),
         dcc.Dropdown(
             id='strategy_input',
-            options=[{'label': i, 'value': i} for i in ['Manual', 'Automatic']],
+            options=[{'label': i, 'value': i} for i in ['Manual']],
         ),
         dbc.FormText("Manual or Automatic"),
 
@@ -80,40 +78,33 @@ def make_about_layout():
         dbc.FormText("Make a New Portfolio")
     ])
 
-    form_div = html.Div([
-        dbc.Form([
-            dbc.Row([
-                dbc.Col([
-                    name_input
-                ]),
-                dbc.Col([
-                    strategy_input
-                ]),
-                dbc.Col([
-                    create_input
-                ])
-            ]),
-            dbc.Row([
-                dbc.Col([
-                    create_alert
-                ])
-            ])
-        ])
-    ],
-        style={'width': '100%', 'margin-top': '5px'}
-    )
-
-    about_layout_content = html.Div([
+    about_layout = html.Div([
         dbc.Row([
-            dbc.Col([jumbotron,
-                    form_div,
+            dbc.Col([
+                jumbotron
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                name_input
+            ]),
+            dbc.Col([
+                strategy_input
+            ]),
+            dbc.Col([
+                create_input
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                create_alert
             ])
         ])
     ])
 
-    about_layout_div = get_dashboard_layout(about_layout_content)
+    # about_layout_div = get_dashboard_layout(about_layout_content)
 
-    return about_layout_div
+    return about_layout
 
 
 def register_home_dashapp(server):
@@ -124,7 +115,9 @@ def register_home_dashapp(server):
                     url_base_pathname='/dash/home/',
                     external_stylesheets=external_stylesheets)
 
-    app.layout = make_about_layout()
+    app.layout = html.Div([
+        make_about_layout()
+        ])
 
     @app.callback([Output('create_alert', 'children'),
                    Output('create_alert', 'color'),
