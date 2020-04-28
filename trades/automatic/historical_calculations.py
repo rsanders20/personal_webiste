@@ -232,31 +232,31 @@ def make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, rule_1_index, 
 
 
 def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_index):
-    # TODO:  Save SPY data to avoid network calls
-
-    # base_time = datetime.datetime.strptime("2000-01-03", "%Y-%m-%d")
-    # now_time = datetime.datetime.strptime("2020-04-13", "%Y-%m-%d")
+    # Create the SPY dataframe
     early_time = base_time-datetime.timedelta(days=365)
     spy_extra_df = stock_calculations.get_yahoo_stock_data(['SPY'], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
     spy_extra_df['25'] = spy_extra_df.Close.rolling(window=25).mean()
     spy_extra_df['50'] = spy_extra_df.Close.rolling(window=50).mean()
     spy_extra_df['100'] = spy_extra_df.Close.rolling(window=100).mean()
     spy_extra_df['200'] = spy_extra_df.Close.rolling(window=200).mean()
-    # print(spy_extra_df.head())
+
+    # Trim the dataframe to remove the extra time
     np_end_date = stock_calculations.make_np_date(now_time)
     np_start_date = stock_calculations.make_np_date(base_time)
     spy_full_df = spy_extra_df.loc[
         (spy_extra_df.index.values <= np_end_date) & (spy_extra_df.index.values >= np_start_date)]
 
-    # spy_full_df = stock_calculations.get_yahoo_stock_data(['SPY'], base_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    # Create a list of each monday between the start and end time
     n_days = (now_time-base_time).days
     n_weeks = np.round(n_days/7)+1
     print(n_weeks)
     all_weeks = [base_time+datetime.timedelta(days=7*i_days) for i_days in range(int(n_weeks))]
 
+    # Make the daily trades for the simple and strategic strategy
     weekly_strategic_df, weekly_choice_df = make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, rule_1_index, and_or, rule_2_index)
     weekly_df = make_simple_portfolio(all_weeks, spy_full_df)
 
+    # Calculate the portfolio performance and create data frames
     spy_statistics = []
     for interval in [364*i for i in [1, 5, 10]]:
         print(interval)

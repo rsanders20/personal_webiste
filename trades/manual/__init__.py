@@ -27,10 +27,8 @@ def get_portfolios():
 
 
 def register_manual(server):
-    # TODO:  Add delete portfolio button
-    # TODO:  Add way to delete securities, and to see cash values.
+    # TODO:  Add delete portfolio button, update the warning message
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
-    # TODO:  Change the sell or delete message
     # TODO:  Add a footer, with copyright protection.
 
     external_stylesheets = [dbc.themes.FLATLY]
