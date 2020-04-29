@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    server_name r-sanders.com;
+
+    location = /favicon.ico {access_log off; log_not_found off;}
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/ryan/spt/spt.sock;
+    }
+}
+
+## Place into /etc/nginx/sites-available

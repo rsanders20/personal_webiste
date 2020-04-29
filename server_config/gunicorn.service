@@ -1,0 +1,15 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+User=ryan
+Group=www-data
+WorkingDirectory=/home/ryan/spt/
+Environment="PATH=/home/ryan/spt/venv/bin"
+ExecStart=/home/ryan/personal_website/spt/venv/bin/gunicorn --workers 3 --bind unix:personal_website.sock -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
+
+##Place into /etc/systemd/system
