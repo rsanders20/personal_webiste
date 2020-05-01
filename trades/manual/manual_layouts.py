@@ -12,26 +12,80 @@ def make_manual_dashboard(portfolio_list):
     individual_graph, total_graph, roi_graph = make_total_graph_layout("Total", portfolio_list)
     single_graph = make_individual_graph_layout("Individual", portfolio_list)
     controls = make_manual_controls()
+    return_toggle = make_return_toggle()
+    purchase = make_purchase_layout()
 
     dashboard_div = html.Div([
         dbc.Row([
             dbc.Col([
-                individual_graph
+                html.Div([
+                    individual_graph
+                ],
+                    style={'background-color': '#f9f9f9',
+                           'border-radius': '5px',
+                           'margin': '10px',
+                           'padding': '15px',
+                           'box-shadow': '2px 2px 2px lightgrey'})
             ]),
             dbc.Col([
-                controls
+                html.Div([
+                    controls
+                ],
+                    style={'background-color': '#f9f9f9',
+                           'border-radius': '5px',
+                           'margin': '10px',
+                           'padding': '15px',
+                           'box-shadow': '2px 2px 2px lightgrey'}
+                )
             ])
         ]),
         dbc.Row([
             dbc.Col([
-                roi_graph
+                html.Div([
+                    return_toggle,
+                    roi_graph,
+                ],
+                    style={'background-color': '#f9f9f9',
+                           'border-radius': '5px',
+                           'margin': '10px',
+                           'padding': '15px',
+                           'box-shadow': '2px 2px 2px lightgrey'}
+                )
             ]),
             dbc.Col([
-                single_graph,
+                html.Div([
+                    purchase,
+                    single_graph,
+                ],
+                    style={'background-color': '#f9f9f9',
+                           'border-radius': '5px',
+                           'margin': '10px',
+                           'padding': '15px',
+                           'box-shadow': '2px 2px 2px lightgrey'}
+                )
             ])
         ]),
     ])
     return dashboard_div
+
+
+def make_return_toggle():
+    return_toggle = html.Div([
+
+        dbc.Row([
+            dbc.Col([
+                dbc.RadioItems(
+                    id='return_radio',
+                    options=[
+                        {'label': 'Portfolio Value', 'value': 1},
+                        {'label': 'Portfolio Return', 'value': 2}
+                    ],
+                    value=1,
+                    inline=True)
+            ])
+        ]),
+        ])
+    return return_toggle
 
 
 def make_individual_graph_layout(brand_name, portfolio_list):
@@ -153,8 +207,6 @@ def make_purchase_layout():
                 dbc.Col([
                     source_input
                 ]),
-            ]),
-            dbc.Row([
                 dbc.Col([
                     submit_input
                 ])
@@ -176,6 +228,7 @@ def make_manual_controls():
     purchase_div = make_purchase_layout()
     sell_div = make_sell_layout()
     sell_input, sell_date = make_sell_controls()
+    return_toggle = make_return_toggle()
 
     controls = dbc.Form([
         dbc.Row([
@@ -197,21 +250,23 @@ def make_manual_controls():
                 ],
                     style={'margin-top': '15px'},
                 ),
+                # dbc.FormGroup([
+                #     dbc.Label("Toggle Between Portfolio Value and Portfolio Returns", color="success"),
+                #     return_toggle
+                # ]),
             ])
         ]),
-        dbc.Row([
-            dbc.Col([
-                dbc.FormGroup([
-                    dbc.Label("Purchase New Stocks from the S&P500", color="success"),
-                    purchase_div
-                ])
-            ])
-        ])
+        # dbc.Row([
+        #     dbc.Col([
+        #         dbc.FormGroup([
+        #             dbc.Label("Purchase New Stocks from the S&P500", color="success"),
+        #             purchase_div
+        #         ])
+        #     ])
+        # ]),
     ])
 
     return controls
-
-
 
 
 def make_sell_controls():

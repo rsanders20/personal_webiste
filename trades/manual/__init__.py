@@ -59,13 +59,14 @@ def register_manual(server):
             return manual_layouts.make_manual_dashboard(portfolio_list)
 
     @app.callback([Output('portfolio_input', 'options'),
-                   Output('stock_navbar', 'brand')],
+                   Output('stock_navbar', 'brand'),
+                   Output('portfolio_input', 'value')],
                   [Input('url', 'pathname')])
     def display_nav(pathname):
         portfolio_list = get_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Manual Portfolio"
-        return options, brand_name
+        return options, brand_name, portfolio_list[-1].name
 
     @app.callback(Output('security_input', 'options'),
                    [Input('portfolio_input', 'value')])
@@ -102,18 +103,18 @@ def register_manual(server):
         security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
         security_graph.update_layout(xaxis=dict(title='Date'),
                                      yaxis=dict(title='Closing Value ($)'),
-                                     title='Closing Value of {}'.format(company_name))
+                                     title='Select a Purchase Date to View Closing Values')
         return security_graph
 
     @app.callback(
         [Output('individual_graph', 'figure'),
-         Output('total_graph', 'figure'),
          Output('roi_graph', 'figure')],
         [Input('portfolio_input', 'value'),
          Input('sell_alert', 'children'),
-         Input('purchase_alert', 'children')]
+         Input('purchase_alert', 'children'),
+         Input('return_radio', 'value')]
     )
-    def update_total_graph(portfolio_name, sell_alert, purchase_alert):
+    def update_total_graph(portfolio_name, sell_alert, purchase_alert, return_radio):
         if not portfolio_name:
             return px.line(), px.line(), px.line()
         user_name = session.get('user_name', None)
@@ -139,7 +140,11 @@ def register_manual(server):
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
         i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
         r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
-        return i_graph, t_graph, r_graph
+
+        if return_radio==1:
+            return i_graph, t_graph,
+        else:
+            return i_graph, r_graph
 
     @app.callback(Output('portfolio_entries', 'data'),
                   [Input('portfolio_input', 'value'),
