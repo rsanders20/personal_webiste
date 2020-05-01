@@ -103,7 +103,8 @@ def register_manual(server):
         security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
         security_graph.update_layout(xaxis=dict(title='Date'),
                                      yaxis=dict(title='Closing Value ($)'),
-                                     title='Select a Purchase Date to View Closing Values')
+                                     margin=dict(t=0, b=0),
+                                     paper_bgcolor='#f9f9f9')
         return security_graph
 
     @app.callback(
@@ -138,9 +139,14 @@ def register_manual(server):
 
         print(ticker_list, value_list, start_dates, sell_dates, all_cash)
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
-        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
-        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
-
+        # i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
+        # r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
+        i_graph.update_layout(margin=dict(t=0, b=0),
+                                     paper_bgcolor='#f9f9f9')
+        r_graph.update_layout(margin=dict(t=0, b=0),
+                                     paper_bgcolor='#f9f9f9')
+        t_graph.update_layout(margin=dict(t=0, b=0),
+                                     paper_bgcolor='#f9f9f9')
         if return_radio==1:
             return i_graph, t_graph,
         else:

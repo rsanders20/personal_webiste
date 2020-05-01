@@ -182,7 +182,8 @@ def plot_individual_stocks(ticker_symbol, start_time_list, end_time_list):
     df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
     if not df.empty:
         graph = px.line(df, x=df.index, y='Close')
-        graph.update_layout(title=ticker_symbol[0])
+        graph.update_layout(title=ticker_symbol[0],
+                            margin={'l': 0, 'r': 0, 't': 0, 'b': 0})
         return graph
     else:
         return px.line()
