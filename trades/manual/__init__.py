@@ -31,7 +31,8 @@ def register_manual(server):
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
     # TODO:  Add a footer, with copyright protection.
 
-    external_stylesheets = [dbc.themes.FLATLY]
+    custom_css = r'/static/css/custom.css'
+    external_stylesheets = [dbc.themes.FLATLY, custom_css]
 
     app = dash.Dash(__name__,
                     server=server,

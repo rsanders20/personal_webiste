@@ -19,49 +19,27 @@ def make_manual_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children='Individual Stocks',
-                            style={'text-align': 'center',
-                                   'margin-bottom': '27.5px'}),
-                    individual_graph
-                ],
-                    style={'background-color': '#f9f9f9',
-                           'border-radius': '5px',
-                           'margin': '10px',
-                           'padding': '15px',
-                           'box-shadow': '2px 2px 2px lightgrey'})
-            ],
-            width=6),
-            dbc.Col([
-                html.Div([
                     html.H4(children="Total Portfolio Value or Return",
                             style={'text-align': 'center'}),
                     return_toggle,
                     roi_graph,
                 ],
-                    style={'background-color': '#f9f9f9',
-                           'border-radius': '5px',
-                           'margin': '10px',
-                           'padding': '15px',
-                           'box-shadow': '2px 2px 2px lightgrey'}
+                    className='pretty_container'
                 )
+            ],
+                width=6),
+            dbc.Col([
+                html.Div([
+                    html.H4(children='Individual Stocks',
+                            style={'text-align': 'center',
+                                   'margin-bottom': '27.5px'}),
+                    individual_graph
+                ],
+                    className='pretty_container')
             ],
             width=6)
         ]),
         dbc.Row([
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Sell Stocks",
-                            style={'text-align': 'center'}),
-                    controls
-                ],
-                    style={'background-color': '#f9f9f9',
-                           'border-radius': '5px',
-                           'margin': '10px',
-                           'padding': '15px',
-                           'box-shadow': '2px 2px 2px lightgrey'}
-                )
-            ],
-            width=6),
             dbc.Col([
                 html.Div([
                     html.H4(children="Purchase Stocks",
@@ -69,11 +47,17 @@ def make_manual_dashboard(portfolio_list):
                     purchase,
                     single_graph,
                 ],
-                    style={'background-color': '#f9f9f9',
-                           'border-radius': '5px',
-                           'margin': '10px',
-                           'padding': '15px',
-                           'box-shadow': '2px 2px 2px lightgrey'}
+                    className='pretty_container'
+                )
+            ],
+                width=6),
+            dbc.Col([
+                html.Div([
+                    html.H4(children="Sell Stocks",
+                            style={'text-align': 'center'}),
+                    controls
+                ],
+                    className='pretty_container'
                 )
             ],
             width=6)

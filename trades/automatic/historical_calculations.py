@@ -258,7 +258,7 @@ def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_i
 
     # Calculate the portfolio performance and create data frames
     spy_statistics = []
-    for interval in [364*i for i in [1, 5, 10]]:
+    for interval in [364*i for i in [5]]:
         print(interval)
         for i, week in enumerate(all_weeks):
             if week + datetime.timedelta(interval) < now_time:
@@ -303,7 +303,7 @@ def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_i
         return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, px.line()
 
     fig = px.box(spy_df, x='interval', y='roi', color='strategy')
-    fig.update_layout(title='ROI from 1-1-2000 to 4-13-2020')
+    # fig.update_layout(title='ROI from 1-1-2000 to 4-13-2020')
 
     return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, fig
 

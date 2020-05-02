@@ -31,7 +31,8 @@ def get_portfolios():
 
 
 def register_automatic(server):
-    external_stylesheets = [dbc.themes.FLATLY]
+    custom_css = r'/static/css/custom.css'
+    external_stylesheets = [dbc.themes.FLATLY, custom_css]
     app = dash.Dash(__name__,
                     server=server,
                     url_base_pathname='/dash/automatic/',
@@ -89,7 +90,10 @@ def register_automatic(server):
                                                               rule_2_index)
 
         fig.update_layout(xaxis=dict(title='Time Invested (Days)'),
-                          yaxis=dict(title='Return on Investment (ROI)'))
+                          yaxis=dict(title='Return on Investment (ROI)'),
+                          margin=dict(t=0, b=0, r=0, l=0),
+                          paper_bgcolor='#f9f9f9'
+                          )
         return fig
 
     @app.callback([Output('weekly_roi_graph', 'figure'),
@@ -133,9 +137,11 @@ def register_automatic(server):
         portfolio_return.add_trace(go.Scatter(
             x=time_values, y=total_return, name='Strategic'
         ))
-        portfolio_return.update_layout(title="Portfolio Return by Week",
-                                       legend_orientation='h',
-                                       yaxis=dict(title='Change in Portfolio Value ($)'))
+        portfolio_return.update_layout(legend_orientation='h',
+                                       yaxis=dict(title='Change in Portfolio Value ($)'),
+                                       margin=dict(t=0, b=0, r=0, l=0),
+                                       paper_bgcolor='#f9f9f9'
+                                       )
 
         portfolio_value = go.Figure()
         portfolio_value.add_trace(go.Scatter(
@@ -147,9 +153,11 @@ def register_automatic(server):
         portfolio_value.add_trace(go.Scatter(
             x=time_values, y=cash_values, name='Cash'
         ))
-        portfolio_value.update_layout(title="Portfolio Value by Week",
-                                      legend_orientation='h',
-                                      yaxis=dict(title='Portfolio Value ($)'))
+        portfolio_value.update_layout(legend_orientation='h',
+                                      yaxis=dict(title='Portfolio Value ($)'),
+                                      margin=dict(t=0, b=0, r=0, l=0),
+                                      paper_bgcolor='#f9f9f9'
+                                      )
 
         buy_correct = []
         buy_wrong = []
@@ -215,11 +223,13 @@ def register_automatic(server):
             x=spy_full_df.index, y=spy_full_df['50'], name='50 Day'
         ))
 
-        spy_value.update_layout(title='SPY Daily Closing Value',
-                                showlegend=True,
+        spy_value.update_layout(showlegend=True,
                                 legend_orientation='h',
                                 xaxis=dict(range=[spy_full_df.index[0], spy_full_df.index[-1]]),
-                                yaxis=dict(title='SPY Closing Value ($)'))
+                                yaxis=dict(title='SPY Closing Value ($)'),
+                                margin=dict(t=0, b=0, r=0, l=0),
+                                paper_bgcolor='#f9f9f9'
+                                )
 
         if weekly_roi_radio == 1:
             return portfolio_value, spy_value
