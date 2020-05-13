@@ -298,12 +298,125 @@ def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_i
                 }
                 spy_statistics.append(roi_dict)
 
+    rules_list = {}
+    buy_threshold = 0.9
+    sell_threshold = 0.1
+    get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
+
     spy_df = pd.DataFrame.from_records(spy_statistics)
     if spy_df.empty:
         return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, px.line()
 
     fig = px.box(spy_df, x='interval', y='roi', color='strategy')
-    # fig.update_layout(title='ROI from 1-1-2000 to 4-13-2020')
+
+    fig.update_layout(margin=dict(t=0, b=0, r=0, l=0),
+                      paper_bgcolor='#f9f9f9')
 
     return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, fig
+
+
+def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
+    early_time = base_time-datetime.timedelta(days=365)
+    ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    ticker_extra_df['50'] = ticker_extra_df.Close.rolling(window=50).mean()
+    ticker_extra_df['200'] = ticker_extra_df.Close.rolling(window=200).mean()
+
+    # Trim the dataframe to remove the extra time
+    np_end_date = stock_calculations.make_np_date(now_time)
+    np_start_date = stock_calculations.make_np_date(base_time)
+    ticker_full_df = ticker_extra_df.loc[
+        (ticker_extra_df.index.values <= np_end_date) & (ticker_extra_df.index.values >= np_start_date)]
+
+    # Create a list of each trading day
+    all_days = ticker_full_df.index.values
+
+    # Make the daily trades for the simple and strategic strategy
+    rules_list = [{'Name': 'Good Last Wk', 'Signal': 'Bullish', 'Duration': 7, 'Type': 'Close', 'Current > Past': True, "Weight": 0.5},
+                  {'Name': 'Bad Last 3 Wks', 'Signal': 'Bullish', 'Duration': 21, 'Type': 'Close', 'Current > Past': False, "Weight": 0.5}]
+    rule_df = make_decisions(ticker_extra_df, all_days, np_start_date, np_end_date, rules_list)
+    strategic_df, simple_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
+
+    # Calculate the portfolio performance and create data frames
+
+    return []
+
+
+def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold):
+    ticker_full_df['sum'] = rule_df['sum']
+    sum_array = ticker_full_df['sum'].values
+    value_array = ticker_full_df['Close'].values
+    starting_value = 1000.00
+    strategic_value_list = []
+    strategic_decision_list = []
+    strategic_state_list = []
+    simple_value_list = []
+    for i, sum, value in enumerate(zip(sum_array, value_array)):
+        action='Hold'
+        if sum > buy_threshold:
+            action = "Buy"
+        elif sum < sell_threshold:
+            action = "Sell"
+
+        if i ==0:
+            strategic_value_list.append(starting_value)
+            strategic_decision_list.append(action)
+            if action == "Buy":
+                strategic_state_list.append("Invested")
+            else:
+                strategic_state_list.append("Cash")
+            simple_value_list.append(starting_value)
+        else:
+            simple_value_list.append(simple_value_list[i-1]*value/value_array[i-1])
+            if strategic_decision_list[i-1] == 'Buy':
+                strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
+            elif strategic_decision_list[i-1] == 'Sell':
+                strategic_value_list.append(strategic_value_list[i-1])
+            else:
+                if strategic_state_list[i-1] == 'Invested':
+                    strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
+                else:
+                    strategic_value_list.append(strategic_value_list[i-1])
+
+
+
+        print(sum, value)
+
+    print(sum_array, type(sum_array))
+
+
+    print("here")
+    return [], []
+
+
+def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_list):
+    rule_results = []
+    for rule in rules_list:
+        weight_list = []
+        for day in all_days:
+            past_day = day-np.timedelta64(rule['Duration'], 'D')
+            current_value = ticker_full_df.iloc[ticker_full_df.index==day][rule['Type']].values
+            past_value = ticker_full_df.iloc[ticker_full_df.index.values==past_day][rule['Type']].values
+
+            sign = -1.0
+            if rule['Signal'] == 'Bullish':
+                sign = 1.0
+
+            weight = 0
+            if current_value > past_value and rule['Current > Past']:
+                weight += rule['Weight']*sign
+
+            if past_value > current_value and not rule['Current > Past']:
+                weight += rule['Weight']*sign
+
+            weight_list.append(weight)
+
+        rule_results.append(weight_list)
+
+    rule_df = pd.DataFrame.from_records(rule_results).T
+    rule_df.index = all_days
+    rule_df.columns = ["{}".format(i['Name']) for i in rules_list]
+    rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
+    print(rule_df)
+
+    return rule_df
 

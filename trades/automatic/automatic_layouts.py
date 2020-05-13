@@ -17,17 +17,12 @@ def make_automatic_dashboard(portfolio_list):
     spy_graph = make_spy_graph()
     dashboard_controls = make_dashboard_controls()
 
+    weekly_progress = make_weekly_progress()
+    weekly_toggle = make_weekly_toggle()
+    historic_button = make_historic_button()
+
     dashboard_div = html.Div([
         dbc.Row([
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Total Portfolio Value or Return",
-                            style={'text-align': 'center'}),
-                    weekly_roi
-                ],
-                className='pretty_container')
-            ],
-            width=6),
             dbc.Col([
                 html.Div([
                     html.H4(children="Buy/Sell Logic",
@@ -41,23 +36,36 @@ def make_automatic_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
+                    html.H4(children="Total Portfolio Value or Return",
+                            style={'text-align': 'center',
+                                   'margin-bottom': '45px'}),
+                    weekly_toggle,
+                    weekly_roi
+                ],
+                    className='pretty_container')
+            ],
+                width=4),
+            dbc.Col([
+                html.Div([
                     html.H4(children='SPY Daily Closing Value',
                             style={'text-align': 'center'}),
+                    weekly_progress,
                     spy_graph
 
                 ],
                 className='pretty_container')
             ],
-            width=6),
+            width=4),
             dbc.Col([
                 html.Div([
                     html.H4(children="Historic Returns",
                             style={'text-align': 'center'}),
+                    historic_button,
                     historic_roi
                 ],
                 className='pretty_container')
             ],
-            width=6)
+            width=4)
         ]),
     ])
 
@@ -87,9 +95,6 @@ def make_spy_graph():
 
 def make_dashboard_controls():
     rules_div = make_rules_form()
-    weekly_progress = make_weekly_progress()
-    weekly_toggle = make_weekly_toggle()
-    historic_button = make_historic_button()
 
     controls = dbc.Form([
 
@@ -98,18 +103,6 @@ def make_dashboard_controls():
             rules_div
         ],
         style={'margin-top': '15px'}),
-        dbc.FormGroup([
-            dbc.Label("Change the Start and End Dates", color='success'),
-            weekly_progress
-        ]),
-        dbc.FormGroup([
-            dbc.Label("Toggle Values and Returns", color='success'),
-            weekly_toggle
-        ]),
-        dbc.FormGroup([
-            dbc.Label("Run a Statistical Comparison over 20 Yrs.", color='success'),
-            historic_button
-        ])
     ])
 
     return controls
@@ -127,7 +120,8 @@ def make_weekly_toggle():
                         {'label': 'Portfolio Return', 'value': 2}
                     ],
                     value=1,
-                    inline=True)
+                    inline=True,
+                    style={'text-align': 'center'})
             ])
         ]),
         ])
@@ -158,7 +152,7 @@ def make_weekly_progress():
 
     buy_and_sell = dbc.FormGroup([
         dbc.Button(id='advance_input',
-                   children="Advance 1 Yr. ->",
+                   children="1 Yr. ->",
                    block=True),
     ])
 
@@ -169,20 +163,15 @@ def make_weekly_progress():
     ])
 
     data_div = html.Div([
-        # dbc.Row([
-        #     dbc.Col([
-        #         table_input,
-        #     ],
-        #     style={'margin-left': '15px', 'margin-right': '15px'}
-        #     )
-        # ]),
         dbc.Row([
             dbc.Col([
                 date_range,
-            ]),
+            ],
+            width=8),
             dbc.Col([
                 buy_and_sell,
-            ]),
+            ],
+            width=4),
         ]),
         dbc.Row([
             dbc.Col([
@@ -294,25 +283,6 @@ def get_rules():
         'Below 200 Day Avg.',
         'Above 50 Day Avg.',
         'Below 50 Day Avg.'
-        
-        # '200 Day Up-Cross Last 1 Wk.',
-        # '200 Day Up-Cross Last 2 Wk.',
-        # '200 Day Up-Cross Last 3 Wk.',
-        # '200 Day Up-Cross Last 4 Wk.',
-        # '200 Day Down-Cross Last 1 Wk.',
-        # '200 Day Down-Cross Last 2 Wk.',
-        # '200 Day Down-Cross Last 3 Wk.',
-        # '200 Day Down-Cross Last 4 Wk.',
-        #
-        # '50 Day Up-Cross Last 1 Wk.',
-        # '50 Day Up-Cross Last 2 Wk.',
-        # '50 Day Up-Cross Last 3 Wk.',
-        # '50 Day Up-Cross Last 4 Wk.',
-        # '50 Day Down-Cross Last 1 Wk.',
-        # '50 Day Down-Cross Last 2 Wk.',
-        # '50 Day Down-Cross Last 3 Wk.',
-        # '50 Day Down-Cross Last 4 Wk.',
-
     ]
 
     return rules_list
