@@ -7,6 +7,7 @@ import pandas as pd
 from trades.models import Portfolio, Dollar
 from trades.manual.stock_calculations import flatten_df, make_np_date
 import plotly.express as px
+import plotly.graph_objs as go
 import pathlib
 import numpy as np
 import scipy
@@ -42,10 +43,6 @@ def make_simple_portfolio(all_weeks, spy_full_df):
 
 def buy_or_sell_indicator(spy_full_df, week):
     roi_positive_list = []
-    down_crossing_200_list = []
-    up_crossing_200_list = []
-    down_crossing_50_list = []
-    up_crossing_50_list = []
     for n_days in [7, 14, 21, 28]:
         start_time = make_np_date(week - datetime.timedelta(days=n_days))
         if start_time < make_np_date(spy_full_df.index[0]):
@@ -64,32 +61,8 @@ def buy_or_sell_indicator(spy_full_df, week):
         else:
             roi_indicator = False
 
-        # if week_data['200'][0] > week_data['Close'][0] and week_data['200'][-1] < week_data['Close'][-1]:
-        #     down_crossing_200 = True
-        # else:
-        #     down_crossing_200 = False
-        #
-        # if week_data['200'][0] < week_data['Close'][0] and week_data['200'][-1] > week_data['Close'][-1]:
-        #     up_crossing_200 = True
-        # else:
-        #     up_crossing_200 = False
-        #
-        # if week_data['50'][0] > week_data['Close'][0] and week_data['50'][-1] < week_data['Close'][-1]:
-        #     down_crossing_50 = True
-        # else:
-        #     down_crossing_50 = False
-        #
-        # if week_data['50'][0] < week_data['Close'][0] and week_data['50'][-1] > week_data['Close'][-1]:
-        #     up_crossing_50 = True
-        # else:
-        #     up_crossing_50 = False
-
 
         roi_positive_list.append(roi_indicator)
-        # down_crossing_200_list.append(down_crossing_200)
-        # up_crossing_200_list.append(up_crossing_200)
-        # down_crossing_50_list.append(down_crossing_50)
-        # up_crossing_50_list.append(up_crossing_50)
 
     roi_negative_list = []
     for roi_indicator in roi_positive_list:
@@ -126,31 +99,7 @@ def make_strategic_portfolio(all_weeks, spy_full_df, buy_or_sell, rule_1_index, 
 
             new_week = [0 for i in range(week_length)]
             new_week_choice = ['nothing' for i in range(week_length)]
-
-            # roi_pos_1 = roi_indicator(spy_full_df, week, 7)
-            # roi_pos_2 = roi_indicator(spy_full_df, week, 14)
-            # roi_pos_3 = roi_indicator(spy_full_df, week, 21)
-            # roi_pos_4 = roi_indicator(spy_full_df, week, 28)
-            # up_cross_200_1
-            # up_cross_200_2
-            # up_cross_200_3
-            # up_cross_200_4
-            #roi_positive 1-4 weeks
-            #roi_negative 1-4 weeks
-            #200 day upcrossing in last 4,8 weeks
-            #200 day downcrossing in last 4,8 weeks
-            #50 day up-crossing in last 2, 4 weeks
-            #50 day down-cross in last 2,4 weeks
             rules_list = buy_or_sell_indicator(spy_full_df, week)
-
-            # rules_list = [roi_pos_1,
-            #               roi_pos_2,
-            #               roi_pos_3,
-            #               roi_pos_4,
-            #               not roi_pos_1,
-            #               not roi_pos_2,
-            #               not roi_pos_3,
-            #               not roi_pos_3]
 
             rule_1 = rules_list[rule_1_index]
             rule_2 = rules_list[rule_2_index]
@@ -315,6 +264,129 @@ def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_i
     return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, fig
 
 
+def make_portfolio_graph(strategic_df, dca_df, weekly_roi_radio):
+    time_values = strategic_df.columns
+    n_weeks = len(time_values)
+    cash_values = np.array([100 * (i + 1) for i in range(n_weeks)])
+
+    if weekly_roi_radio == 2:
+        total_return = strategic_df.to_numpy()[-1, :] - cash_values
+        weekly_return = dca_df.to_numpy()[-1, :] - cash_values
+
+        portfolio_return = go.Figure()
+        portfolio_return.add_trace(go.Scatter(
+            x=time_values, y=weekly_return, name='DCA'
+        ))
+        portfolio_return.add_trace(go.Scatter(
+            x=time_values, y=total_return, name='Strategic'
+        ))
+        portfolio_return.update_layout(legend_orientation='h',
+                                       yaxis=dict(title='Change in Portfolio Value ($)'),
+                                       margin=dict(t=0, b=0, r=0, l=0),
+                                       paper_bgcolor='#f9f9f9'
+                                       )
+        return portfolio_return
+    else:
+        total_value = strategic_df.to_numpy()[-1, :]
+        weekly_value = dca_df.to_numpy()[-1, :]
+
+        portfolio_value = go.Figure()
+        portfolio_value.add_trace(go.Scatter(
+            x=time_values, y=weekly_value, name='DCA'
+        ))
+        portfolio_value.add_trace(go.Scatter(
+            x=time_values, y=total_value, name='Strategic'
+        ))
+        portfolio_value.add_trace(go.Scatter(
+            x=time_values, y=cash_values, name='Cash'
+        ))
+        portfolio_value.update_layout(legend_orientation='h',
+                                      yaxis=dict(title='Portfolio Value ($)'),
+                                      margin=dict(t=0, b=0, r=0, l=0),
+                                      paper_bgcolor='#f9f9f9'
+                                      )
+
+        return portfolio_value
+
+def make_spy_value_graph(spy_full_df, choice_df):
+    buy_correct = []
+    buy_wrong = []
+    sell_correct = []
+    sell_wrong = []
+    choice_dates = choice_df.index
+    choice_list = choice_df.to_numpy()[0]
+    for date, choice in zip(choice_dates, choice_list):
+        next_week = date + datetime.timedelta(days=7)
+        spy_value = \
+        spy_full_df.iloc[abs(spy_full_df.index - date) == min(abs(spy_full_df.index - date))]['Close'].to_numpy()[0]
+        next_spy_value = \
+        spy_full_df.iloc[abs(spy_full_df.index - next_week) == min(abs(spy_full_df.index - next_week))][
+            'Close'].to_numpy()[0]
+
+        if choice == "invest":
+            if next_spy_value > spy_value:
+                buy_correct.append([date, spy_value])
+            else:
+                buy_wrong.append([date, spy_value])
+        else:
+            if next_spy_value > spy_value:
+                sell_wrong.append([date, spy_value])
+            else:
+                sell_correct.append([date, spy_value])
+
+    buy_correct_array = np.array(buy_correct)
+    sell_correct_array = np.array(sell_correct)
+    buy_wrong_array = np.array(buy_wrong)
+    sell_wrong_array = np.array(sell_wrong)
+
+    spy_value = go.Figure()
+    spy_value.add_trace(go.Scatter(
+        x=spy_full_df.index, y=spy_full_df['Close'], name='SPY',
+    ))
+    if sell_correct_array.any():
+        spy_value.add_trace(go.Scatter(
+            x=sell_correct_array[:, 0], y=sell_correct_array[:, 1],
+            mode='markers', name='Sell (Correct)', marker_symbol='triangle-up',
+            marker_color='Red', marker_size=12
+        ))
+    if sell_wrong_array.any():
+        spy_value.add_trace(go.Scatter(
+            x=sell_wrong_array[:, 0], y=sell_wrong_array[:, 1],
+            mode='markers', name='Sell (Wrong)', marker_symbol='triangle-down',
+            marker_color='Red', marker_size=12
+        ))
+
+    if buy_correct_array.any():
+        spy_value.add_trace(go.Scatter(
+            x=buy_correct_array[:, 0], y=buy_correct_array[:, 1],
+            mode='markers', name='Buy (Correct)', marker_symbol='triangle-up',
+            marker_color='Green', marker_size=12
+        ))
+    if buy_wrong_array.any():
+        spy_value.add_trace(go.Scatter(
+            x=buy_wrong_array[:, 0], y=buy_wrong_array[:, 1],
+            mode='markers', name='Buy (Wrong)', marker_symbol='triangle-down',
+            marker_color='Green', marker_size=12
+        ))
+
+    spy_value.add_trace(go.Scatter(
+        x=spy_full_df.index, y=spy_full_df['200'], name='200 Day'
+    ))
+    spy_value.add_trace(go.Scatter(
+        x=spy_full_df.index, y=spy_full_df['50'], name='50 Day'
+    ))
+
+    spy_value.update_layout(showlegend=True,
+                            legend_orientation='h',
+                            xaxis=dict(range=[spy_full_df.index[0], spy_full_df.index[-1]]),
+                            yaxis=dict(title='SPY Closing Value ($)'),
+                            margin=dict(t=0, b=0, r=0, l=0),
+                            paper_bgcolor='#f9f9f9'
+                            )
+
+    return spy_value
+
+
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
     early_time = base_time-datetime.timedelta(days=365)
     ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
@@ -334,7 +406,7 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
     rules_list = [{'Name': 'Good Last Wk', 'Signal': 'Bullish', 'Duration': 7, 'Type': 'Close', 'Current > Past': True, "Weight": 0.5},
                   {'Name': 'Bad Last 3 Wks', 'Signal': 'Bullish', 'Duration': 21, 'Type': 'Close', 'Current > Past': False, "Weight": 0.5}]
     rule_df = make_decisions(ticker_extra_df, all_days, np_start_date, np_end_date, rules_list)
-    strategic_df, simple_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
+    values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
     # Calculate the portfolio performance and create data frames
 
@@ -342,7 +414,7 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
 
 
 def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold):
-    ticker_full_df['sum'] = rule_df['sum']
+    ticker_full_df.loc[:, "sum"] = rule_df['sum']
     sum_array = ticker_full_df['sum'].values
     value_array = ticker_full_df['Close'].values
     starting_value = 1000.00
@@ -350,7 +422,9 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
     strategic_decision_list = []
     strategic_state_list = []
     simple_value_list = []
-    for i, sum, value in enumerate(zip(sum_array, value_array)):
+
+    i = 0
+    for sum, value in zip(sum_array, value_array):
         action='Hold'
         if sum > buy_threshold:
             action = "Buy"
@@ -367,25 +441,30 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
             simple_value_list.append(starting_value)
         else:
             simple_value_list.append(simple_value_list[i-1]*value/value_array[i-1])
+            strategic_decision_list.append(action)
             if strategic_decision_list[i-1] == 'Buy':
                 strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
+                strategic_state_list.append("Invested")
             elif strategic_decision_list[i-1] == 'Sell':
                 strategic_value_list.append(strategic_value_list[i-1])
-            else:
+                strategic_state_list.append("Cash")
+            else: #Hold
                 if strategic_state_list[i-1] == 'Invested':
                     strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
+                    strategic_state_list.append("Invested")
                 else:
                     strategic_value_list.append(strategic_value_list[i-1])
+                    strategic_state_list.append("Cash")
 
 
+        i = i+1
+    ticker_full_df.loc[:, "simple_values"] = simple_value_list
+    ticker_full_df.loc[:, "strategic_values"] = strategic_value_list
+    ticker_full_df.loc[:, "strategic_decisions"] = strategic_decision_list
+    ticker_full_df.loc[:, "strategic_state"] = strategic_state_list
 
-        print(sum, value)
-
-    print(sum_array, type(sum_array))
-
-
-    print("here")
-    return [], []
+    print(ticker_full_df)
+    return ticker_full_df
 
 
 def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_list):
