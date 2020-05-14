@@ -247,11 +247,6 @@ def get_spy_roi(base_time, now_time, buy_or_sell, rule_1_index, and_or, rule_2_i
                 }
                 spy_statistics.append(roi_dict)
 
-    rules_list = {}
-    buy_threshold = 0.9
-    sell_threshold = 0.1
-    get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
-
     spy_df = pd.DataFrame.from_records(spy_statistics)
     if spy_df.empty:
         return weekly_strategic_df, weekly_choice_df, weekly_df, spy_full_df, px.line()
@@ -403,14 +398,12 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
     all_days = ticker_full_df.index.values
 
     # Make the daily trades for the simple and strategic strategy
-    rules_list = [{'Name': 'Good Last Wk', 'Signal': 'Bullish', 'Duration': 7, 'Type': 'Close', 'Current > Past': True, "Weight": 0.5},
-                  {'Name': 'Bad Last 3 Wks', 'Signal': 'Bullish', 'Duration': 21, 'Type': 'Close', 'Current > Past': False, "Weight": 0.5}]
     rule_df = make_decisions(ticker_extra_df, all_days, np_start_date, np_end_date, rules_list)
     values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
     # Calculate the portfolio performance and create data frames
 
-    return []
+    return values_df
 
 
 def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold):
@@ -463,7 +456,6 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
     ticker_full_df.loc[:, "strategic_decisions"] = strategic_decision_list
     ticker_full_df.loc[:, "strategic_state"] = strategic_state_list
 
-    print(ticker_full_df)
     return ticker_full_df
 
 

@@ -112,17 +112,37 @@ def register_automatic(server):
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
 
-        strategic_df, choice_df, dca_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
-                                                              now_time,
-                                                              buy_or_sell,
-                                                              rule_1_index,
-                                                              and_or,
-                                                              rule_2_index)
-        strategic_df.loc['Total'] = strategic_df.select_dtypes(pd.np.number).sum()
-        dca_df.loc['Total'] = dca_df.select_dtypes(pd.np.number).sum()
+        # Dollar Cost Averaging Code
+        # strategic_df, choice_df, dca_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
+        #                                                       now_time,
+        #                                                       buy_or_sell,
+        #                                                       rule_1_index,
+        #                                                       and_or,
+        #                                                       rule_2_index)
+        # strategic_df.loc['Total'] = strategic_df.select_dtypes(pd.np.number).sum()
+        # dca_df.loc['Total'] = dca_df.select_dtypes(pd.np.number).sum()
+        # portfolio = historical_calculations.make_portfolio_graph(strategic_df, dca_df, weekly_roi_radio)
+        # spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
 
-        portfolio = historical_calculations.make_portfolio_graph(strategic_df, dca_df, weekly_roi_radio)
-        spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
+        # Lump Sum Code
+        rules_list = [
+            {'Name': 'Good Last Wk', 'Signal': 'Bullish', 'Duration': 7, 'Type': 'Close', 'Current > Past': True,
+             "Weight": 0.5},
+            {'Name': 'Bad Last 3 Wks', 'Signal': 'Bullish', 'Duration': 21, 'Type': 'Close', 'Current > Past': False,
+             "Weight": 0.5}]
+        buy_threshold = 0.9
+        sell_threshold = 0.1
+        values_df = historical_calculations.get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
+        spy_value = px.line(values_df, x=values_df.index, y = 'Close')
+        # df1 = values_df.melt(id_vars=values_df.index+list(values_df.keys()), var_name='SPY')
+        # portfolio = px.line(values_df, x=[values_df.index, values_df.index], y = ['strategic_values', 'simple_value'])
+        # portfolio = px.line(df1, x = df1.index, y='value', color='SPY')
+        portfolio = px.line(values_df, x= values_df.index, y = 'strategic_values')
+        portfolio.add_trace(go.Scatter(
+            x = values_df.index, y = values_df['simple_values'], name='Simple'
+        ))
+        # TODO:  Add in the interface to build a weighted criteria.  Migrate database.
+
 
         return portfolio, spy_value
 
