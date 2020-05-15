@@ -303,6 +303,7 @@ def make_portfolio_graph(strategic_df, dca_df, weekly_roi_radio):
 
         return portfolio_value
 
+
 def make_spy_value_graph(spy_full_df, choice_df):
     buy_correct = []
     buy_wrong = []
@@ -434,20 +435,35 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
             simple_value_list.append(starting_value)
         else:
             simple_value_list.append(simple_value_list[i-1]*value/value_array[i-1])
-            strategic_decision_list.append(action)
             if strategic_decision_list[i-1] == 'Buy':
                 strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
                 strategic_state_list.append("Invested")
+                if action == 'Buy':
+                    strategic_decision_list.append("Hold")
+                else:
+                    strategic_decision_list.append(action)
             elif strategic_decision_list[i-1] == 'Sell':
                 strategic_value_list.append(strategic_value_list[i-1])
                 strategic_state_list.append("Cash")
+                if action== 'Sell':
+                    strategic_decision_list.append("Hold")
+                else:
+                    strategic_decision_list.append(action)
             else: #Hold
                 if strategic_state_list[i-1] == 'Invested':
                     strategic_value_list.append(strategic_value_list[i-1]*value/value_array[i-1])
                     strategic_state_list.append("Invested")
+                    if action == 'Buy':
+                        strategic_decision_list.append("Hold")
+                    else:
+                        strategic_decision_list.append(action)
                 else:
                     strategic_value_list.append(strategic_value_list[i-1])
                     strategic_state_list.append("Cash")
+                    if action == 'Sell':
+                        strategic_decision_list.append("Hold")
+                    else:
+                        strategic_decision_list.append(action)
 
 
         i = i+1
@@ -464,20 +480,15 @@ def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_li
     for rule in rules_list:
         weight_list = []
         for day in all_days:
-            past_day = day-np.timedelta64(rule['Duration'], 'D')
-            current_value = ticker_full_df.iloc[ticker_full_df.index==day][rule['Type']].values
-            past_value = ticker_full_df.iloc[ticker_full_df.index.values==past_day][rule['Type']].values
+            larger_time = day+np.timedelta64(rule['Larger: When?'], 'D')
+            smaller_time = day+np.timedelta64(rule['Smaller: When?'], 'D')
 
-            sign = -1.0
-            if rule['Signal'] == 'Bullish':
-                sign = 1.0
+            larger_value = ticker_full_df.iloc[ticker_full_df.index==larger_time][rule['Larger: What?']].values
+            smaller_value = ticker_full_df.iloc[ticker_full_df.index.values==smaller_time][rule['Smaller: What?']].values
 
             weight = 0
-            if current_value > past_value and rule['Current > Past']:
-                weight += rule['Weight']*sign
-
-            if past_value > current_value and not rule['Current > Past']:
-                weight += rule['Weight']*sign
+            if larger_value > smaller_value:
+                weight += rule['Weight']
 
             weight_list.append(weight)
 
@@ -485,7 +496,7 @@ def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_li
 
     rule_df = pd.DataFrame.from_records(rule_results).T
     rule_df.index = all_days
-    rule_df.columns = ["{}".format(i['Name']) for i in rules_list]
+    rule_df.columns = ["{}".format(i) for i in range(len(rules_list))]
     rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
     print(rule_df)
 

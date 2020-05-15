@@ -25,15 +25,16 @@ def make_automatic_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Buy/Sell Logic",
+                    html.H4(children='SPY Daily Closing Value',
                             style={'text-align': 'center'}),
-                    dashboard_controls
+                    weekly_progress,
+                    spy_graph
+
                 ],
-                className='pretty_container')
+                    className='pretty_container')
             ],
-            width=6)
-        ]),
-        dbc.Row([
+                width=6
+            ),
             dbc.Col([
                 html.Div([
                     html.H4(children="Total Portfolio Value or Return",
@@ -44,18 +45,9 @@ def make_automatic_dashboard(portfolio_list):
                 ],
                     className='pretty_container')
             ],
-                width=4),
-            dbc.Col([
-                html.Div([
-                    html.H4(children='SPY Daily Closing Value',
-                            style={'text-align': 'center'}),
-                    weekly_progress,
-                    spy_graph
-
-                ],
-                className='pretty_container')
-            ],
-            width=4),
+            width=6)
+        ]),
+        dbc.Row([
             dbc.Col([
                 html.Div([
                     html.H4(children="Historic Returns",
@@ -65,8 +57,17 @@ def make_automatic_dashboard(portfolio_list):
                 ],
                 className='pretty_container')
             ],
-            width=4)
+            width=8)
         ]),
+        dbc.Col([
+            html.Div([
+                html.H4(children="Buy/Sell Logic",
+                        style={'text-align': 'center'}),
+                dashboard_controls
+            ],
+                className='pretty_container')
+        ],
+            width=4)
     ])
 
     return dashboard_div

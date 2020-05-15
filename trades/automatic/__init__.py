@@ -125,24 +125,60 @@ def register_automatic(server):
         # spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
 
         # Lump Sum Code
+        # TODO:  add in percentage e.g. greater by 1%, 2%, etc.
+        # TODO:  add in comparison of 2 signals.
+        # larger_when: '0, -7, -14', larger_what: '200, 500, close', smaller_when = 'now, smaller_what = '200', weight -5
         rules_list = [
-            {'Name': 'Good Last Wk', 'Signal': 'Bullish', 'Duration': 7, 'Type': 'Close', 'Current > Past': True,
-             "Weight": 0.5},
-            {'Name': 'Bad Last 3 Wks', 'Signal': 'Bullish', 'Duration': 21, 'Type': 'Close', 'Current > Past': False,
-             "Weight": 0.5}]
-        buy_threshold = 0.9
-        sell_threshold = 0.1
+            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -7, 'Smaller: What?': 'Close', "Weight": -0.5},
+            {'Larger: When?': -21, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', "Weight": -0.5}]
+        buy_threshold = -0.99   # Buy if greater than
+        sell_threshold = -0.99  # Sell if Less than
         values_df = historical_calculations.get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
-        spy_value = px.line(values_df, x=values_df.index, y = 'Close')
-        # df1 = values_df.melt(id_vars=values_df.index+list(values_df.keys()), var_name='SPY')
-        # portfolio = px.line(values_df, x=[values_df.index, values_df.index], y = ['strategic_values', 'simple_value'])
-        # portfolio = px.line(df1, x = df1.index, y='value', color='SPY')
-        portfolio = px.line(values_df, x= values_df.index, y = 'strategic_values')
+
+        # SPY Value Graph
+        spy_value = go.Figure()
+        spy_value.add_trace(go.Scatter(
+            x=values_df.index, y = values_df['Close'], name = 'SPY'
+        ))
+        spy_value.add_trace(go.Scatter(
+            x=values_df.index, y = values_df['200'], name = '200'
+        ))
+        spy_value.add_trace(go.Scatter(
+            x=values_df.index, y=values_df['50'], name='50'
+        ))
+        spy_value.add_trace(go.Scatter(
+            x=values_df.loc[values_df['strategic_decisions']=='Sell'].index,
+            y = values_df.loc[values_df['strategic_decisions']=='Sell', 'Close'],
+            mode='markers', name='Sell', marker_symbol='triangle-down', marker_color='Red', marker_size=12
+        ))
+        spy_value.add_trace(go.Scatter(
+            x=values_df.loc[values_df['strategic_decisions']=='Buy'].index,
+            y = values_df.loc[values_df['strategic_decisions']=='Buy', 'Close'],
+            mode='markers', name='Buy', marker_symbol='triangle-up', marker_color='Green', marker_size=12
+        ))
+
+        spy_value.update_layout(showlegend=True,
+                                legend_orientation='h',
+                                yaxis=dict(title='SPY Closing Value ($)'),
+                                margin=dict(t=0, b=0, r=0, l=0),
+                                paper_bgcolor='#f9f9f9'
+                                )
+
+        # Portfolio Graph
+        portfolio = go.Figure()
         portfolio.add_trace(go.Scatter(
             x = values_df.index, y = values_df['simple_values'], name='Simple'
         ))
-        # TODO:  Add in the interface to build a weighted criteria.  Migrate database.
+        portfolio.add_trace(go.Scatter(
+            x=values_df.index, y=values_df['strategic_values'], name='Strategic'
+        ))
 
+
+        portfolio.update_layout(legend_orientation='h',
+                                      yaxis=dict(title='Portfolio Value ($)'),
+                                      margin=dict(t=0, b=0, r=0, l=0),
+                                      paper_bgcolor='#f9f9f9'
+                                      )
 
         return portfolio, spy_value
 
