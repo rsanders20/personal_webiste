@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 from dash import dash
@@ -80,20 +81,31 @@ def register_automatic(server):
                    State('rule_2', 'value')]
     )
     def historic_roi(n_clicks, buy_or_sell, rule_1_index, and_or, rule_2_index):
-        base_time = datetime.strptime("2000-01-03", "%Y-%m-%d")
-        now_time = datetime.strptime("2020-04-13", "%Y-%m-%d")
-        value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
-                                                              now_time,
-                                                              buy_or_sell,
-                                                              rule_1_index,
-                                                              and_or,
-                                                              rule_2_index)
+        # Dollar Cost Averaging Code
+        # value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
+        #                                                       now_time,
+        #                                                       buy_or_sell,
+        #                                                       rule_1_index,
+        #                                                       and_or,
+        #                                                       rule_2_index)
+        #
+        # fig.update_layout(xaxis=dict(title='Time Invested (Days)'),
+        #                   yaxis=dict(title='Return on Investment (ROI)'),
+        #                   margin=dict(t=0, b=0, r=0, l=0),
+        #                   paper_bgcolor='#f9f9f9'
+        #                   )
+        # return fig
 
-        fig.update_layout(xaxis=dict(title='Time Invested (Days)'),
-                          yaxis=dict(title='Return on Investment (ROI)'),
-                          margin=dict(t=0, b=0, r=0, l=0),
-                          paper_bgcolor='#f9f9f9'
-                          )
+        # Lump Sum Code
+        rules_list = [
+            {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
+            {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
+            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
+        ]
+        buy_threshold = -0.5   # Buy if greater than
+        sell_threshold = -2.5  # Sell if Less than
+        fig = historical_calculations.get_historic_roi('SPY', rules_list, buy_threshold, sell_threshold)
+
         return fig
 
     @app.callback([Output('weekly_roi_graph', 'figure'),
@@ -125,14 +137,14 @@ def register_automatic(server):
         # spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
 
         # Lump Sum Code
-        # TODO:  add in percentage e.g. greater by 1%, 2%, etc.
-        # TODO:  add in comparison of 2 signals.
-        # larger_when: '0, -7, -14', larger_what: '200, 500, close', smaller_when = 'now, smaller_what = '200', weight -5
         rules_list = [
-            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -7, 'Smaller: What?': 'Close', "Weight": -0.5},
-            {'Larger: When?': -21, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', "Weight": -0.5}]
-        buy_threshold = -0.99   # Buy if greater than
-        sell_threshold = -0.99  # Sell if Less than
+            {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
+            {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
+            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
+            # {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': '50', 'Percentage': 0.0, "Weight": 1.0},
+        ]
+        buy_threshold = -0.5   # Buy if greater than
+        sell_threshold = -2.5  # Sell if Less than
         values_df = historical_calculations.get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
 
         # SPY Value Graph
@@ -173,7 +185,6 @@ def register_automatic(server):
             x=values_df.index, y=values_df['strategic_values'], name='Strategic'
         ))
 
-
         portfolio.update_layout(legend_orientation='h',
                                       yaxis=dict(title='Portfolio Value ($)'),
                                       margin=dict(t=0, b=0, r=0, l=0),
@@ -182,31 +193,37 @@ def register_automatic(server):
 
         return portfolio, spy_value
 
+    # @app.callback(
+    #     [Output('date_range', 'start_date'),
+    #      Output('date_range', 'end_date')],
+    #     [Input('advance_input', 'n_clicks')],
+    #     [State('date_range', 'start_date'),
+    #     State('date_range', 'end_date')]
+    # )
+    # def advance_1_yr(n_clicks, start_date, end_date):
+    #     if n_clicks:
+    #         start_time = datetime.strptime(start_date[0:10], '%Y-%m-%d')
+    #         end_time = datetime.strptime(end_date[0:10], '%Y-%m-%d')
+    #
+    #         nsd = start_time-timedelta(days=365)
+    #         ned = end_time-timedelta(days=365)
+    #         return nsd, ned
+    #
+    #     return start_date, end_date
+
     @app.callback(
         [Output('date_range', 'start_date'),
          Output('date_range', 'end_date')],
-        [Input('advance_input', 'n_clicks')],
+        [Input('historic_roi', 'clickData')],
         [State('date_range', 'start_date'),
         State('date_range', 'end_date')]
     )
-    def advance_1_yr(n_clicks, start_date, end_date):
-        if n_clicks:
-            start_time = datetime.strptime(start_date[0:10], '%Y-%m-%d')
-            end_time = datetime.strptime(end_date[0:10], '%Y-%m-%d')
-            # start_year = str(int(start_date[0:4])+1)
-            # end_year = str(int(end_date[0:4])+1)
-            # nsd = datetime.strptime(start_year+'-01-01', '%Y-%m-%d')
-            nsd = start_time+timedelta(days=365)
-            nsd = nsd+timedelta(days=-nsd.weekday())
-            if nsd.year == start_time.year:
-                nsd = nsd+timedelta(days=7)
-            # ned = datetime.strptime(end_year+'-01-01', '%Y-%m-%d')
-            ned = end_time+timedelta(days=365)
-            ned = ned+timedelta(days=-ned.weekday())
-            if ned.year == end_time.year:
-                ned = ned+timedelta(days=7)
-            print(nsd, ned)
-            return nsd, ned
+    def advance_1_yr(clicked_data, start_date, end_date):
+        if clicked_data:
+            start_str = clicked_data["points"][0]['x']
+            start_date = datetime.strptime(start_str, '%Y-%m-%d')
+            end_date = start_date+timedelta(days=365)
+            return start_date, end_date
 
         return start_date, end_date
 

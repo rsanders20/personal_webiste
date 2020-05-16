@@ -56,20 +56,19 @@ def make_automatic_dashboard(portfolio_list):
                     historic_roi
                 ],
                 className='pretty_container')
-            ],
-            width=8)
+            ]),
         ]),
-        dbc.Col([
-            html.Div([
-                html.H4(children="Buy/Sell Logic",
-                        style={'text-align': 'center'}),
-                dashboard_controls
-            ],
-                className='pretty_container')
-        ],
-            width=4)
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H4(children="Buy/Sell Logic",
+                            style={'text-align': 'center'}),
+                    dashboard_controls
+                ],
+                    className='pretty_container')
+            ]),
+        ])
     ])
-
     return dashboard_div
     # return html.Div(children="Hello!")
 
@@ -153,15 +152,14 @@ def make_weekly_progress():
 
     buy_and_sell = dbc.FormGroup([
         dbc.Button(id='advance_input',
-                   children="1 Yr. ->",
+                   children=" <- 1 Yr.",
                    block=True),
     ])
 
-    date_range = dbc.FormGroup([
-        dcc.DatePickerRange(id='date_range',
-                            start_date = datetime.datetime.strptime('2000-01-03', '%Y-%m-%d'),
-                            end_date = datetime.datetime.strptime('2001-01-01', '%Y-%m-%d')),
-    ])
+    now_time = datetime.datetime.now()
+    start_time = now_time-datetime.timedelta(days=365)
+
+    date_range = dbc.FormGroup([dcc.DatePickerRange(id='date_range', start_date = start_time, end_date = now_time)])
 
     data_div = html.Div([
         dbc.Row([

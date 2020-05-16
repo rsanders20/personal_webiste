@@ -383,6 +383,36 @@ def make_spy_value_graph(spy_full_df, choice_df):
     return spy_value
 
 
+def get_historic_roi(ticker, rules_list, buy_threshold, sell_threshold):
+    base_time = datetime.datetime.strptime('2019-01-01', "%Y-%m-%d")
+    now_time = datetime.datetime.now()
+    interval = 1
+    day_step = 30
+    values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
+    historic_performance = []
+    last_day = base_time
+    for day in values_df.index:
+        if (day-last_day).days > day_step:
+            start_time = day
+            end_time = start_time + datetime.timedelta(days=interval*365)
+            if values_df.index[-1] > end_time:
+                interval_df = values_df.iloc[(values_df.index >= start_time) & (values_df.index < end_time)]
+                simple_roi = interval_df['simple_values'].iloc[-1]/interval_df['simple_values'][0]
+                historic_performance.append([start_time, end_time, simple_roi, 'simple', interval])
+                strategic_roi = interval_df['strategic_values'].iloc[-1]/interval_df['strategic_values'].iloc[0]
+                historic_performance.append([start_time,end_time, strategic_roi, 'strategic', interval])
+
+                last_day = day
+
+    historic_array = np.array(historic_performance)
+    historic_df = pd.DataFrame.from_records(historic_array)
+    historic_df.columns = ['start_time', 'end_time', 'roi', 'strategy', 'interval']
+    fig = px.scatter(historic_df, x = 'start_time', y='roi', color='strategy', marginal_y='box')
+    fig.update_layout(clickmode='event')
+    # fig = px.box(historic_df, x='interval', y='roi', color='strategy')
+    return fig
+
+
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
     early_time = base_time-datetime.timedelta(days=365)
     ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
@@ -427,11 +457,13 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
         if i ==0:
             strategic_value_list.append(starting_value)
-            strategic_decision_list.append(action)
-            if action == "Buy":
-                strategic_state_list.append("Invested")
-            else:
-                strategic_state_list.append("Cash")
+            strategic_decision_list.append("Buy")
+            strategic_state_list.append("Invested")
+            # strategic_decision_list.append(action)
+            # if action == "Buy":
+            #     strategic_state_list.append("Invested")
+            # else:
+            #     strategic_state_list.append("Cash")
             simple_value_list.append(starting_value)
         else:
             simple_value_list.append(simple_value_list[i-1]*value/value_array[i-1])
@@ -479,15 +511,15 @@ def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_li
     rule_results = []
     for rule in rules_list:
         weight_list = []
-        for day in all_days:
-            larger_time = day+np.timedelta64(rule['Larger: When?'], 'D')
-            smaller_time = day+np.timedelta64(rule['Smaller: When?'], 'D')
+        for i, day in enumerate(all_days):
+            larger_time = all_days[i+rule['Larger: When?']]
+            smaller_time = all_days[i+rule['Smaller: When?']]
 
             larger_value = ticker_full_df.iloc[ticker_full_df.index==larger_time][rule['Larger: What?']].values
             smaller_value = ticker_full_df.iloc[ticker_full_df.index.values==smaller_time][rule['Smaller: What?']].values
 
             weight = 0
-            if larger_value > smaller_value:
+            if larger_value > smaller_value*(1+rule['Percentage']/100):
                 weight += rule['Weight']
 
             weight_list.append(weight)
@@ -498,7 +530,6 @@ def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_li
     rule_df.index = all_days
     rule_df.columns = ["{}".format(i) for i in range(len(rules_list))]
     rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
-    print(rule_df)
 
     return rule_df
 
