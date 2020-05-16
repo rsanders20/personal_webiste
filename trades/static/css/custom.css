@@ -1,3 +1,6 @@
+/*!
+ * Custom CSS
+ */
 .pretty_container {
   border-radius: 5px;
   background-color: #f9f9f9;
@@ -5,4 +8,11 @@
   padding: 15px;
   position: relative;
   box-shadow: 2px 2px 2px lightgrey;
+}
+.Select-menu-outer {
+  display : inline-block !important;
+  --accent : black;
+}
+.Select-arrow {
+  --accent: black !important;
 }

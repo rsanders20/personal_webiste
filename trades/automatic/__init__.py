@@ -33,7 +33,7 @@ def get_portfolios():
 
 def register_automatic(server):
     custom_css = r'/static/css/custom.css'
-    external_stylesheets = [dbc.themes.FLATLY, custom_css]
+    external_stylesheets = [dbc.themes.GRID, dbc.themes.FLATLY, custom_css]
     app = dash.Dash(__name__,
                     server=server,
                     url_base_pathname='/dash/automatic/',
@@ -51,8 +51,12 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  Add in explanation of theory behind charts
-    # TODO:  Add in a database and table to keep track of portfolio rules
+    # TODO:  1)  Update the rules dropdown.
+    #        2)  Add a table to keep track of the rules
+    #        3)  Remove the advance button
+    #        4)  Add back in the option for total or return
+    #        5)  Back up the table in a database
+    #
     # TODO:  Add in a view with statistics on performance (and score)
     # TODO:  Consider next steps:  higher frequency, machine learning, multiple stocks.
 
@@ -75,12 +79,13 @@ def register_automatic(server):
 
     @app.callback(Output('historic_roi', 'figure'),
                   [Input('historic_input', 'n_clicks')],
-                  [State('buy_or_sell', 'value'),
-                   State('rule_1', 'value'),
-                   State('and_or', 'value'),
-                   State('rule_2', 'value')]
+                  # [State('buy_or_sell', 'value'),
+                  #  State('rule_1', 'value'),
+                  #  State('and_or', 'value'),
+                  #  State('rule_2', 'value')]
     )
-    def historic_roi(n_clicks, buy_or_sell, rule_1_index, and_or, rule_2_index):
+    def historic_roi(n_clicks):
+        # , buy_or_sell, rule_1_index, and_or, rule_2_index):
         # Dollar Cost Averaging Code
         # value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
         #                                                       now_time,
@@ -112,14 +117,16 @@ def register_automatic(server):
                    Output('spy_graph', 'figure')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
-                   Input('buy_or_sell', 'value'),
-                   Input('rule_1', 'value'),
-                   Input('and_or', 'value'),
-                   Input('rule_2', 'value'),
-                   Input('weekly_roi_radio', 'value')]
+                   # Input('buy_or_sell', 'value'),
+                   # Input('rule_1', 'value'),
+                   # Input('and_or', 'value'),
+                   # Input('rule_2', 'value'),
+                   # Input('weekly_roi_radio', 'value')
+                   ]
+
     )
-    def weekly_roi(start_date, end_date, buy_or_sell, rule_1_index, and_or, rule_2_index, weekly_roi_radio):
-        # print(start_date, end_date)
+    def weekly_roi(start_date, end_date):
+        # buy_or_sell, rule_1_index, and_or, rule_2_index, weekly_roi_radio):
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
@@ -141,7 +148,6 @@ def register_automatic(server):
             {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
             {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
             {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
-            # {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': '50', 'Percentage': 0.0, "Weight": 1.0},
         ]
         buy_threshold = -0.5   # Buy if greater than
         sell_threshold = -2.5  # Sell if Less than
@@ -193,23 +199,6 @@ def register_automatic(server):
 
         return portfolio, spy_value
 
-    # @app.callback(
-    #     [Output('date_range', 'start_date'),
-    #      Output('date_range', 'end_date')],
-    #     [Input('advance_input', 'n_clicks')],
-    #     [State('date_range', 'start_date'),
-    #     State('date_range', 'end_date')]
-    # )
-    # def advance_1_yr(n_clicks, start_date, end_date):
-    #     if n_clicks:
-    #         start_time = datetime.strptime(start_date[0:10], '%Y-%m-%d')
-    #         end_time = datetime.strptime(end_date[0:10], '%Y-%m-%d')
-    #
-    #         nsd = start_time-timedelta(days=365)
-    #         ned = end_time-timedelta(days=365)
-    #         return nsd, ned
-    #
-    #     return start_date, end_date
 
     @app.callback(
         [Output('date_range', 'start_date'),

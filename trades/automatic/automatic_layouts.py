@@ -5,6 +5,8 @@ import dash_bootstrap_components as dbc
 
 import datetime
 
+import pandas as pd
+
 import plotly.express as px
 
 from trades.manual import stock_calculations
@@ -94,7 +96,8 @@ def make_spy_graph():
 
 
 def make_dashboard_controls():
-    rules_div = make_rules_form()
+    # rules_div = make_rules_form()
+    rules_div = make_signal_table()
 
     controls = dbc.Form([
 
@@ -181,6 +184,49 @@ def make_weekly_progress():
         style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'})
 
     return data_div
+
+
+def make_signal_table():
+    rules_list = [
+        {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
+         'Percentage': 3.0, "Weight": -1.0},
+        {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
+         'Percentage': 2.0, "Weight": -1.0},
+        {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close',
+         'Percentage': 1.0, "Weight": -1.0},
+    ]
+    signal_div = html.Div([
+        dash_table.DataTable(
+            id='signal_table',
+            data=rules_list,
+            columns=[
+                {'id': 'Larger: When?', 'name': 'Larger: When?', 'editable':True, 'type': 'numeric'},
+                {'id': 'Larger: What?', 'name': 'Larger: What?', 'presentation': 'dropdown', 'editable':True, },
+                {'id': 'Smaller: When?', 'name': 'Smaller: When?', 'editable':True, 'type': 'numeric'},
+                {'id': 'Smaller: What?', 'name': 'Smaller: What?', 'presentation': 'dropdown', 'editable':True},
+                {'id': 'Percentage', 'name': 'Percentage', 'editable':True},
+                {'id': 'Weight', 'name': 'Weight', 'editable':True, 'type': 'numeric'},
+            ],
+
+            editable=True,
+            dropdown={
+                'Larger: What?': {
+                    'options': [
+                        {'label': i, 'value': i}
+                        for i in ['Open', 'Close', '200', '50']
+                    ]
+                },
+                'Smaller: What?': {
+                    'options': [
+                        {'label': i, 'value': i}
+                        for i in ['Open', 'Close', '200', '50']
+                    ]
+                }
+            }
+        )
+    ])
+
+    return signal_div
 
 
 def make_rules_form():
