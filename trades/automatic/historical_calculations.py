@@ -383,9 +383,9 @@ def make_spy_value_graph(spy_full_df, choice_df):
     return spy_value
 
 
-def get_historic_roi(ticker, rules_list, buy_threshold, sell_threshold):
-    base_time = datetime.datetime.strptime('2019-01-01', "%Y-%m-%d")
-    now_time = datetime.datetime.now()
+def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, sell_threshold):
+    base_time = start_date
+    now_time = end_date
     interval = 1
     day_step = 30
     values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)

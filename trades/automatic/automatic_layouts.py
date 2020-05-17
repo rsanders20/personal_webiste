@@ -62,7 +62,7 @@ def make_automatic_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Historic Returns",
+                    html.H4(children="Returns Over 1 Yr. of Investment",
                             style={'text-align': 'center'}),
                     historic_button,
                     historic_roi
@@ -122,8 +122,25 @@ def make_dashboard_controls():
             type='text',
             value='SPY',
         ),
-        dbc.FormText("Specify the stock ticker name.")
+        dcc.Dropdown(
+            id='ticker_sp500_input',
+            options=securities_list,
+            value='CVX',
+            style={'display': 'none'}
+        ),
+    ])
 
+    security_radio = dbc.FormGroup([
+        dbc.Label("SP500/Custom"),
+        dbc.RadioItems(
+            id='ticker_input_radio',
+            options=[
+                {'label': 'SP500', 'value': 'SP500'},
+                {'label': 'Custom', 'value': 'Custom'}
+            ],
+            value='Custom',
+        ),
+        dbc.FormText("Choose from SP500 or Custom")
     ])
 
     run_analysis = dbc.FormGroup([
@@ -140,7 +157,9 @@ def make_dashboard_controls():
     controls_form = dbc.FormGroup([
             dbc.Label("Weighted Signals"),
             signal_div,
-            dbc.FormText("Create weighted signals that determine when to buy or sell")
+            dbc.FormText("Create weighted signals that determine when to buy or sell. "
+                         " Select When (how many days ago) what (open, close, or a moving average) "
+                         "and how important (weight) each event is.")
         ],
         style={'margin-top': '15px'})
 
@@ -152,6 +171,9 @@ def make_dashboard_controls():
                 ])
             ]),
             dbc.Row([
+                dbc.Col([
+                   security_radio
+                ]),
                 dbc.Col([
                     security_input
                 ]),
@@ -247,7 +269,7 @@ def make_signal_table():
                 {'id': 'Larger: What?', 'name': 'Larger: What?', 'presentation': 'dropdown', 'editable':True, },
                 {'id': 'Smaller: When?', 'name': 'Smaller: When?', 'editable':True, 'type': 'numeric'},
                 {'id': 'Smaller: What?', 'name': 'Smaller: What?', 'presentation': 'dropdown', 'editable':True},
-                {'id': 'Percentage', 'name': 'Percentage', 'editable':True},
+                {'id': 'Percentage', 'name': 'Percentage', 'editable':True, 'type': 'numeric'},
                 {'id': 'Weight', 'name': 'Weight', 'editable':True, 'type': 'numeric', 'editable': True},
             ],
 
@@ -276,10 +298,23 @@ def make_signal_table():
 
 
 def make_historic_button():
+    now_time = datetime.datetime.now()
+    start_time = now_time-datetime.timedelta(days=2*365)
+
     historic_input = dbc.FormGroup([
-        dbc.Button(id='historic_input',
-                   children='Run Statistical Comparison',
-                   block=True)
+        dbc.Row([
+            dbc.Col([
+                dcc.DatePickerRange(id='historic_date',
+                                    start_date=start_time,
+                                    end_date=now_time)
+            ]),
+            dbc.Col([
+                dbc.Button(id='historic_input',
+                           children='Run Statistical Comparison',
+                           block=True)
+            ]),
+        ])
+
     ])
 
     return historic_input

@@ -51,14 +51,12 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  4)  Add back in the option for total or return
-    #        6)  Add in the historic date range
-    #        7)  Add in the forward and back buttons
-    #        7)  Add in an option of picking from SP500 or custom ticker
-    #        8)  Add in alert if the analysis worked or not
-    #        9)  Add in a total score for the set of rules
+    # TODO:  8)  Add in a way to add rows to the table
+    #        9)  Add in alert if the analysis worked or not
+    #       10)  Label the historic graph more accurately
     #       10)  Add in a way to save the strategy to a database
     #       11)  Add in a way to apply a strategy to a portfolio (For each stock, add dropdown to select strategy)
+    #       12)  Add in an "optimize-rules" button
     #
 
     @app.callback(Output('page_content', 'children'),
@@ -80,12 +78,34 @@ def register_automatic(server):
 
     @app.callback(Output('historic_roi', 'figure'),
                   [Input('historic_input', 'n_clicks')],
+                   [State('historic_date', 'start_date'),
+                   State('historic_date', 'end_date'),
+                   State('ticker_input', 'value'),
+                    State('ticker_sp500_input', 'value'),
+                    State('ticker_input_radio', 'value'),
+                   State('signal_table', 'data'),
+                   State('signal_table', 'selected_rows'),
+                   State('buy_threshold', 'value'),
+                   State('sell_threshold', 'value')]
                   # [State('buy_or_sell', 'value'),
                   #  State('rule_1', 'value'),
                   #  State('and_or', 'value'),
                   #  State('rule_2', 'value')]
     )
-    def historic_roi(n_clicks):
+    def historic_roi(n_clicks, start_date, end_date, ticker_input, ticker_sp500_input,
+                   ticker_input_radio, data, selected_rows, buy_threshold, sell_threshold):
+        rules_list = []
+        for i in selected_rows:
+            rules_list.append(data[i])
+
+        if ticker_input_radio == "SP500":
+            ticker = ticker_sp500_input
+        else:
+            ticker = ticker_input
+
+        base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
+        now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
+
         # , buy_or_sell, rule_1_index, and_or, rule_2_index):
         # Dollar Cost Averaging Code
         # value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
@@ -103,14 +123,8 @@ def register_automatic(server):
         # return fig
 
         # Lump Sum Code
-        rules_list = [
-            {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
-            {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
-            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
-        ]
-        buy_threshold = -0.5   # Buy if greater than
-        sell_threshold = -2.5  # Sell if Less than
-        fig = historical_calculations.get_historic_roi('SPY', rules_list, buy_threshold, sell_threshold)
+        fig = historical_calculations.get_historic_roi(ticker, base_time, now_time,
+                                                       rules_list, buy_threshold, sell_threshold)
 
         return fig
 
@@ -118,18 +132,29 @@ def register_automatic(server):
                    Output('spy_graph', 'figure')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
-                   Input('run_analysis', 'n_clicks')],
+                   Input('run_analysis', 'n_clicks'),
+                   Input('weekly_roi_radio', 'value')],
                   [State('buy_threshold', 'value'),
                    State('sell_threshold', 'value'),
                    State('ticker_input', 'value'),
+                   State('ticker_sp500_input', 'value'),
+                   State('ticker_input_radio', 'value'),
                    State('signal_table', 'selected_rows'),
                    State('signal_table', 'data')]
                   )
-    def weekly_roi(start_date, end_date, n_clicks, buy_threshold, sell_threshold, ticker_input, selected_rows, data):
+    def weekly_roi(start_date, end_date, n_clicks, weekly_roi_radio,
+                   buy_threshold, sell_threshold, ticker_input, ticker_sp500_input,
+                   ticker_input_radio, selected_rows, data):
         rules_list = []
         for i in selected_rows:
             rules_list.append(data[i])
 
+        if ticker_input_radio == "SP500":
+            ticker = ticker_sp500_input
+        else:
+            ticker = ticker_input
+
+        print(rules_list)
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
 
@@ -153,7 +178,7 @@ def register_automatic(server):
         # ]
         # buy_threshold = -0.5   # Buy if greater than
         # sell_threshold = -2.5  # Sell if Less than
-        values_df = historical_calculations.get_roi(ticker_input, base_time, now_time,
+        values_df = historical_calculations.get_roi(ticker, base_time, now_time,
                                                     rules_list, buy_threshold, sell_threshold)
 
         # SPY Value Graph
@@ -187,28 +212,41 @@ def register_automatic(server):
 
         # Portfolio Graph
         portfolio = go.Figure()
-        portfolio.add_trace(go.Scatter(
-            x = values_df.index, y = values_df['simple_values'], name='Simple'
-        ))
-        portfolio.add_trace(go.Scatter(
-            x=values_df.index, y=values_df['strategic_values'], name='Strategic'
-        ))
+        if weekly_roi_radio == 1:
+            portfolio.add_trace(go.Scatter(
+                x = values_df.index, y = values_df['simple_values'], name='Simple'
+            ))
+            portfolio.add_trace(go.Scatter(
+                x=values_df.index, y=values_df['strategic_values'], name='Strategic'
+            ))
 
-        portfolio.update_layout(legend_orientation='h',
-                                      yaxis=dict(title='Portfolio Value ($)'),
-                                      margin=dict(t=0, b=0, r=0, l=0),
-                                      paper_bgcolor='#f9f9f9'
-                                      )
+            portfolio.update_layout(legend_orientation='h',
+                                          yaxis=dict(title='Portfolio Value ($)'),
+                                          margin=dict(t=0, b=0, r=0, l=0),
+                                          paper_bgcolor='#f9f9f9'
+                                          )
+        else:
+            portfolio.add_trace(go.Scatter(
+                x=values_df.index, y=values_df['simple_values']/1000, name='Simple'
+            ))
+            portfolio.add_trace(go.Scatter(
+                x=values_df.index, y=values_df['strategic_values']/1000, name='Strategic'
+            ))
+
+            portfolio.update_layout(legend_orientation='h',
+                                    yaxis=dict(title='Portfolio ROI []'),
+                                    margin=dict(t=0, b=0, r=0, l=0),
+                                    paper_bgcolor='#f9f9f9'
+                                    )
 
         return portfolio, spy_value
-
 
     @app.callback(
         [Output('date_range', 'start_date'),
          Output('date_range', 'end_date')],
         [Input('historic_roi', 'clickData')],
         [State('date_range', 'start_date'),
-        State('date_range', 'end_date')]
+         State('date_range', 'end_date')]
     )
     def advance_1_yr(clicked_data, start_date, end_date):
         if clicked_data:
@@ -219,3 +257,15 @@ def register_automatic(server):
 
         return start_date, end_date
 
+    @app.callback(
+        [Output('ticker_input', 'style'),
+         Output('ticker_sp500_input', 'style')],
+        [Input('ticker_input_radio', 'value')]
+    )
+    def change_ticker_input(ticker_input_radio):
+        hidden_style = {'display': 'none'}
+        visible_style = {'display': 'block'}
+        if ticker_input_radio == 'SP500':
+            return hidden_style, visible_style
+        else:
+            return visible_style, hidden_style
