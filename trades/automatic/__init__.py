@@ -51,14 +51,15 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  1)  Update the rules dropdown.
-    #        2)  Add a table to keep track of the rules
-    #        3)  Remove the advance button
-    #        4)  Add back in the option for total or return
-    #        5)  Back up the table in a database
+    # TODO:  4)  Add back in the option for total or return
+    #        6)  Add in the historic date range
+    #        7)  Add in the forward and back buttons
+    #        7)  Add in an option of picking from SP500 or custom ticker
+    #        8)  Add in alert if the analysis worked or not
+    #        9)  Add in a total score for the set of rules
+    #       10)  Add in a way to save the strategy to a database
+    #       11)  Add in a way to apply a strategy to a portfolio (For each stock, add dropdown to select strategy)
     #
-    # TODO:  Add in a view with statistics on performance (and score)
-    # TODO:  Consider next steps:  higher frequency, machine learning, multiple stocks.
 
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
@@ -117,16 +118,17 @@ def register_automatic(server):
                    Output('spy_graph', 'figure')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
-                   # Input('buy_or_sell', 'value'),
-                   # Input('rule_1', 'value'),
-                   # Input('and_or', 'value'),
-                   # Input('rule_2', 'value'),
-                   # Input('weekly_roi_radio', 'value')
-                   ]
-
-    )
-    def weekly_roi(start_date, end_date):
-        # buy_or_sell, rule_1_index, and_or, rule_2_index, weekly_roi_radio):
+                   Input('run_analysis', 'n_clicks')],
+                  [State('buy_threshold', 'value'),
+                   State('sell_threshold', 'value'),
+                   State('ticker_input', 'value'),
+                   State('signal_table', 'selected_rows'),
+                   State('signal_table', 'data')]
+                  )
+    def weekly_roi(start_date, end_date, n_clicks, buy_threshold, sell_threshold, ticker_input, selected_rows, data):
+        rules_list = []
+        for i in selected_rows:
+            rules_list.append(data[i])
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
@@ -144,19 +146,20 @@ def register_automatic(server):
         # spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
 
         # Lump Sum Code
-        rules_list = [
-            {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
-            {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
-            {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
-        ]
-        buy_threshold = -0.5   # Buy if greater than
-        sell_threshold = -2.5  # Sell if Less than
-        values_df = historical_calculations.get_roi('SPY', base_time, now_time, rules_list, buy_threshold, sell_threshold)
+        # rules_list = [
+        #     {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
+        #     {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
+        #     {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
+        # ]
+        # buy_threshold = -0.5   # Buy if greater than
+        # sell_threshold = -2.5  # Sell if Less than
+        values_df = historical_calculations.get_roi(ticker_input, base_time, now_time,
+                                                    rules_list, buy_threshold, sell_threshold)
 
         # SPY Value Graph
         spy_value = go.Figure()
         spy_value.add_trace(go.Scatter(
-            x=values_df.index, y = values_df['Close'], name = 'SPY'
+            x=values_df.index, y = values_df['Close'], name = ticker_input
         ))
         spy_value.add_trace(go.Scatter(
             x=values_df.index, y = values_df['200'], name = '200'
@@ -177,7 +180,7 @@ def register_automatic(server):
 
         spy_value.update_layout(showlegend=True,
                                 legend_orientation='h',
-                                yaxis=dict(title='SPY Closing Value ($)'),
+                                yaxis=dict(title=f'{ticker_input} Closing Value ($)'),
                                 margin=dict(t=0, b=0, r=0, l=0),
                                 paper_bgcolor='#f9f9f9'
                                 )

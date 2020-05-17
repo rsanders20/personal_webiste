@@ -27,7 +27,17 @@ def make_automatic_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children='SPY Daily Closing Value',
+                    html.H4(children="Buy/Sell Signals",
+                            style={'text-align': 'center'}),
+                    dashboard_controls
+                ],
+                    className='pretty_container')
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H4(children='Daily Closing Value',
                             style={'text-align': 'center'}),
                     weekly_progress,
                     spy_graph
@@ -41,7 +51,7 @@ def make_automatic_dashboard(portfolio_list):
                 html.Div([
                     html.H4(children="Total Portfolio Value or Return",
                             style={'text-align': 'center',
-                                   'margin-bottom': '45px'}),
+                                   'margin-bottom': '20px'}),
                     weekly_toggle,
                     weekly_roi
                 ],
@@ -60,16 +70,6 @@ def make_automatic_dashboard(portfolio_list):
                 className='pretty_container')
             ]),
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Buy/Sell Logic",
-                            style={'text-align': 'center'}),
-                    dashboard_controls
-                ],
-                    className='pretty_container')
-            ]),
-        ])
     ])
     return dashboard_div
     # return html.Div(children="Hello!")
@@ -96,19 +96,79 @@ def make_spy_graph():
 
 
 def make_dashboard_controls():
-    # rules_div = make_rules_form()
-    rules_div = make_signal_table()
+    signal_div = make_signal_table()
+    securities_list = stock_calculations.get_securities_list()
 
-    controls = dbc.Form([
+    buy_threshold = dbc.FormGroup([
+        dbc.Label("Buy Threshold"),
+        dbc.Input(id="buy_threshold",
+                  type='number',
+                  value=-0.5),
+        dbc.FormText("Buy if the weighted sum is greater than this threshold")
 
-        dbc.FormGroup([
-            dbc.Label("Set Buying and Selling Logic", color='success'),
-            rules_div
-        ],
-        style={'margin-top': '15px'}),
+    ])
+    sell_threshold = dbc.FormGroup([
+        dbc.Label("Sell Threshold"),
+        dbc.Input(id="sell_threshold",
+                  type='number',
+                  value=-2.5),
+        dbc.FormText("Sell if the weighted sum is less than this threshold")
+
+    ])
+    security_input = dbc.FormGroup([
+        dbc.Label("Stock Ticker"),
+        dbc.Input(
+            id='ticker_input',
+            type='text',
+            value='SPY',
+        ),
+        dbc.FormText("Specify the stock ticker name.")
+
     ])
 
-    return controls
+    run_analysis = dbc.FormGroup([
+        dbc.Label("Run"),
+        dbc.Button(
+            id='run_analysis',
+            children='Run',
+            block=True,
+        ),
+        dbc.FormText("Run the analysis")
+
+    ])
+
+    controls_form = dbc.FormGroup([
+            dbc.Label("Weighted Signals"),
+            signal_div,
+            dbc.FormText("Create weighted signals that determine when to buy or sell")
+        ],
+        style={'margin-top': '15px'})
+
+    form_div = html.Div([
+        dbc.Form([
+            dbc.Row([
+                dbc.Col([
+                    controls_form
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    security_input
+                ]),
+                dbc.Col([
+                    buy_threshold
+                ]),
+                dbc.Col([
+                    sell_threshold
+                ]),
+                dbc.Col([
+                    run_analysis
+                ])
+            ]),
+        ])
+    ])
+
+    return form_div
 
 
 def make_weekly_toggle():
@@ -124,7 +184,7 @@ def make_weekly_toggle():
                     ],
                     value=1,
                     inline=True,
-                    style={'text-align': 'center'})
+                    style={'text-align': 'center', 'margin-bottom': '30px'})
             ])
         ]),
         ])
@@ -146,34 +206,17 @@ def make_weekly_progress():
                            is_open=False,
                            duration=4000)
 
-    table_input = dbc.FormGroup([
-        dash_table.DataTable(id='portfolio_entries',
-                             columns=(
-                                 [{'id': 'purchase_date', 'name': 'Purchase Date', 'type': 'datetime'}]+
-                                 [{'id': 'value_{}'.format(i+1), 'name': '{}'. format(i+1)} for i in range(10)])),
-    ])
-
-    buy_and_sell = dbc.FormGroup([
-        dbc.Button(id='advance_input',
-                   children=" <- 1 Yr.",
-                   block=True),
-    ])
-
     now_time = datetime.datetime.now()
     start_time = now_time-datetime.timedelta(days=365)
-
-    date_range = dbc.FormGroup([dcc.DatePickerRange(id='date_range', start_date = start_time, end_date = now_time)])
+    date_range = dbc.FormGroup([dcc.DatePickerRange(id='date_range',
+                                                    start_date = start_time,
+                                                    end_date = now_time)])
 
     data_div = html.Div([
         dbc.Row([
             dbc.Col([
                 date_range,
-            ],
-            width=8),
-            dbc.Col([
-                buy_and_sell,
-            ],
-            width=4),
+            ]),
         ]),
         dbc.Row([
             dbc.Col([
@@ -181,7 +224,7 @@ def make_weekly_progress():
             ]),
         ]),
     ],
-        style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px'})
+        style={'margin-top': '5px', 'width': '100%', 'margin-right': '15px', 'text-align': 'center'})
 
     return data_div
 
@@ -205,10 +248,13 @@ def make_signal_table():
                 {'id': 'Smaller: When?', 'name': 'Smaller: When?', 'editable':True, 'type': 'numeric'},
                 {'id': 'Smaller: What?', 'name': 'Smaller: What?', 'presentation': 'dropdown', 'editable':True},
                 {'id': 'Percentage', 'name': 'Percentage', 'editable':True},
-                {'id': 'Weight', 'name': 'Weight', 'editable':True, 'type': 'numeric'},
+                {'id': 'Weight', 'name': 'Weight', 'editable':True, 'type': 'numeric', 'editable': True},
             ],
 
             editable=True,
+            row_selectable='multi',
+            # selected_rows = [],
+            selected_rows = [i for i in range(len(rules_list))],
             dropdown={
                 'Larger: What?': {
                     'options': [
@@ -227,80 +273,6 @@ def make_signal_table():
     ])
 
     return signal_div
-
-
-def make_rules_form():
-    rules_alert = dbc.FormGroup([
-        dbc.Alert(id='rules_alert',
-                  children="No new rule has been added",
-                  color="warning",
-                  is_open=False,
-                  duration=4000)
-    ])
-
-    buy_or_sell = dbc.FormGroup([
-        dbc.Label("Buy/Sell"),
-        dbc.RadioItems(id="buy_or_sell",
-                       options=[{'label': "Buy", 'value': 'buy'},
-                                {'label': 'Sell', 'value': 'sell'}],
-                       value='sell'),
-
-    ])
-
-    # securities_list = stock_calculations.get_securities_list()
-
-    positive_rule = dbc.FormGroup([
-        # dbc.Label("If Last X Wks. Positive"),
-        dcc.Dropdown(
-            id='rule_1',
-            options=[{'label': rule, 'value': i} for i, rule in enumerate(get_rules())],
-            value=0,
-        ),
-    ])
-
-    and_or = dbc.FormGroup([
-        dbc.Label("And/Or"),
-        dbc.RadioItems(id="and_or",
-                       options=[{'label': "And", 'value': 'and'},
-                                {'label': 'Or', 'value': 'or'}],
-                       value='and'),
-
-    ])
-
-    negative_rule = dbc.FormGroup([
-        # dbc.Label("If Last X Wks. Negative"),
-        dcc.Dropdown(
-            id='rule_2',
-            options=[{'label': rule, 'value': i} for i, rule in enumerate(get_rules())],
-            value=6,
-        ),
-    ])
-
-
-    form_div = html.Div([
-        dbc.Form([
-            dbc.Row([
-                dbc.Col([
-                    buy_or_sell
-                ],
-                width=2),
-                dbc.Col([
-                    positive_rule
-                ],
-                width=4),
-                dbc.Col([
-                    and_or
-                ],
-                width=2),
-                dbc.Col([
-                    negative_rule
-                ],
-                width=4),
-            ]),
-        ])
-    ])
-
-    return form_div
 
 
 def make_historic_button():
