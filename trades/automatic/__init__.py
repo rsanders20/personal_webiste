@@ -51,8 +51,7 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  8)  Add in a way to add rows to the table
-    #        9)  Add in alert if the analysis worked or not
+    # TODO:  9)  Add in alert if the analysis worked or not
     #       10)  Label the historic graph more accurately
     #       10)  Add in a way to save the strategy to a database
     #       11)  Add in a way to apply a strategy to a portfolio (For each stock, add dropdown to select strategy)
@@ -78,20 +77,16 @@ def register_automatic(server):
 
     @app.callback(Output('historic_roi', 'figure'),
                   [Input('historic_input', 'n_clicks')],
-                   [State('historic_date', 'start_date'),
+                  [State('historic_date', 'start_date'),
                    State('historic_date', 'end_date'),
                    State('ticker_input', 'value'),
-                    State('ticker_sp500_input', 'value'),
-                    State('ticker_input_radio', 'value'),
+                   State('ticker_sp500_input', 'value'),
+                   State('ticker_input_radio', 'value'),
                    State('signal_table', 'data'),
                    State('signal_table', 'selected_rows'),
                    State('buy_threshold', 'value'),
                    State('sell_threshold', 'value')]
-                  # [State('buy_or_sell', 'value'),
-                  #  State('rule_1', 'value'),
-                  #  State('and_or', 'value'),
-                  #  State('rule_2', 'value')]
-    )
+                  )
     def historic_roi(n_clicks, start_date, end_date, ticker_input, ticker_sp500_input,
                    ticker_input_radio, data, selected_rows, buy_threshold, sell_threshold):
         rules_list = []
@@ -105,22 +100,6 @@ def register_automatic(server):
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
-
-        # , buy_or_sell, rule_1_index, and_or, rule_2_index):
-        # Dollar Cost Averaging Code
-        # value_df, choice_df, weekly_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
-        #                                                       now_time,
-        #                                                       buy_or_sell,
-        #                                                       rule_1_index,
-        #                                                       and_or,
-        #                                                       rule_2_index)
-        #
-        # fig.update_layout(xaxis=dict(title='Time Invested (Days)'),
-        #                   yaxis=dict(title='Return on Investment (ROI)'),
-        #                   margin=dict(t=0, b=0, r=0, l=0),
-        #                   paper_bgcolor='#f9f9f9'
-        #                   )
-        # return fig
 
         # Lump Sum Code
         fig = historical_calculations.get_historic_roi(ticker, base_time, now_time,
@@ -157,27 +136,6 @@ def register_automatic(server):
         print(rules_list)
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
-
-        # Dollar Cost Averaging Code
-        # strategic_df, choice_df, dca_df, spy_full_df, fig = historical_calculations.get_spy_roi(base_time,
-        #                                                       now_time,
-        #                                                       buy_or_sell,
-        #                                                       rule_1_index,
-        #                                                       and_or,
-        #                                                       rule_2_index)
-        # strategic_df.loc['Total'] = strategic_df.select_dtypes(pd.np.number).sum()
-        # dca_df.loc['Total'] = dca_df.select_dtypes(pd.np.number).sum()
-        # portfolio = historical_calculations.make_portfolio_graph(strategic_df, dca_df, weekly_roi_radio)
-        # spy_value = historical_calculations.make_spy_value_graph(spy_full_df, choice_df)
-
-        # Lump Sum Code
-        # rules_list = [
-        #     {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 3.0, "Weight": -1.0},
-        #     {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close', 'Percentage': 2.0, "Weight": -1.0},
-        #     {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close', 'Percentage': 1.0, "Weight": -1.0},
-        # ]
-        # buy_threshold = -0.5   # Buy if greater than
-        # sell_threshold = -2.5  # Sell if Less than
         values_df = historical_calculations.get_roi(ticker, base_time, now_time,
                                                     rules_list, buy_threshold, sell_threshold)
 
@@ -269,3 +227,13 @@ def register_automatic(server):
             return hidden_style, visible_style
         else:
             return visible_style, hidden_style
+
+    @app.callback(
+        Output('signal_table', 'data'),
+        [Input('editing-rows-button', 'n_clicks')],
+        [State('signal_table', 'data'),
+         State('signal_table', 'columns')])
+    def add_row(n_clicks, rows, columns):
+        if n_clicks > 0:
+            rows.append({c['id']: '' for c in columns})
+        return rows

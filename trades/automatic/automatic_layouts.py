@@ -145,13 +145,23 @@ def make_dashboard_controls():
 
     run_analysis = dbc.FormGroup([
         dbc.Label("Run"),
-        dbc.Button(
-            id='run_analysis',
-            children='Run',
-            block=True,
-        ),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Button(
+                        id='run_analysis',
+                        children='Run',
+                        block=True,
+                    )
+                ]),
+                dbc.Col([
+                    dbc.Button(
+                        id='editing-rows-button',
+                        children='Add row',
+                        block=True,
+                    )
+                ]),
+            ]),
         dbc.FormText("Run the analysis")
-
     ])
 
     controls_form = dbc.FormGroup([
@@ -274,6 +284,7 @@ def make_signal_table():
             ],
 
             editable=True,
+            row_deletable=True,
             row_selectable='multi',
             # selected_rows = [],
             selected_rows = [i for i in range(len(rules_list))],
