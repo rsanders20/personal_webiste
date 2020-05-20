@@ -51,11 +51,10 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  9)  Add in a warning if the ticker is not recognized.  Add to manual as well.
-    #       10)  Provide a score for the historic graph
-    #       12)  Add in an "optimize-rules" button
+    # TODO: 10)  Provide a score for the historic graph
     #       10)  Add in a way to save the strategy to a database
     #       10)  Label the historic graph with the strategy name and ticker
+    #       12)  Add in an "optimize-rules" button
     #       11)  Add in a way to apply a strategy to a portfolio
     #           (For each stock, add dropdown to select strategy as well as the date the strategy starts working)
     #       13)  Add in more than just the moving averages...alpha, beta, theta, etc.
@@ -90,7 +89,7 @@ def register_automatic(server):
                    State('sell_threshold', 'value')]
                   )
     def historic_roi(n_clicks, start_date, end_date, ticker_input, ticker_sp500_input,
-                   ticker_input_radio, data, selected_rows, buy_threshold, sell_threshold):
+                     ticker_input_radio, data, selected_rows, buy_threshold, sell_threshold):
         rules_list = []
         for i in selected_rows:
             rules_list.append(data[i])
@@ -110,7 +109,8 @@ def register_automatic(server):
         return fig
 
     @app.callback([Output('weekly_roi_graph', 'figure'),
-                   Output('spy_graph', 'figure')],
+                   Output('spy_graph', 'figure'),
+                   Output('ticker_alert', 'is_open')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
                    Input('run_analysis', 'n_clicks'),
@@ -134,6 +134,12 @@ def register_automatic(server):
             ticker = ticker_sp500_input
         else:
             ticker = ticker_input
+            check_start = datetime.now() - timedelta(days=5)
+            check_end = datetime.now()
+            df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
+                                                         check_end.strftime('%Y-%m-%d'))
+            if df.empty:
+                return px.line(), px.line(), True
 
         print(rules_list)
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
@@ -199,7 +205,7 @@ def register_automatic(server):
                                     paper_bgcolor='#f9f9f9'
                                     )
 
-        return portfolio, spy_value
+        return portfolio, spy_value, False
 
     @app.callback(
         [Output('date_range', 'start_date'),

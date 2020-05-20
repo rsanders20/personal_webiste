@@ -29,7 +29,12 @@ def make_automatic_dashboard(portfolio_list):
                 html.Div([
                     html.H4(children="Buy/Sell Signals",
                             style={'text-align': 'center'}),
-                    dashboard_controls
+                    dashboard_controls,
+                    dbc.Alert(id='ticker_alert',
+                              children="No Ticker Data Found on Yahoo Finance",
+                              color="warning",
+                              is_open=False,
+                              duration=4000)
                 ],
                     className='pretty_container')
             ]),
