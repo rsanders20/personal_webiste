@@ -396,11 +396,11 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
             start_time = day
             end_time = start_time + datetime.timedelta(days=interval*365)
             if values_df.index[-1] > end_time:
-                interval_df = values_df.iloc[(values_df.index >= start_time) & (values_df.index < end_time)]
+                interval_df = values_df.iloc[(values_df.index >= start_time) & (values_df.index <= end_time)]
                 simple_roi = interval_df['simple_values'].iloc[-1]/interval_df['simple_values'][0]
                 historic_performance.append([start_time, end_time, simple_roi, 'simple', interval])
                 strategic_roi = interval_df['strategic_values'].iloc[-1]/interval_df['strategic_values'].iloc[0]
-                historic_performance.append([start_time,end_time, strategic_roi, 'strategic', interval])
+                historic_performance.append([start_time, end_time, strategic_roi, 'strategic', interval])
 
                 last_day = day
 
@@ -427,9 +427,10 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
 
     # Create a list of each trading day
     all_days = ticker_full_df.index.values
+    all_extra_days = ticker_extra_df.index.values
 
     # Make the daily trades for the simple and strategic strategy
-    rule_df = make_decisions(ticker_extra_df, all_days, np_start_date, np_end_date, rules_list)
+    rule_df = make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list)
     values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
     # Calculate the portfolio performance and create data frames
@@ -455,15 +456,21 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
         elif sum < sell_threshold:
             action = "Sell"
 
-        if i ==0:
+        if i == 0:
+            # strategic_value_list.append(starting_value)
+            # strategic_decision_list.append("Buy")
+            # strategic_state_list.append("Invested")
             strategic_value_list.append(starting_value)
-            strategic_decision_list.append("Buy")
-            strategic_state_list.append("Invested")
-            # strategic_decision_list.append(action)
-            # if action == "Buy":
-            #     strategic_state_list.append("Invested")
-            # else:
-            #     strategic_state_list.append("Cash")
+            if action == "Buy":
+                strategic_state_list.append("Invested")
+                strategic_decision_list.append(action)
+            elif action == "Sell":
+                strategic_state_list.append("Cash")
+                strategic_decision_list.append(action)
+            else:  # Hold
+                # When in doubt, buy in to start the investment.  This is a difference to the historic method.
+                strategic_state_list.append("Invested")
+                strategic_decision_list.append("Buy")
             simple_value_list.append(starting_value)
         else:
             simple_value_list.append(simple_value_list[i-1]*value/value_array[i-1])
@@ -497,7 +504,6 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
                     else:
                         strategic_decision_list.append(action)
 
-
         i = i+1
     ticker_full_df.loc[:, "simple_values"] = simple_value_list
     ticker_full_df.loc[:, "strategic_values"] = strategic_value_list
@@ -507,20 +513,28 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
     return ticker_full_df
 
 
-def make_decisions(ticker_full_df, all_days, np_start_date, np_end_ate, rules_list):
+def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
+    offset = 0
+    for ie, extra_day in enumerate(all_extra_days):
+        if extra_day == all_days[0]:
+            offset = ie
+
     rule_results = []
     for rule in rules_list:
         weight_list = []
         for i, day in enumerate(all_days):
-            larger_time = all_days[i+rule['Larger: When?']]
-            smaller_time = all_days[i+rule['Smaller: When?']]
+            larger_time = all_extra_days[i+offset+rule['Larger: When?']]
+            smaller_time = all_extra_days[i+offset+rule['Smaller: When?']]
 
-            larger_value = ticker_full_df.iloc[ticker_full_df.index==larger_time][rule['Larger: What?']].values
-            smaller_value = ticker_full_df.iloc[ticker_full_df.index.values==smaller_time][rule['Smaller: What?']].values
+            # larger_time = all_days[i+rule['Larger: When?']]
+            # smaller_time = all_days[i+rule['Smaller: When?']]
+
+            larger_value = ticker_extra_df.iloc[ticker_extra_df.index==larger_time][rule['Larger: What?']].values
+            smaller_value = ticker_extra_df.iloc[ticker_extra_df.index.values==smaller_time][rule['Smaller: What?']].values
 
             weight = 0
             if larger_value > smaller_value*(1+rule['Percentage']/100):
-                weight += rule['Weight']
+                weight = rule['Weight']
 
             weight_list.append(weight)
 

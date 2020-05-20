@@ -51,12 +51,14 @@ def register_automatic(server):
     ],
     style={'width': '97%'})
 
-    # TODO:  9)  Add in alert if the analysis worked or not
-    #       10)  Label the historic graph more accurately
-    #       10)  Add in a way to save the strategy to a database
-    #       11)  Add in a way to apply a strategy to a portfolio (For each stock, add dropdown to select strategy)
+    # TODO:  9)  Add in a warning if the ticker is not recognized.  Add to manual as well.
+    #       10)  Provide a score for the historic graph
     #       12)  Add in an "optimize-rules" button
-    #
+    #       10)  Add in a way to save the strategy to a database
+    #       10)  Label the historic graph with the strategy name and ticker
+    #       11)  Add in a way to apply a strategy to a portfolio
+    #           (For each stock, add dropdown to select strategy as well as the date the strategy starts working)
+    #       13)  Add in more than just the moving averages...alpha, beta, theta, etc.
 
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
@@ -135,7 +137,7 @@ def register_automatic(server):
 
         print(rules_list)
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
-        now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
+        now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
         values_df = historical_calculations.get_roi(ticker, base_time, now_time,
                                                     rules_list, buy_threshold, sell_threshold)
 
@@ -234,6 +236,6 @@ def register_automatic(server):
         [State('signal_table', 'data'),
          State('signal_table', 'columns')])
     def add_row(n_clicks, rows, columns):
-        if n_clicks > 0:
+        if n_clicks:
             rows.append({c['id']: '' for c in columns})
         return rows
