@@ -12,8 +12,8 @@ import plotly.express as px
 from trades.manual import stock_calculations
 
 
-def make_automatic_dashboard(portfolio_list):
-
+def make_automatic_dashboard():
+    print("making dashboard")
     historic_roi = make_historic_roi_graph()
     weekly_roi = make_weekly_graph()
     spy_graph = make_spy_graph()
@@ -169,6 +169,10 @@ def make_dashboard_controls():
         dbc.FormText("Run the analysis")
     ])
 
+    save_button = dbc.Button(id='save_button',
+                              children='Save Signals to Database',
+                              block=True)
+
     controls_form = dbc.FormGroup([
             dbc.Label("Weighted Signals"),
             signal_div,
@@ -202,6 +206,21 @@ def make_dashboard_controls():
                     run_analysis
                 ])
             ]),
+            dbc.Row([
+                dbc.Col([
+                    save_button
+                ])
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Alert(
+                        id='save_alert',
+                        duration=4000,
+                        is_open=False,
+                        children="",
+                        color='warning'),
+                ]),
+            ])
         ])
     ])
 
@@ -267,18 +286,10 @@ def make_weekly_progress():
 
 
 def make_signal_table():
-    rules_list = [
-        {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-         'Percentage': 3.0, "Weight": -1.0},
-        {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-         'Percentage': 2.0, "Weight": -1.0},
-        {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close',
-         'Percentage': 1.0, "Weight": -1.0},
-    ]
     signal_div = html.Div([
         dash_table.DataTable(
             id='signal_table',
-            data=rules_list,
+            # data=rules_list,
             columns=[
                 {'id': 'Larger: When?', 'name': 'Larger: When?', 'editable':True, 'type': 'numeric'},
                 {'id': 'Larger: What?', 'name': 'Larger: What?', 'presentation': 'dropdown', 'editable':True, },
@@ -290,9 +301,9 @@ def make_signal_table():
 
             editable=True,
             row_deletable=True,
-            row_selectable='multi',
+            # row_selectable='multi',
             # selected_rows = [],
-            selected_rows = [i for i in range(len(rules_list))],
+            # selected_rows = [i for i in range(len(rules_list))],
             dropdown={
                 'Larger: What?': {
                     'options': [
@@ -323,6 +334,11 @@ def make_historic_button():
                 dcc.DatePickerRange(id='historic_date',
                                     start_date=start_time,
                                     end_date=now_time)
+            ]),
+            dbc.Col([
+               dbc.Alert(id='historic_alert',
+                         children='Strategy Score:  ',
+                         color='primary')
             ]),
             dbc.Col([
                 dbc.Button(id='historic_input',
@@ -357,20 +373,80 @@ def get_rules():
 
 
 def make_auto_navbar():
-    navbar_div = html.Div([
-        dbc.Row([
+    navbar_div = dbc.Navbar(
+        [
+                dbc.Col([
+                    dbc.NavbarBrand("Strategy", className="ml-2")
+                ],
+                    width=2),
+                dbc.Col([
+                    dbc.RadioItems(
+                        id='new_strategy_type',
+                        options=[
+                            {'label': 'Empty', 'value': 'Empty'},
+                            {'label': 'Copy', 'value': 'Copy'},
+                            {'label': 'Default', 'value': 'Default'}
+                        ],
+                        value='Default',
+                        style={'color': 'white'},
+                    ),
+                ]),
+                dbc.Col([
+                    dcc.Dropdown(
+                        id='strategy_name',
+                        placeholder='Select Existing Strategy'
+                    ),
+                ],
+                    width=2),
+                dbc.Col([
+                    dbc.Input(
+                        id='new_strategy_name',
+                        placeholder='New Strategy Name',
+                    ),
+                ],
+                    width=2),
+                dbc.Col([
+                    dbc.Button(
+                        id='new_strategy_button',
+                        children='Make New Strategy',
+                        block=True
+                    )
+                ],
+                    width=2),
             dbc.Col([
-                dbc.NavbarSimple(
-                    id='stock_navbar',
-                    color="primary",
-                    dark=True,
-                    # style={'padding': '0px'},
-            )
+                dbc.Button(
+                    id='delete_strategy_button',
+                    children='Delete Strategy',
+                    block=True
+                )
             ],
-                width=12)
-        ]),
+                width=2),
+        ],
+        id='stock_navbar',
+        color="primary",
+        dark=True,
+    )
+    navbar = dbc.Row([
+        dbc.Col([
+            navbar_div,
+            dbc.Alert(
+                id='new_strategy_alert',
+                duration=4000,
+                is_open=False,
+                children="No Portfolio Created",
+                color="warning"
+            ),
+            dbc.Alert(
+                id='delete_strategy_alert',
+                duration=4000,
+                is_open=False,
+                children="No Portfolio Deleted",
+                color="warning"
+            )
+        ])
     ])
-    return navbar_div
+
+    return navbar
 
 
 

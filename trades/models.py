@@ -27,6 +27,17 @@ class Portfolio(db.Model):
     trades = db.relationship('Trade', backref='trades', lazy=True)
 
 
+class Strategy(db.Model):
+    __tablename__ = 'strategies'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(50))
+    signals = db.relationship('Signal', backref='signals', lazy=True)
+    buy_threshold = db.Column(db.Float)
+    sell_threshold = db.Column(db.Float)
+    stock_ticker = db.Column(db.String(50))
+
+
 class Trade(db.Model):
     __tablename__ = 'trades'
     id = db.Column(db.Integer, primary_key=True)
@@ -36,6 +47,18 @@ class Trade(db.Model):
     n_shares = db.Column(db.Float)
     purchase_date = db.Column(db.DateTime, default = datetime.utcnow)
     sell_date = db.Column(db.DateTime, default = None)
+
+
+class Signal(db.Model):
+    __tablename__ = 'signals'
+    id = db.Column(db.Integer, primary_key=True)
+    strategy_id = db.Column(db.Integer, db.ForeignKey('strategies.id'), nullable=False)
+    larger_when = db.Column(db.Float)
+    larger_what = db.Column(db.String(50))
+    smaller_when = db.Column(db.Float)
+    smaller_what = db.Column(db.String(50))
+    percentage = db.Column(db.Float)
+    weight = db.Column(db.Float)
 
 
 class Dollar(db.Model):

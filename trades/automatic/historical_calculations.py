@@ -391,6 +391,9 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
     values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
     historic_performance = []
     last_day = base_time
+
+    strategic_score = 0
+    total_score = 0
     for day in values_df.index:
         if (day-last_day).days > day_step:
             start_time = day
@@ -401,6 +404,11 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
                 historic_performance.append([start_time, end_time, simple_roi, 'simple', interval])
                 strategic_roi = interval_df['strategic_values'].iloc[-1]/interval_df['strategic_values'].iloc[0]
                 historic_performance.append([start_time, end_time, strategic_roi, 'strategic', interval])
+                if strategic_roi > simple_roi:
+                    strategic_score += 1
+                    total_score += 1
+                else:
+                    total_score += 1
 
                 last_day = day
 
@@ -409,8 +417,17 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
     historic_df.columns = ['start_time', 'end_time', 'roi', 'strategy', 'interval']
     fig = px.scatter(historic_df, x = 'start_time', y='roi', color='strategy', marginal_y='box')
     fig.update_layout(clickmode='event')
+
+    score_string = f"Improved {strategic_score}/{total_score} realizations"
+    if strategic_score/total_score < 0.5:
+        score_color = 'danger'
+    elif strategic_score/total_score < 0.75:
+        score_color = 'warning'
+    else:
+        score_color = 'success'
+
     # fig = px.box(historic_df, x='interval', y='roi', color='strategy')
-    return fig
+    return fig, score_string, score_color
 
 
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
