@@ -13,7 +13,6 @@ from trades.manual import stock_calculations
 
 
 def make_automatic_dashboard():
-    print("making dashboard")
     historic_roi = make_historic_roi_graph()
     weekly_roi = make_weekly_graph()
     spy_graph = make_spy_graph()

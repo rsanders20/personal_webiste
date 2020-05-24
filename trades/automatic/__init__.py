@@ -43,7 +43,6 @@ def register_automatic(server):
     protect_dash_route(app)
 
     page_nav = automatic_layouts.make_auto_navbar()
-    print("made navbar")
     app.layout = html.Div([
         dcc.Location(id='url', refresh=False, pathname='/purchase/'),
         page_nav,
@@ -52,15 +51,14 @@ def register_automatic(server):
     style={'width': '97%'})
 
     # TODO:
-    #       12)  Add in an "optimize-rules" button
-    #       11)  Add in a way to apply a strategy to a portfolio
+    #       11)  Add in an "optimize-rules" button
+    #       12)  Add in a way to apply a strategy to a portfolio
     #           (For each stock, add dropdown to select strategy as well as the date the strategy starts working)
     #       13)  Add in more than just the moving averages...alpha, beta, theta, etc.
 
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        print("displaying page")
         if pathname == "/purchase/":
             return automatic_layouts.make_automatic_dashboard()
 
@@ -168,7 +166,6 @@ def register_automatic(server):
                    Input('delete_strategy_alert', 'children')])
     def display_nav(pathname, n_new, n_del):
         strategy_list = get_strategies()
-        print(strategy_list)
         if strategy_list:
             options = [{'label': i.name, 'value': i.name} for i in strategy_list]
             value = strategy_list[-1].name
@@ -243,7 +240,6 @@ def register_automatic(server):
             ticker = ticker_sp500_input
         else:
             ticker = ticker_input
-            print(ticker, buy_threshold, sell_threshold)
             check_start = datetime.now() - timedelta(days=5)
             check_end = datetime.now()
             df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
@@ -251,7 +247,6 @@ def register_automatic(server):
             if df.empty:
                 return px.line(), px.line(), True
 
-        print(rules_list)
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
         values_df = historical_calculations.get_roi(ticker, base_time, now_time,
@@ -435,12 +430,18 @@ def register_automatic(server):
         if add_row_time:
             if not save_time and not new_time:
                 is_rows = True
-            if save_time:
+            elif save_time and not new_time:
                 if add_row_time > save_time:
-                    if not new_time:
-                        is_rows = True
-                    elif add_row_time > new_time:
-                        is_rows = True
+                    is_rows = True
+            elif new_time and not save_time:
+                if add_row_time > new_time:
+                    is_rows = True
+            elif save_time > new_time:
+                if add_row_time > save_time:
+                    is_rows = True
+            elif new_time > save_time:
+                if add_row_time > new_time:
+                    is_rows = True
         if add_row_n_clicks and is_rows:
             existing_data.append({c['id']: '' for c in columns})
             return existing_data, buy_threshold, sell_threshold, ticker_input
