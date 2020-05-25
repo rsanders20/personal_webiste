@@ -13,6 +13,7 @@ import numpy as np
 import scipy
 
 
+
 def make_simple_portfolio(all_weeks, spy_full_df):
     weekly_value = []
 
@@ -447,12 +448,10 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
     all_extra_days = ticker_extra_df.index.values
 
     # Make the daily trades for the simple and strategic strategy
-    print(rules_list)
     rule_df = make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list)
     values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
     # Calculate the portfolio performance and create data frames
-    print(values_df['strategic_values'][-1]/values_df['strategic_values'][0])
     return values_df
 
 
