@@ -13,7 +13,6 @@ import numpy as np
 import scipy
 
 
-
 def make_simple_portfolio(all_weeks, spy_full_df):
     weekly_value = []
 
@@ -433,7 +432,9 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
 
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
     early_time = base_time-datetime.timedelta(days=365)
-    ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    # ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    ticker_extra_df = get_data([ticker], early_time, now_time)
+
     ticker_extra_df['50'] = ticker_extra_df.Close.rolling(window=50).mean()
     ticker_extra_df['200'] = ticker_extra_df.Close.rolling(window=200).mean()
 
@@ -563,4 +564,33 @@ def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
     rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
 
     return rule_df
+
+
+def get_data(ticker_list, start_time, end_time):
+    ticker=ticker_list[0]
+    data_dir = r'./assets/sp500/'
+    file = os.path.join(data_dir, ticker+".csv")
+
+    if end_time.weekday() > 4:
+        if end_time.weekday() == 5:
+            end_time = end_time - datetime.timedelta(days=1)
+        elif end_time.weekday() == 6:
+            end_time = end_time - datetime.timedelta(days=2)
+
+    if os.path.isfile(file):
+        existing_df = pd.read_csv(file)
+        df_start_time = datetime.datetime.strptime(existing_df["Date"].iloc[0], '%Y-%m-%d')
+        df_end_time = datetime.datetime.strptime(existing_df["Date"].iloc[-1], '%Y-%m-%d')
+
+        if df_start_time.date() <= start_time.date() and df_end_time.date() >= end_time.date():
+            existing_df.index = pd.to_datetime(existing_df["Date"], format = '%Y-%m-%d')
+            df = existing_df.loc[(existing_df.index>=start_time) & (existing_df.index<=end_time)]
+            print("used existing data")
+        else:
+            df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2), end_time)
+            df.to_csv(file)
+    else:
+        df = stock_calculations.get_yahoo_stock_data([ticker], start_time-datetime.timedelta(days=365*2), end_time)
+        df.to_csv(file)
+    return df
 
