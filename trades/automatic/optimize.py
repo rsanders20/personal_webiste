@@ -1,13 +1,20 @@
+import os
+import time
+
 from skopt import gp_minimize
 from skopt.plots import plot_convergence, plot_evaluations, plot_objective
 from skopt.benchmarks import branin, hart6
 from skopt.acquisition import gaussian_ei
 import numpy as np
+
+from trades.manual import stock_calculations
+
 np.random.seed(237)
 import datetime
 import matplotlib.pyplot as plt
 from trades.automatic.historical_calculations import get_roi
-
+import pandas as pd
+from functools import partial
 
 def f(x, noise_level=0.1):
     return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2))\
@@ -112,13 +119,13 @@ def optimize_weights(weight_list):
         # {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
         #  'Percentage': 10.0, "Weight": -2.0},
         {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-         'Percentage': 1.0, "Weight": -1.0},
+         'Percentage': 1.0, "Weight": -2.0},
         {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -1, 'Smaller: What?': 'Close',
-         'Percentage': 1.5, "Weight": -2.0},
+         'Percentage': 1.0, "Weight": -1.0},
         {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -3, 'Smaller: What?': 'Close',
          'Percentage': 1.0, "Weight": -1.0},
         {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close',
-         'Percentage': 0.0, "Weight": -1.0},
+         'Percentage': 1.0, "Weight": -1.0},
         # {'Larger: When?': -5, 'Larger: What?': 'Close', 'Smaller: When?': -6, 'Smaller: What?': 'Close',
         #  'Percentage': 0.0, "Weight": -1.0},
     ]
@@ -126,19 +133,50 @@ def optimize_weights(weight_list):
     for i, weight in enumerate(weight_list):
         rules_list[i]["Percentage"] = weight
 
-    buy_threshold = -1.5
-    sell_threshold = -1.5
-    ticker = 'AMZN'
-    now_time = datetime.datetime.now()
-    base_time = now_time-datetime.timedelta(days=365)
+    buy_threshold = -2.5
+    sell_threshold = -2.5
+    ticker = 'SPY'
+    now_time = datetime.datetime.now()-datetime.timedelta(days=365)
+    base_time = now_time-datetime.timedelta(days=365*2)
     values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
     roi = -1 * values_df['strategic_values'][-1]/values_df['strategic_values'][0]
 
     return roi
 
 
+def get_data(ticker, start_time, end_time):
+    data_dir = r'../../assets/sp500/'
+    file = os.path.join(data_dir, ticker+".csv")
+
+    if end_time.weekday() > 4:
+        if end_time.weekday() == 5:
+            end_time = end_time - datetime.timedelta(days=1)
+        elif end_time.weekday() == 6:
+            end_time = end_time - datetime.timedelta(days=2)
+
+    if os.path.isfile(file):
+        existing_df = pd.read_csv(file)
+        df_start_time = datetime.datetime.strptime(existing_df["Date"].iloc[0], '%Y-%m-%d')
+        df_end_time = datetime.datetime.strptime(existing_df["Date"].iloc[-1], '%Y-%m-%d')
+        print(df_start_time, start_time)
+        print(df_end_time, end_time)
+        print(df_start_time.date()<=start_time.date() and df_end_time.date()>=end_time.date())
+
+        if df_start_time.date() <= start_time.date() and df_end_time.date() >= end_time.date():
+            existing_df["Date"] = pd.to_datetime(existing_df["Date"], format = '%Y-%m-%d')
+            df = existing_df.loc[(existing_df["Date"]>=start_time) & (existing_df["Date"]<=end_time)]
+            print("used existing data")
+        else:
+            df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2), end_time)
+            df.to_csv(file)
+    else:
+        df = stock_calculations.get_yahoo_stock_data([ticker], start_time-datetime.timedelta(days=365*2), end_time)
+        df.to_csv(file)
+    return df
+
+
 def optimize_roi():
-    bounds = [(0., 5), (0., 10), (0., 10), (0., 10.)]
+    bounds = [(0., 10.), (0., 10), (0., 10), (0., 10.)]
     res = gp_minimize(optimize_weights,  # the function to minimize
                       bounds,  # the bounds on each dimension of x
                       acq_func="EI",  # the acquisition function
@@ -157,6 +195,20 @@ def optimize_roi():
 
 
 if __name__ == "__main__":
-    optimize_roi()
+    now_time = datetime.datetime.now()
+    base_time = now_time-datetime.timedelta(days=100)
+    tic = time.time()
+    df1 = get_data("SPY", base_time, now_time)
+    print(df1.head())
+    toc = time.time()
+    print(f"With existing data: {toc-tic}")
+
+    # TODO:  reformat the date column as the index
+    tic=time.time()
+    df2 = stock_calculations.get_yahoo_stock_data(["SPY"], base_time, now_time)
+    print(df2.head())
+    toc = time.time()
+    print(f"With downloaded data: {toc-tic}")
+    # optimize_roi()
     # test_optimize()
     # test_optimize_6D()
