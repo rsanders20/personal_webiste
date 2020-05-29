@@ -1,9 +1,13 @@
+import cProfile
 import datetime
+import io
 import os
+import pstats
 
 from trades.manual import stock_calculations
 import matplotlib.pyplot as plt
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 from trades.models import Portfolio, Dollar
 from trades.manual.stock_calculations import flatten_df, make_np_date
 import plotly.express as px
@@ -532,6 +536,8 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
 
 
 def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
+    # profile = cProfile.Profile()
+    # profile.enable()
     offset = 0
     for ie, extra_day in enumerate(all_extra_days):
         if extra_day == all_days[0]:
@@ -540,15 +546,27 @@ def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
     rule_results = []
     for rule in rules_list:
         weight_list = []
+        larger_array = ticker_extra_df[rule["Larger: What?"]].to_numpy()
+        smaller_array = ticker_extra_df[rule["Smaller: What?"]].to_numpy()
+        # time_array = ticker_extra_df.index.to_numpy()
         for i, day in enumerate(all_days):
-            larger_time = all_extra_days[i+offset+rule['Larger: When?']]
-            smaller_time = all_extra_days[i+offset+rule['Smaller: When?']]
+            # larger_time = all_extra_days[i+offset+rule['Larger: When?']]
+            # smaller_time = all_extra_days[i+offset+rule['Smaller: When?']]
+
+            larger_value = larger_array[i+offset+rule['Larger: When?']]
+            smaller_value = smaller_array[i+offset+rule['Smaller: When?']]
 
             # larger_time = all_days[i+rule['Larger: When?']]
             # smaller_time = all_days[i+rule['Smaller: When?']]
 
-            larger_value = ticker_extra_df.iloc[ticker_extra_df.index==larger_time][rule['Larger: What?']].values
-            smaller_value = ticker_extra_df.iloc[ticker_extra_df.index.values==smaller_time][rule['Smaller: What?']].values
+            # larger_value = ticker_extra_df.loc[ticker_extra_df.index==larger_time, rule['Larger: What?']].values[0]
+            # smaller_value = ticker_extra_df.loc[ticker_extra_df.index==smaller_time, rule['Smaller: What?']].values[0]
+
+            # larger_value_orig = ticker_extra_df.iloc[ticker_extra_df.index==larger_time][rule['Larger: What?']].values
+            # smaller_value_orig = ticker_extra_df.iloc[ticker_extra_df.index.values==smaller_time][rule['Smaller: What?']].values
+
+            # print(larger_value-larger_value_orig)
+            # print(smaller_value-smaller_value_orig)
 
             weight = 0
             if larger_value > smaller_value*(1+rule['Percentage']/100):
@@ -562,6 +580,12 @@ def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
     rule_df.index = all_days
     rule_df.columns = ["{}".format(i) for i in range(len(rules_list))]
     rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
+    # profile.disable()
+    # s = io.StringIO()
+    # ps = pstats.Stats(profile, stream=s).sort_stats("cumtime")
+    # ps.print_stats()
+    # with open('test.txt', 'w+') as f:
+    #     f.write(s.getvalue())
 
     return rule_df
 
@@ -585,7 +609,7 @@ def get_data(ticker_list, start_time, end_time):
         if df_start_time.date() <= start_time.date() and df_end_time.date() >= end_time.date():
             existing_df.index = pd.to_datetime(existing_df["Date"], format = '%Y-%m-%d')
             df = existing_df.loc[(existing_df.index>=start_time) & (existing_df.index<=end_time)]
-            print("used existing data")
+            # print("used existing data")
         else:
             df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2), end_time)
             df.to_csv(file)

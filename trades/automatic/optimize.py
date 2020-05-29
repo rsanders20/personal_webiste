@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from trades.automatic.historical_calculations import get_roi
 import pandas as pd
 from functools import partial
+import cProfile
+import pstats
 
 def f(x, noise_level=0.1):
     return np.sin(5 * x[0]) * (1 - np.tanh(x[0] ** 2))\
@@ -98,15 +100,15 @@ def test_optimize():
     plt.savefig("test.png")
 
 
-def test_optimize_6D():
+def test_optimize_6d():
     x = np.linspace(-2, 2, 400).reshape(-1, 1)
     fx = np.array([f(x_i, noise_level=0.0) for x_i in x])
     bounds = [(0., 1.)] * 6
     res = gp_minimize(hart6,  # the function to minimize
                       bounds,  # the bounds on each dimension of x
                       acq_func="EI",  # the acquisition function
-                      n_calls=50,  # the number of evaluations of f
-                      n_random_starts=25,  # the number of random initialization points
+                      n_calls=100,  # the number of evaluations of f
+                      n_random_starts=10,  # the number of random initialization points
                       random_state=1234)  # the random seed
 
     # fig = plot_evaluations(res, bins=20)
@@ -114,12 +116,20 @@ def test_optimize_6D():
     plt.savefig("test.png")
 
 
-def optimize_weights(weight_list):
-    tic = time.time()
-    # weight_list = [w1, w2, w3, w4, w5, w6]
+def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time):
+    def optimize_weights(weight_list):
+        for i, weight in enumerate(weight_list):
+            rules_list[i]["Percentage"] = weight
+
+        values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
+        roi = -1 * values_df['strategic_values'][-1] / values_df['strategic_values'][0]
+        return roi
+
+    return optimize_weights
+
+
+def create_yearly_solutions():
     rules_list = [
-        # {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-        #  'Percentage': 10.0, "Weight": -2.0},
         {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
          'Percentage': 1.0, "Weight": -2.0},
         {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -1, 'Smaller: What?': 'Close',
@@ -128,43 +138,51 @@ def optimize_weights(weight_list):
          'Percentage': 1.0, "Weight": -1.0},
         {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close',
          'Percentage': 1.0, "Weight": -1.0},
-        # {'Larger: When?': -5, 'Larger: What?': 'Close', 'Smaller: When?': -6, 'Smaller: What?': 'Close',
-        #  'Percentage': 0.0, "Weight": -1.0},
     ]
-
-    for i, weight in enumerate(weight_list):
-        rules_list[i]["Percentage"] = weight
 
     buy_threshold = -2.5
     sell_threshold = -2.5
     ticker = 'SPY'
-    now_time = datetime.datetime.now()-datetime.timedelta(days=365)
-    base_time = now_time-datetime.timedelta(days=365*2)
-    values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
-    roi = -1 * values_df['strategic_values'][-1]/values_df['strategic_values'][0]
-    toc=time.time()
-    print(f"Optimize Time: {toc-tic}")
+    now_time = datetime.datetime.now() - datetime.timedelta(days=365)
+    base_time = now_time - datetime.timedelta(days=365 * 10)
 
-    return roi
+    results_list = []
+    first_year = 2000
+    for i in range(20):
+        year = first_year+i
+        base_time = datetime.datetime.strptime(f'{year}-01-01', '%Y-%m-%d')
+        now_time = base_time+datetime.timedelta(days=365)
+        optimize_weights_function = create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time)
+        yearly_results = optimize_roi(optimize_weights_function, base_time)
+        results_list.append(yearly_results)
+
+    data_dir = r'./assets/opt/'
+    file = os.path.join(data_dir, ticker+".csv")
+    results_df = pd.DataFrame.from_records(results_list)
+    results_df.to_csv(file)
 
 
-def optimize_roi():
+def optimize_roi(optimize_weights_function, base_time):
+    tic = time.time()
     bounds = [(0., 10.), (0., 10), (0., 10), (0., 10.)]
-    res = gp_minimize(optimize_weights,  # the function to minimize
+    res = gp_minimize(optimize_weights_function,  # the function to minimize
                       bounds,  # the bounds on each dimension of x
                       acq_func="EI",  # the acquisition function
-                      n_calls=10,  # the number of evaluations of f
-                      n_random_starts=5,  # the number of random initialization points
+                      n_calls=50,  # the number of evaluations of f
+                      n_random_starts=15,  # the number of random initialization points
                       random_state=1234)  # the random seed
 
     # fig = plot_evaluations(res, bins=20)
-    print(res)
     print(res.x)
     print(res.fun)
     plot_objective(res, n_samples=50)
     plt.savefig("test_objective.png")
     plot_evaluations(res)
     plt.savefig("test_evaluations.png")
+    toc=time.time()
+    print(f"Optimize Time: {toc-tic}")
+    results_dict = {'res_x': res.x, 'res_fun': res.fun, 'base_time': base_time}
+    return results_dict
 
 
 def test_data_speed():
@@ -176,7 +194,6 @@ def test_data_speed():
     toc = time.time()
     print(f"With existing data: {toc-tic}")
 
-    # TODO:  reformat the date column as the index
     tic=time.time()
     df2 = stock_calculations.get_yahoo_stock_data(["SPY"], base_time, now_time)
     print(df2.head())
@@ -186,6 +203,9 @@ def test_data_speed():
 
 if __name__ == "__main__":
     # test_data_speed()
-    optimize_roi()
+    # TODO:  Save optimum solution for each year for each stock.
+    # optimize_roi()
+    create_yearly_solutions()
+    # timing_function()
     # test_optimize()
     # test_optimize_6D()
