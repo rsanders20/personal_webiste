@@ -8,14 +8,14 @@ from skopt.acquisition import gaussian_ei
 import plotly.express as px
 import numpy as np
 
-from trades.automatic import historical_calculations
-from trades.automatic.optimize import create_optimize_function, optimize_roi
+from trades.strategy import strategy_calculations
+from trades.strategy.optimize import create_optimize_function, optimize_roi
 from trades.manual import stock_calculations
 
 np.random.seed(237)
 import datetime
 import matplotlib.pyplot as plt
-from trades.automatic.historical_calculations import get_roi, get_historic_roi
+from trades.strategy.strategy_calculations import get_roi, get_historic_roi
 import pandas as pd
 from functools import partial
 import cProfile
@@ -176,7 +176,7 @@ def test_data_speed():
     now_time = datetime.datetime.now()
     base_time = now_time-datetime.timedelta(days=100)
     tic = time.time()
-    df1 = historical_calculations.get_data(["SPY"], base_time, now_time)
+    df1 = strategy_calculations.get_data(["SPY"], base_time, now_time)
     print(df1.head())
     toc = time.time()
     print(f"With existing data: {toc-tic}")

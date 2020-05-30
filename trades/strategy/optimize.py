@@ -5,7 +5,7 @@ import numpy as np
 
 np.random.seed(237)
 import datetime
-from trades.automatic.historical_calculations import get_roi, get_historic_roi
+from trades.strategy.strategy_calculations import get_roi, get_historic_roi
 import pandas as pd
 
 

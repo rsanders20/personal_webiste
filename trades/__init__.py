@@ -34,11 +34,14 @@ def create_app():
     from . import home
     home.register_home_dashapp(server)
 
-    from . import automatic
-    automatic.register_automatic(server)
+    from . import strategy
+    strategy.register_strategy(server)
 
     from . import manual
     manual.register_manual(server)
+
+    from . import automatic
+    automatic.register_automatic(server)
 
     return server
 

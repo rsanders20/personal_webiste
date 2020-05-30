@@ -90,11 +90,19 @@ def manual():
     return render_template('dash_iframe.html', url=url)
 
 
+@bp.route('/strategy/', methods=('GET', 'POST'))
+@login_required
+def strategy():
+    url = '/dash/strategy'
+    print("This is strategy:  "+session.get('user_name', None))
+    return render_template('dash_iframe.html', url=url)
+
+
 @bp.route('/automatic/', methods=('GET', 'POST'))
 @login_required
 def automatic():
     url = '/dash/automatic'
-    print("This is travel:  "+session.get('user_name', None))
+    print("This is automatic:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 
