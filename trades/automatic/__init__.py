@@ -15,6 +15,7 @@ import pandas as pd
 
 from trades import db
 from trades.automatic import automatic_layouts, historical_calculations
+from trades.automatic.optimize import create_single_solutions
 from trades.manual import manual_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar, Strategy, Signal
 
@@ -404,45 +405,64 @@ def register_automatic(server):
         return "", 'warning', False
 
     @app.callback(
+        [Output('row_alert', 'is_open'),
+         Output('row_alert', 'children')],
+        [Input('editing-rows-button', 'n_clicks')]
+    )
+    def add_row(n_clicks):
+        if n_clicks:
+            return True, "Adding Row"
+        return False, ""
+
+    @app.callback(
+        [Output('opt_alert', 'is_open'),
+         Output('opt_alert', 'children')],
+        [Input('opt_button', 'n_clicks')]
+    )
+    def add_row(n_clicks):
+        if n_clicks:
+            return True, "Optimizing Percentages..."
+        return False, ""
+
+    @app.callback(
         [Output('signal_table', 'data'),
          Output('buy_threshold', 'value'),
          Output('sell_threshold', 'value'),
          Output('ticker_input', 'value')],
         [Input('save_alert', 'children'),
-         Input('editing-rows-button', 'n_clicks'),
-         Input('strategy_name', 'value')],
-         [State('signal_table', 'data'),
-          State('save_button', 'n_clicks_timestamp'),
-          State('editing-rows-button', 'n_clicks_timestamp'),
-          State('new_strategy_button', 'n_clicks_timestamp'),
-          State('signal_table', 'columns'),
-          State('buy_threshold', 'value'),
-          State('sell_threshold', 'value'),
-          State('ticker_input', 'value')]
+         Input('strategy_name', 'value'),
+         Input('row_alert', 'children'),
+         Input('opt_alert', 'children')],
+        [State('row_alert', 'is_open'),
+         State('opt_alert', 'is_open'),
+         State('signal_table', 'data'),
+         State('signal_table', 'columns'),
+         State('buy_threshold', 'value'),
+         State('sell_threshold', 'value'),
+         State('ticker_input', 'value')]
     )
-    def get_data(save_alert, add_row_n_clicks,
-                 strategy_name, existing_data, save_time, add_row_time, new_time,
-                 columns,
-                 buy_threshold, sell_threshold, ticker_input):
-        # Just add a row
-        print("getting data")
-        is_rows = False
-        if add_row_time:
-            if not save_time and not new_time:
-                is_rows = True
-            elif save_time and not new_time:
-                if add_row_time > save_time:
-                    is_rows = True
-            elif new_time and not save_time:
-                if add_row_time > new_time:
-                    is_rows = True
-            elif save_time > new_time:
-                if add_row_time > save_time:
-                    is_rows = True
-            elif new_time > save_time:
-                if add_row_time > new_time:
-                    is_rows = True
-        if add_row_n_clicks and is_rows:
+    def get_data(save_alert, strategy_name, row_children, opt_children, is_rows, is_opt,
+                 existing_data, columns, buy_threshold, sell_threshold, ticker_input):
+
+        if is_opt:
+            now_time = datetime.now()
+            base_time = now_time-timedelta(days=365*20)
+            bounds = []
+            for rule in existing_data:
+                lower_bound = rule['Percentage'] * 0.5
+                upper_bound = rule['Percentage'] * 3.0
+                bounds.append((lower_bound, upper_bound))
+            goal = "realizations"
+            results = create_single_solutions(
+                existing_data, buy_threshold, sell_threshold, ticker_input,
+                base_time, now_time, bounds, goal)
+            print(results)
+            for i, row in enumerate(existing_data):
+                row['Percentage'] = results[i]
+
+            return existing_data, buy_threshold, sell_threshold, ticker_input
+
+        if is_rows:
             existing_data.append({c['id']: '' for c in columns})
             return existing_data, buy_threshold, sell_threshold, ticker_input
 

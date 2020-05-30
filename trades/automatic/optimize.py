@@ -31,9 +31,10 @@ def create_starting_values():
     sell_threshold = -2.5
     ticker = 'SPY'
 
-    year = 2009
+    year = 2000
     base_time = datetime.datetime.strptime(f'{year}-01-01', '%Y-%m-%d')
-    now_time = base_time+datetime.timedelta(days=365*10)
+    # now_time = base_time+datetime.timedelta(days=365*10)
+    now_time = datetime.datetime.now()
     # bounds = [(0.5, 3.0), (0.5, 1.5), (0.5, 1.5), (0.5, 1.5)]
     goal= "realizations"
 
@@ -89,8 +90,9 @@ def optimize_roi(optimize_weights_function, bounds):
     # plot_evaluations(res)
     # plt.savefig("test_evaluations.png")
     toc=time.time()
-    results_dict = {'res_x1': res.x[0], 'res_x2': res.x[1], 'res_x3': res.x[2], 'res_x4': res.x[3], 'res_fun': res.fun}
-    return results_dict
+    # results_dict = {'res_x1': res.x[0], 'res_x2': res.x[1], 'res_x3': res.x[2], 'res_x4': res.x[3], 'res_fun': res.fun}
+    return res.x
+
 
 if __name__ == "__main__":
     #TODO:

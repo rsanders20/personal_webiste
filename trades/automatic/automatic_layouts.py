@@ -157,24 +157,15 @@ def make_dashboard_controls():
                         block=True,
                     )
                 ]),
-                dbc.Col([
-                    dbc.Button(
-                        id='editing-rows-button',
-                        children='Add row',
-                        block=True,
-                    )
-                ]),
             ]),
         dbc.FormText("Run the analysis")
     ])
 
-    save_button = dbc.Button(id='save_button',
-                              children='Save Signals to Database',
-                              block=True)
-
     controls_form = dbc.FormGroup([
             dbc.Label("Weighted Signals"),
-            signal_div,
+            dcc.Loading(id='loading_signal',
+                        children=[signal_div],
+                        type='default'),
             dbc.FormText("Create weighted signals that determine when to buy or sell. "
                          " Select When (how many days ago) what (open, close, or a moving average) "
                          "and how important (weight) each event is.")
@@ -207,7 +198,23 @@ def make_dashboard_controls():
             ]),
             dbc.Row([
                 dbc.Col([
-                    save_button
+                    dbc.Button(
+                        id='editing-rows-button',
+                        children='Add row',
+                        block=True,
+                    )
+                ]),
+                dbc.Col([
+                    dbc.Button(
+                        id='opt_button',
+                        children='Optimize Percentages',
+                        block=True
+                    )
+                ]),
+                dbc.Col([
+                    dbc.Button(id='save_button',
+                               children='Save Signals to Database',
+                               block=True)
                 ])
             ]),
             dbc.Row([
@@ -218,6 +225,18 @@ def make_dashboard_controls():
                         is_open=False,
                         children="",
                         color='warning'),
+                    dbc.Alert(
+                        id='row_alert',
+                        duration=1000,
+                        is_open=False,
+                        children="",
+                        color='success'),
+                    dbc.Alert(
+                        id='opt_alert',
+                        duration=4000,
+                        is_open=False,
+                        children="",
+                        color='success'),
                 ]),
             ])
         ])
