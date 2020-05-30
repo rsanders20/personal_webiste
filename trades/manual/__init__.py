@@ -16,12 +16,12 @@ from trades.models import User, Trade, Portfolio, Dollar
 from trades import protect_dash_route
 
 
-def get_portfolios():
+def get_manual_portfolios():
     user_name = session.get('user_name', None)
     user = User.query.filter_by(user_name=user_name).one_or_none()
     portfolio_list = []
     if user:
-        portfolio_list = Portfolio.query.filter_by(user_id=user.id).all()
+        portfolio_list = Portfolio.query.filter_by(user_id=user.id, strategy='Manual').all()
 
     return portfolio_list
 
@@ -54,7 +54,7 @@ def register_manual(server):
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        portfolio_list = get_portfolios()
+        portfolio_list = get_manual_portfolios()
 
         if pathname == "/purchase/":
             return manual_layouts.make_manual_dashboard(portfolio_list)
@@ -64,7 +64,7 @@ def register_manual(server):
                    Output('portfolio_input', 'value')],
                   [Input('url', 'pathname')])
     def display_nav(pathname):
-        portfolio_list = get_portfolios()
+        portfolio_list = get_manual_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Manual Portfolio"
         return options, brand_name, portfolio_list[-1].name

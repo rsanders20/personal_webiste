@@ -64,7 +64,7 @@ def make_about_layout():
         dbc.Label("Strategy"),
         dcc.Dropdown(
             id='strategy_input',
-            options=[{'label': i, 'value': i} for i in ['Manual']],
+            options=[{'label': i, 'value': i} for i in ['Manual', 'Automatic']],
         ),
         dbc.FormText("Manual or Automatic"),
 

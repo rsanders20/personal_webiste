@@ -22,14 +22,14 @@ from trades.models import User, Trade, Portfolio, Dollar, Strategy, Signal
 from trades import protect_dash_route
 
 
-def get_strategies():
+def get_auto_portfolios():
     user_name = session.get('user_name', None)
     user = User.query.filter_by(user_name=user_name).one_or_none()
-    strategy_list = []
+    portfolio_list = []
     if user:
-        strategy_list = Strategy.query.filter_by(user_id=user.id).all()
+        portfolio_list = Portfolio.query.filter_by(user_id=user.id, strategy="Automatic").all()
 
-    return strategy_list
+    return portfolio_list
 
 
 def register_automatic(server):
@@ -43,10 +43,20 @@ def register_automatic(server):
 
     protect_dash_route(app)
 
-    page_nav = strategy_layouts.make_auto_navbar()
+    page_nav = manual_layouts.make_navbar_view()
     app.layout = html.Div([
         dcc.Location(id='url', refresh=False, pathname='/auto/'),
         page_nav,
         html.Div(id='page_content'),
     ],
     style={'width': '97%'})
+
+    @app.callback([Output('portfolio_input', 'options'),
+                   Output('stock_navbar', 'brand'),
+                   Output('portfolio_input', 'value')],
+                  [Input('url', 'pathname')])
+    def display_nav(pathname):
+        portfolio_list = get_auto_portfolios()
+        options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
+        brand_name = "Automatic Portfolio"
+        return options, brand_name, portfolio_list[-1].name
