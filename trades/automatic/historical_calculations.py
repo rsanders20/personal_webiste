@@ -431,7 +431,7 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
         score_color = 'success'
 
     # fig = px.box(historic_df, x='interval', y='roi', color='strategy')
-    return fig, score_string, score_color
+    return fig, score_string, score_color, -1*strategic_score/total_score
 
 
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):

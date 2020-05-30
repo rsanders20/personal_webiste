@@ -203,7 +203,7 @@ def register_automatic(server):
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")
 
         # Lump Sum Code
-        fig, score_str, score_color = historical_calculations.get_historic_roi(ticker, base_time, now_time,
+        fig, score_str, score_color, opt_score = historical_calculations.get_historic_roi(ticker, base_time, now_time,
                                                        rules_list, buy_threshold, sell_threshold)
 
         return fig,  score_str, score_color
