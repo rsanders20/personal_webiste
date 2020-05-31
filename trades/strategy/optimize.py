@@ -1,3 +1,4 @@
+import os
 import time
 
 from skopt import gp_minimize
@@ -44,9 +45,9 @@ def create_starting_values():
 def create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal):
     optimize_weights_function = create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker,
                                                          base_time, now_time, goal)
-    results = optimize_roi(optimize_weights_function, bounds)
+    results, performance = optimize_roi(optimize_weights_function, bounds)
     print(results)
-    return results
+    return results, performance
 
 
 def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, goal):
@@ -90,23 +91,32 @@ def optimize_roi(optimize_weights_function, bounds):
     # plot_evaluations(res)
     # plt.savefig("test_evaluations.png")
     toc=time.time()
+    print(f"Optimize Time {toc-tic}")
     # results_dict = {'res_x1': res.x[0], 'res_x2': res.x[1], 'res_x3': res.x[2], 'res_x4': res.x[3], 'res_fun': res.fun}
-    return res.x
+    return res.x, res.fun
+
+
+def combine_df():
+    data_dir = r'./assets/opt/'
+    file1 = os.path.join(data_dir, "default.csv")
+    file2 = os.path.join(data_dir, "default-backup.csv")
+    file3 = os.path.join(data_dir, "default-2017-20yrs")
+
+    df1 = pd.read_csv(file1, index_col=0)
+    df2 = pd.read_csv(file2, index_col=0)
+    print(df1)
+
+    frames = [df2, df1]
+    df3 = pd.concat(frames, ignore_index=True)
+    df3.to_csv(file3)
+    print(df3)
 
 
 if __name__ == "__main__":
-    #TODO:
-    # Instead, add in some more signals to optimize.
-    # Run this optimization on all 500 stocks 2000-2010
-    # Can I use the last years performance to adjust portfolio holding?
-    # Start Jan 2013, end Jan 2015
-    # Look at SPY to see how long "winning" and "losing" go (generally, there are years where it doesn't work great).
-    # Strategy:  For each stock at the start of the year, run 10 yrs of last data to build optimized factors using the realizations method.
-    # Select the 10 stocks that had the best return over the last year.  Sum the final ROI for all stocks.
-    # Each year, re-generate the factors for all stocks, and repeat.
+    # rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal = create_starting_values()
+    # create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal)
 
-    rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal = create_starting_values()
-    create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal)
+    combine_df()
 
     # create_yearly_solutions(rules_list, buy_threshold, sell_threshold, ticker)
     # run_yearly_solutions(rules_list, buy_threshold, sell_threshold, ticker)

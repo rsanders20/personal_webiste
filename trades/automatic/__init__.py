@@ -49,7 +49,7 @@ def register_automatic(server):
         page_nav,
         html.Div(id='page_content'),
     ],
-    style={'width': '97%'})
+    style = {'width': '97%'})
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand'),
