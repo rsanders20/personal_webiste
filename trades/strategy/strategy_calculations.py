@@ -603,15 +603,20 @@ def get_data(ticker_list, start_time, end_time):
 
     if os.path.isfile(file):
         existing_df = pd.read_csv(file)
-        df_start_time = datetime.datetime.strptime(existing_df["Date"].iloc[0], '%Y-%m-%d')
-        df_end_time = datetime.datetime.strptime(existing_df["Date"].iloc[-1], '%Y-%m-%d')
+        if not existing_df.empty:
+            df_start_time = datetime.datetime.strptime(existing_df["Date"].iloc[0], '%Y-%m-%d')
+            df_end_time = datetime.datetime.strptime(existing_df["Date"].iloc[-1], '%Y-%m-%d')
 
-        if df_start_time.date() <= start_time.date() and df_end_time.date() >= end_time.date():
-            existing_df.index = pd.to_datetime(existing_df["Date"], format = '%Y-%m-%d')
-            df = existing_df.loc[(existing_df.index>=start_time) & (existing_df.index<=end_time)]
-            # print("used existing data")
+            if df_start_time.date() <= start_time.date() and df_end_time.date() >= end_time.date():
+                existing_df.index = pd.to_datetime(existing_df["Date"], format = '%Y-%m-%d')
+                df = existing_df.loc[(existing_df.index>=start_time) & (existing_df.index<=end_time)]
+                # print("used existing data")
+            else:
+                df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2), end_time)
+                df.to_csv(file)
         else:
-            df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2), end_time)
+            df = stock_calculations.get_yahoo_stock_data([ticker], start_time - datetime.timedelta(days=365 * 2),
+                                                         end_time)
             df.to_csv(file)
     else:
         df = stock_calculations.get_yahoo_stock_data([ticker], start_time-datetime.timedelta(days=365*2), end_time)

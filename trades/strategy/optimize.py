@@ -4,7 +4,7 @@ import time
 from skopt import gp_minimize
 import numpy as np
 
-np.random.seed(237)
+# np.random.seed(237)
 import datetime
 from trades.strategy.strategy_calculations import get_roi, get_historic_roi
 import pandas as pd

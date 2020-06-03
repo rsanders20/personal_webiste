@@ -438,21 +438,30 @@ def register_strategy(server):
          State('signal_table', 'columns'),
          State('buy_threshold', 'value'),
          State('sell_threshold', 'value'),
-         State('ticker_input', 'value')]
+         State('ticker_input', 'value'),
+         State('date_range', 'start_date'),
+         State('date_range', 'end_date')
+         ]
     )
     def get_data(save_alert, strategy_name, row_children, opt_children, is_rows, is_opt,
-                 existing_data, columns, buy_threshold, sell_threshold, ticker_input):
+                 existing_data, columns, buy_threshold, sell_threshold, ticker_input,
+                 daily_start, daily_end):
 
         if is_opt:
-            now_time = datetime.now()
-            base_time = now_time-timedelta(days=365*20)
+            # now_time = datetime.now()
+            now_time = datetime.strptime(daily_end[0:10], '%Y-%m-%d')
+            # base_time = now_time-timedelta(days=365*10)
+            base_time = datetime.strptime(daily_start[0:10], '%Y-%m-%d')
             bounds = []
             for rule in existing_data:
-                lower_bound = rule['Percentage'] * 0.5
-                upper_bound = rule['Percentage'] * 3.0
+                lower_bound = rule['Percentage'] * 0.75
+                upper_bound = rule['Percentage'] * 1.5
+                # lower_bound = 0.0
+                # upper_bound = 20.0
+
                 bounds.append((lower_bound, upper_bound))
-            goal = "realizations"
-            results = create_single_solutions(
+            goal = "roi"
+            results, performance = create_single_solutions(
                 existing_data, buy_threshold, sell_threshold, ticker_input,
                 base_time, now_time, bounds, goal)
             print(results)
