@@ -41,35 +41,43 @@ def make_automatic_dashboard():
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Purchase Stocks",
+                    html.H4(children="Daily Values",
                             style={'text-align': 'center'}),
+                    dbc.Tabs([
+                        dbc.Tab(label='Daily Values Table'),
+                        dbc.Tab(label='Daily Values Graph')
+                    ])
                 ],
                     className='pretty_container'
                 )
-            ],
-                width=6),
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Sell Stocks",
-                            style={'text-align': 'center'}),
-                ],
-                    className='pretty_container'
-                )
-            ],
-            width=6)
-        ]),
+            ]),
+        ])
     ])
     return dashboard_div
 
 
 def make_auto_controls():
     auto_controls = html.Div([
+        html.Div(id='strat-div'),
         dbc.Row([
             dbc.Col([
-                dash_table.DataTable(id='strat_table')
-            ])
-        ])
+                dbc.Label("Pick the end-date for the automatic strategies"),
+                dcc.DatePickerSingle(id='end-date-picker',
+                                     date=datetime.now())
+            ],
+                width=6),
+            dbc.Col([
+                dbc.Label("Build the Automatic Portfolio"),
+                dbc.Button(id='run-auto',
+                           children='Run',
+                           block=True)
+            ],
+            width=6),
+
+        ],
+        style={'margin-top': '25px'})
     ])
+
 
     return auto_controls
 
