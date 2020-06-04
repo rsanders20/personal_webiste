@@ -72,7 +72,9 @@ def register_automatic(server):
         brand_name = "Automatic Portfolio"
         return options, brand_name, portfolio_list[-1].name
 
-    @app.callback(Output('strat-div', 'children'),
+    @app.callback([Output('portfolio-table', 'data'),
+                   Output('portfolio-table', 'columns'),
+                   Output('portfolio-table', 'dropdown')],
                   [Input('portfolio_input', 'value')]
                   )
     def get_manual_data(portfolio_name):
@@ -125,25 +127,57 @@ def register_automatic(server):
             }
         }
 
-        strat_table = dash_table.DataTable(
-                id='dropdown_per_row',
-                data=data,
-                columns = columns,
-                dropdown=dropdown)
+        # strat_table = dash_table.DataTable(
+        #         id='portfolio-table',
+        #         data=data,
+        #         columns = columns,
+        #         dropdown=dropdown,
+        #         row_selectable=True)
 
-        return strat_table
+        return data, columns, dropdown
 
+    @app.callback(Output('daily-graph', 'figure'),
+                  [Input('portfolio-table', 'selected_rows'),
+                   Input('tabs', 'active_tab'),
+                   Input('portfolio-table', 'columns'),
+                   Input('portfolio-table', 'data')]
+                  )
+    def get_auto_data(rows, active_tab, cols, data):
+        if rows:
+            # print(data[rows[0]])
+            row_data = data[rows[0]]
+            ticker = row_data['Name']
+            value = row_data['Value']
+            strategy_name = row_data['Strategy']
+            start_date = datetime.strptime(row_data['Start Date'][0:10], '%Y-%m-%d')
+            end_date = datetime.now()
+            print(start_date, end_date)
 
+            user_name = session.get('user_name', None)
+            user = User.query.filter_by(user_name=user_name).one_or_none()
+            strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
+            buy_threshold = strategy.buy_threshold
+            sell_threshold = strategy.sell_threshold
+            rules_list = strategy_calculations.signal_to_dict(Signal.query.filter_by(strategy_id = strategy.id).all())
 
+            print(rules_list)
+            # TODO:  Add in a starting value
+            values_df = strategy_calculations.get_roi(ticker, start_date, end_date,
+                                                      rules_list, buy_threshold, sell_threshold)
 
+            # SPY Value Graph
+            trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
+            individual_perf_graph = strategy_calculations.make_portfolio_graph(values_df, 1)
 
-
-
-
-
-
-
-
-
-        return strat_table
+            if active_tab == 'tab-1':
+                return trading_decisions_graph
+            elif active_tab == 'tab-2':
+                return individual_perf_graph
+            else:
+                return px.line()
+        else:
+            if active_tab == 'tab-1':
+                return px.line()
+            else:
+                return px.line()
 

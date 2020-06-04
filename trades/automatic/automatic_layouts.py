@@ -41,14 +41,19 @@ def make_automatic_dashboard():
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Daily Values",
+                    html.H4(children="Compare Automatic Portfolio",
                             style={'text-align': 'center'}),
                     dbc.Tabs([
-                        dbc.Tab(label='Daily Values Table'),
-                        dbc.Tab(label='Daily Values Graph')
-                    ])
+                        dbc.Tab(label='Trading Decisions', tab_id='tab-1'),
+                        dbc.Tab(label='Individual Performance', tab_id='tab-2'),
+                        dbc.Tab(label='Portfolio Performance', tab_id='tab-3')
+                    ],
+                    id = 'tabs',
+                    active_tab='tab-1'),
+                    dcc.Graph(id='daily-graph')
                 ],
                     className='pretty_container'
+
                 )
             ]),
         ])
@@ -58,24 +63,28 @@ def make_automatic_dashboard():
 
 def make_auto_controls():
     auto_controls = html.Div([
-        html.Div(id='strat-div'),
-        dbc.Row([
-            dbc.Col([
-                dbc.Label("Pick the end-date for the automatic strategies"),
-                dcc.DatePickerSingle(id='end-date-picker',
-                                     date=datetime.now())
-            ],
-                width=6),
-            dbc.Col([
-                dbc.Label("Build the Automatic Portfolio"),
-                dbc.Button(id='run-auto',
-                           children='Run',
-                           block=True)
-            ],
-            width=6),
-
-        ],
-        style={'margin-top': '25px'})
+        html.Div(id='strat-div',
+                 children=[dash_table.DataTable(
+                     id='portfolio-table',
+                     row_selectable='single')]
+                 ),
+        # dbc.Row([
+        #     dbc.Col([
+        #         dbc.Label("Pick the end-date for the automatic strategies"),
+        #         dcc.DatePickerSingle(id='end-date-picker',
+        #                              date=datetime.now())
+        #     ],
+        #         width=6),
+        #     dbc.Col([
+        #         dbc.Label("Build the Automatic Portfolio"),
+        #         dbc.Button(id='run-auto',
+        #                    children='Run',
+        #                    block=True)
+        #     ],
+        #     width=6),
+        #
+        # ],
+        # style={'margin-top': '25px'})
     ])
 
 

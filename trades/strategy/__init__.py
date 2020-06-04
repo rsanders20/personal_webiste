@@ -253,62 +253,10 @@ def register_strategy(server):
                                                   rules_list, buy_threshold, sell_threshold)
 
         # SPY Value Graph
-        spy_value = go.Figure()
-        spy_value.add_trace(go.Scatter(
-            x=values_df.index, y = values_df['Close'], name = ticker_input
-        ))
-        spy_value.add_trace(go.Scatter(
-            x=values_df.index, y = values_df['200'], name = '200'
-        ))
-        spy_value.add_trace(go.Scatter(
-            x=values_df.index, y=values_df['50'], name='50'
-        ))
-        spy_value.add_trace(go.Scatter(
-            x=values_df.loc[values_df['strategic_decisions']=='Sell'].index,
-            y = values_df.loc[values_df['strategic_decisions']=='Sell', 'Close'],
-            mode='markers', name='Sell', marker_symbol='triangle-down', marker_color='Red', marker_size=12
-        ))
-        spy_value.add_trace(go.Scatter(
-            x=values_df.loc[values_df['strategic_decisions']=='Buy'].index,
-            y = values_df.loc[values_df['strategic_decisions']=='Buy', 'Close'],
-            mode='markers', name='Buy', marker_symbol='triangle-up', marker_color='Green', marker_size=12
-        ))
-
-        spy_value.update_layout(showlegend=True,
-                                legend_orientation='h',
-                                yaxis=dict(title=f'{ticker_input} Closing Value ($)'),
-                                margin=dict(t=0, b=0, r=0, l=0),
-                                paper_bgcolor='#f9f9f9'
-                                )
+        spy_value = strategy_calculations.make_spy_graph(ticker, values_df)
 
         # Portfolio Graph
-        portfolio = go.Figure()
-        if weekly_roi_radio == 1:
-            portfolio.add_trace(go.Scatter(
-                x = values_df.index, y = values_df['simple_values'], name='Simple'
-            ))
-            portfolio.add_trace(go.Scatter(
-                x=values_df.index, y=values_df['strategic_values'], name='Strategic'
-            ))
-
-            portfolio.update_layout(legend_orientation='h',
-                                          yaxis=dict(title='Portfolio Value ($)'),
-                                          margin=dict(t=0, b=0, r=0, l=0),
-                                          paper_bgcolor='#f9f9f9'
-                                          )
-        else:
-            portfolio.add_trace(go.Scatter(
-                x=values_df.index, y=values_df['simple_values']/1000, name='Simple'
-            ))
-            portfolio.add_trace(go.Scatter(
-                x=values_df.index, y=values_df['strategic_values']/1000, name='Strategic'
-            ))
-
-            portfolio.update_layout(legend_orientation='h',
-                                    yaxis=dict(title='Portfolio ROI []'),
-                                    margin=dict(t=0, b=0, r=0, l=0),
-                                    paper_bgcolor='#f9f9f9'
-                                    )
+        portfolio = strategy_calculations.make_portfolio_graph(values_df, weekly_roi_radio)
 
         return portfolio, spy_value, False
 
