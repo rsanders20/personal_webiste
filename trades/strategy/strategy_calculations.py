@@ -8,7 +8,7 @@ from trades.manual import stock_calculations
 import matplotlib.pyplot as plt
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
-from trades.models import Portfolio, Dollar
+from trades.models import Portfolio, Dollar, Strategy, Signal
 from trades.manual.stock_calculations import flatten_df, make_np_date
 import plotly.express as px
 import plotly.graph_objs as go
@@ -434,7 +434,7 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
     return fig, score_string, score_color, -1*strategic_score/total_score
 
 
-def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold):
+def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, starting_value):
     early_time = base_time-datetime.timedelta(days=365)
     # ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
     ticker_extra_df = get_data([ticker], early_time, now_time)
@@ -454,17 +454,17 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
 
     # Make the daily trades for the simple and strategic strategy
     rule_df = make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list)
-    values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold)
+    values_df = get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold, starting_value)
 
     # Calculate the portfolio performance and create data frames
     return values_df
 
 
-def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold):
+def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold, starting_value):
     ticker_full_df.loc[:, "sum"] = rule_df['sum']
     sum_array = ticker_full_df['sum'].values
     value_array = ticker_full_df['Close'].values
-    starting_value = 1000.00
+    # starting_value = 1000.00
     strategic_value_list = []
     strategic_decision_list = []
     strategic_state_list = []
@@ -695,3 +695,22 @@ def signal_to_dict(signal_list):
                      'Percentage': signal.percentage,
                      'Weight': signal.weight})
     return data
+
+
+def get_values_df(row_data, user):
+    # print(data[rows[0]])
+    ticker = row_data['Name']
+    value = row_data['Value']
+    strategy_name = row_data['Strategy']
+    start_date = datetime.datetime.strptime(row_data['Start Date'][0:10], '%Y-%m-%d')
+    end_date = datetime.datetime.now()
+    print(start_date, end_date)
+    strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
+    buy_threshold = strategy.buy_threshold
+    sell_threshold = strategy.sell_threshold
+    rules_list = signal_to_dict(Signal.query.filter_by(strategy_id=strategy.id).all())
+
+    print(rules_list)
+    values_df = get_roi(ticker, start_date, end_date, rules_list, buy_threshold, sell_threshold, value)
+
+    return values_df

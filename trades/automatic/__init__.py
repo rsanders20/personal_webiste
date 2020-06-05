@@ -127,13 +127,6 @@ def register_automatic(server):
             }
         }
 
-        # strat_table = dash_table.DataTable(
-        #         id='portfolio-table',
-        #         data=data,
-        #         columns = columns,
-        #         dropdown=dropdown,
-        #         row_selectable=True)
-
         return data, columns, dropdown
 
     @app.callback(Output('daily-graph', 'figure'),
@@ -143,41 +136,51 @@ def register_automatic(server):
                    Input('portfolio-table', 'data')]
                   )
     def get_auto_data(rows, active_tab, cols, data):
-        if rows:
-            # print(data[rows[0]])
-            row_data = data[rows[0]]
-            ticker = row_data['Name']
-            value = row_data['Value']
-            strategy_name = row_data['Strategy']
-            start_date = datetime.strptime(row_data['Start Date'][0:10], '%Y-%m-%d')
-            end_date = datetime.now()
-            print(start_date, end_date)
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
 
-            user_name = session.get('user_name', None)
-            user = User.query.filter_by(user_name=user_name).one_or_none()
-            strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
-            buy_threshold = strategy.buy_threshold
-            sell_threshold = strategy.sell_threshold
-            rules_list = strategy_calculations.signal_to_dict(Signal.query.filter_by(strategy_id = strategy.id).all())
+        if active_tab == 'tab-1' or active_tab == 'tab-2':
+            if rows:
+                row_data = data[rows[0]]
+                ticker = row_data['Name']
 
-            print(rules_list)
-            # TODO:  Add in a starting value
-            values_df = strategy_calculations.get_roi(ticker, start_date, end_date,
-                                                      rules_list, buy_threshold, sell_threshold)
+                values_df = strategy_calculations.get_values_df(row_data, user)
+                trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
+                individual_perf_graph = strategy_calculations.make_portfolio_graph(values_df, 1)
 
-            # SPY Value Graph
-            trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
-            individual_perf_graph = strategy_calculations.make_portfolio_graph(values_df, 1)
-
-            if active_tab == 'tab-1':
-                return trading_decisions_graph
-            elif active_tab == 'tab-2':
-                return individual_perf_graph
+                if active_tab == 'tab-1':
+                    return trading_decisions_graph
+                elif active_tab == 'tab-2':
+                    return individual_perf_graph
             else:
                 return px.line()
         else:
-            if active_tab == 'tab-1':
-                return px.line()
+            df_strat_dict = {}
+            df_simple_dict = {}
+            if data:
+                for row in data:
+                    df_strat = pd.DataFrame()
+                    df_simple = pd.DataFrame()
+                    value_df = strategy_calculations.get_values_df(row, user)
+                    ticker = row['Name']
+                    df_strat['strategic'] = value_df['strategic_values']
+                    df_simple['simple'] = value_df['simple_values']
+                    df_strat_dict[ticker] = df_strat
+                    df_simple_dict[ticker] = df_simple
+
+                full_simple_df = pd.concat(df_simple_dict, axis=1)
+                full_strat_df = pd.concat(df_strat_dict, axis=1)
+
+                full_strat_df['sum'] = full_strat_df[list(full_strat_df.columns)].sum(axis=1)
+                full_simple_df['sum'] = full_simple_df[list(full_simple_df.columns)].sum(axis=1)
+
+                total_fig = go.Figure()
+                total_fig.add_trace(go.Scatter(x=full_simple_df.index, y=full_simple_df['sum'], name='simple'))
+                total_fig.add_trace(go.Scatter(x=full_strat_df.index, y=full_strat_df['sum'], name='strategic'))
+
+                return total_fig
+
             else:
                 return px.line()
+
 
