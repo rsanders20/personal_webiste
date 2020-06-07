@@ -4,6 +4,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 import plotly.express as px
+from dash_table.Format import Format
 
 from trades.manual import stock_calculations
 
@@ -177,9 +178,9 @@ def make_purchase_layout():
     source_input = dbc.FormGroup([
         dbc.Label("Source"),
         dbc.RadioItems(id="source_input",
-                       options=[{'label': "Re-invest", 'value':'re-invest'},
-                                {'label': 'External funds', 'value': 'add'}],
-                       value = 'add'),
+                       options=[{'label': "Internal Funds", 'value':'Internal Funds'},
+                                {'label': 'External Funds', 'value': 'External Funds'}],
+                       value = 'External Funds'),
 
 
     ])
@@ -292,8 +293,10 @@ def make_sell_layout():
                              columns=(
                                  [{'id': 'portfolio', 'name': 'Portfolio'},
                                   {'id': 'security', 'name': 'Company'},
-                                  {'id': 'value', 'name': 'Value'},
+                                  {'id': 'purchase_value', 'name': 'Purchase Value'},
                                   {'id': 'purchase_date', 'name': 'Purchase Date'},
+                                  {'id': 'purchase_internal', 'name': 'Internal?'},
+                                  {'id': 'sell_value', 'name': 'Sell Value', 'type': 'numeric', 'format': Format(precision=5)},
                                   {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
                                   ]),
                              row_selectable='single'),

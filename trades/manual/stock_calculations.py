@@ -153,11 +153,84 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
     return pxdf, ti_df, roi
 
 
-def plot_stocks(ticker_symbol, value_list, start_time_list, end_time_list, all_cash):
-    start_time = min([sti for sti in start_time_list])
-    end_time = max([eti for eti in end_time_list])
-    df = get_yahoo_stock_data(ticker_symbol, start_time, end_time)
-    pxdf, total, roi = flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, all_cash)
+def plot_stocks(all_trades):
+    now_time = datetime.now()
+    ticker_list = []
+    purchase_dates = []
+    purchase_values = []
+    purchase_internals = []
+    sell_dates = []
+    sell_values = []
+    for trade in all_trades:
+        ticker_list.append(trade.security)
+        purchase_dates.append(trade.purchase_date)
+        purchase_values.append(trade.purchase_value)
+        purchase_internals.append(trade.purchase_internal)
+        if trade.sell_date:
+            sell_dates.append(trade.sell_date)
+            sell_values.append(trade.sell_value)
+        else:
+            sell_dates.append(now_time)
+            sell_values.append(None)
+
+    print(purchase_dates)
+    start_time = min([sti for sti in purchase_dates])
+    end_time = max([eti for eti in sell_dates])
+    full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
+    # print(full_df['CVX']['Close'])
+
+    df_list = []
+    for i, ticker in enumerate(ticker_list):
+        individual_df = pd.DataFrame()
+        purchase_date = make_np_date(purchase_dates[i])
+        sell_date = make_np_date(sell_dates[i])
+
+        individual_df[ticker] = full_df.loc[(full_df.index.values >= purchase_date) & (full_df.index.values <= sell_date), ticker]['Close'].copy()
+        shares = purchase_values[i]/individual_df[ticker][0]
+        individual_df[ticker] = individual_df[ticker]*shares
+
+        df_list.append(individual_df)
+    print(df_list[1])
+    df = pd.concat(df_list)
+
+    print(df)
+
+    for ticker, purchase_date in zip(ticker_list, purchase_dates):
+        df.loc[pd.to_datetime(df.index.values) < purchase_date, ticker] = np.nan
+
+    for ticker, sell_date in zip(ticker_list, sell_dates):
+        df.loc[pd.to_datetime(df.index.values) > sell_date, ticker] = np.nan
+
+
+    cash_list = []
+    invested_list = []
+    for date in df.index.values:
+        pd_date = pd.to_datetime(date)
+        cash = 0
+        invested = 0
+        for trade in all_trades:
+            if trade.sell_date:
+                # print(trade.sell_date, type(trade.sell_date))
+                # print(pd.to_datetime(date), type(pd.to_datetime(date)))
+                if trade.sell_date <= pd_date:
+                    cash += trade.sell_value
+            if trade.purchase_date <= pd_date:
+                if trade.purchase_internal:
+                    cash += -1 * trade.purchase_value
+                else:
+                    invested += trade.purchase_value
+
+        cash_list.append(cash)
+        invested_list.append(invested)
+
+    df['cash'] = cash_list
+    df['invested'] = invested_list
+    # df['total'] =
+    # print(df)
+
+    df['roi']
+    donezo
+    # pxdf, total, roi = flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, all_cash)
     if not pxdf.empty:
         pxdf.reset_index(level=0, inplace=True)
         i_graph = px.line(pxdf, x='Date', y='Close', color='ticker')

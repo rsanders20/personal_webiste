@@ -43,9 +43,13 @@ class Trade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     portfolio_id = db.Column(db.Integer, db.ForeignKey('portfolios.id'), nullable=False)
     security = db.Column(db.String(10))
-    value = db.Column(db.Float)
-    n_shares = db.Column(db.Float)
+    purchase_value = db.Column(db.Float)
     purchase_date = db.Column(db.DateTime, default = datetime.utcnow)
+    purchase_internal = db.Column(db.Boolean, default = False)
+
+    n_shares = db.Column(db.Float)
+
+    sell_value = db.Column(db.Float)
     sell_date = db.Column(db.DateTime, default = None)
 
 

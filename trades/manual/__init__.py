@@ -69,21 +69,21 @@ def register_manual(server):
         brand_name = "Manual Portfolio"
         return options, brand_name, portfolio_list[-1].name
 
-    @app.callback(Output('security_input', 'options'),
-                   [Input('portfolio_input', 'value')])
-    def update_company_dd(portfolio_name):
-        if not portfolio_name:
-            return []
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
-        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
-        security_options = []
-        for stock in trades:
-            stock_string = stock.security + ", " + datetime.strftime(stock.purchase_date, '%Y-%m-%d') + ", " + str(stock.value)
-            security_options.append({'label': stock_string, 'value': stock_string})
-
-        return security_options
+    # @app.callback(Output('security_input', 'options'),
+    #                [Input('portfolio_input', 'value')])
+    # def update_company_dd(portfolio_name):
+    #     if not portfolio_name:
+    #         return []
+    #     user_name = session.get('user_name', None)
+    #     user = User.query.filter_by(user_name=user_name).one_or_none()
+    #     portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+    #     trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+    #     security_options = []
+    #     for stock in trades:
+    #         stock_string = stock.security + ", " + datetime.strftime(stock.purchase_date, '%Y-%m-%d') + ", " + str(stock.value)
+    #         security_options.append({'label': stock_string, 'value': stock_string})
+    #
+    #     return security_options
 
     @app.callback(Output('portfolio_graph', 'figure'),
                   [Input('manage_security_input', 'value'),
@@ -122,24 +122,9 @@ def register_manual(server):
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
-        all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
-        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
-        now_time = datetime.now()
-        ticker_list = []
-        start_dates = []
-        value_list = []
-        sell_dates = []
-        for trade in trades:
-            ticker_list.append(trade.security)
-            start_dates.append(trade.purchase_date)
-            value_list.append(trade.value)
-            if trade.sell_date:
-                sell_dates.append(trade.sell_date)
-            else:
-                sell_dates.append(now_time)
+        all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(all_trades)
 
-        print(ticker_list, value_list, start_dates, sell_dates, all_cash)
-        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(ticker_list, value_list, start_dates, sell_dates, all_cash)
         # i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
         # r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
         i_graph.update_layout(margin=dict(t=0, b=0),
@@ -171,12 +156,20 @@ def register_manual(server):
                 sell_date = datetime.strftime(trade.sell_date, '%Y-%m-%d')
             else:
                 sell_date = None
+
+            if trade.sell_value:
+                sell_value = trade.sell_value
+            else:
+                sell_value = None
+
             data.append({'id': trade.id,
                          'portfolio': portfolio.name,
                          'security': trade.security,
-                         'value': trade.value,
+                         'purchase_value': trade.purchase_value,
                          'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d'),
-                         'sell_date': sell_date
+                         'purchase_internal': trade.purchase_internal,
+                         'sell_date': sell_date,
+                         'sell_value': sell_value
                          })
 
         return data
@@ -197,53 +190,63 @@ def register_manual(server):
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id = user.id, name=portfolio).one_or_none()
-        trade = Trade(portfolio_id = portfolio.id,
-                      security=security,
-                      value=value,
-                      purchase_date=purchase_datetime)
-        db.session.add(trade)
 
-        if source == 'add':
-            cash_dd = Dollar(portfolio_id=portfolio.id,
-                             value=value,
-                             purchase_date=purchase_datetime,
-                             added=True)
-
-            cash_invested = Dollar(portfolio_id=portfolio.id,
-                                   value=value,
-                                   purchase_date=purchase_datetime,
-                                   invested=True)
-            db.session.add(cash_dd)
-            db.session.add(cash_invested)
-            db.session.commit()
-            return "Portfolio Updated", "success", True
-        else:
-            all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
-            if not all_cash:
+        purchase_internal = False
+        if source == 'External Funds':
+            purchase_internal = False
+        elif source == 'Internal Funds':
+            purchase_internal = True
+            all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+            # all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
+            if not all_trades:
                 return "No cash is currently in the portfolio.  Sell manual or add more", "danger", True
 
-            added_cash = Dollar.query.filter(
-                Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.added == True).all()
-            de_invested_cash = Dollar.query.filter(
-                Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.de_invested == True).all()
-            invested_cash = Dollar.query.filter(
-                Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.invested == True).all()
+            cash = 0
+            for trade in all_trades:
+                if trade.sell_date:
+                    if trade.sell_date <= purchase_datetime:
+                        cash += trade.sell_value
+                if trade.purchase_date <= purchase_datetime:
+                    if trade.purchase_internal:
+                        cash += -1 * trade.purchase_value
 
-            ac_sum = sum([row.value for row in added_cash])
-            di_sum = sum([ac.value for ac in de_invested_cash])
-            ic_sum = (sum([ac.value for ac in invested_cash]))
+            if cash < value:
+                return "Only ${:.2f} cash.  Please add more funds.".format(cash), "danger", True
 
-            available_cash = ac_sum-ic_sum+di_sum
-            if available_cash < value:
-                return "Only ${:.2f} cash.  Please add more funds.".format(available_cash), "danger", True
+        trade = Trade(portfolio_id=portfolio.id,
+                      security=security,
+                      purchase_value=value,
+                      purchase_date=purchase_datetime,
+                      purchase_internal=purchase_internal)
+        db.session.add(trade)
+        db.session.commit()
+        return "Portfolio Updated", "success", True
 
-            cash_invested = Dollar(portfolio_id=portfolio.id,
-                                   value=value,
-                                   purchase_date=purchase_datetime,
-                                   invested=True)
-            db.session.add(cash_invested)
-            db.session.commit()
-            return "Portfolio Updated", "success", True
+            # added_cash = Dollar.query.filter(
+            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.added == True).all()
+            # de_invested_cash = Dollar.query.filter(
+            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.de_invested == True).all()
+            # invested_cash = Dollar.query.filter(
+            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.invested == True).all()
+            #
+            # ac_sum = sum([row.value for row in added_cash])
+            # di_sum = sum([ac.value for ac in de_invested_cash])
+            # ic_sum = (sum([ac.value for ac in invested_cash]))
+            #
+            # available_cash = ac_sum-ic_sum+di_sum
+            # if available_cash < value:
+            #
+            #
+            # cash_invested = Dollar(portfolio_id=portfolio.id,
+            #                        value=value,
+            #                        purchase_date=purchase_datetime,
+            #                        invested=True)
+            # db.session.add(cash_invested)
+            # db.session.commit()
+
+
+
+        db.session.add(trade)
 
     @app.callback([Output('sell_alert', 'children'),
                    Output('sell_alert', 'color'),
@@ -257,11 +260,6 @@ def register_manual(server):
 
         if sell_date is None:
             return "Select a date of sale", "danger", True
-
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
-        sell_datetime = datetime.strptime(sell_date, '%Y-%m-%d')
 
         if datetime.strptime(sell_date, '%Y-%m-%d') > datetime.now():
             return "Sell date cannot be in the future", "danger", True
@@ -281,16 +279,13 @@ def register_manual(server):
 
         trade.sell_date = datetime.strptime(sell_date, '%Y-%m-%d')
 
+        #TODO:  Fix a bug with this being off by one day?
         df = stock_calculations.get_yahoo_stock_data([trade.security], trade.purchase_date, trade.sell_date)
-        value_factor = float(trade.value) / df['Close'][0]
+        value_factor = float(trade.purchase_value) / df['Close'][0]
         sell_value = df['Close'][-1] * value_factor
+
+        trade.sell_value = sell_value
         print(sell_value)
 
-        de_invested = Dollar(portfolio_id=portfolio.id,
-                             value=sell_value,
-                             purchase_date=sell_datetime+timedelta(days=1),
-                             de_invested=True)
-        db.session.add(de_invested)
         db.session.commit()
-
         return "Stock Sold", "success", True
