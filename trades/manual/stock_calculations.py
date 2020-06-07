@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import plotly.express as px
+import plotly.graph_objs as go
 
 
 def get_securities_list():
@@ -154,6 +155,7 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
 
 
 def plot_stocks(all_trades):
+    #TODO:  Handle the one or no-stock case
     now_time = datetime.now()
     ticker_list = []
     purchase_dates = []
@@ -177,7 +179,6 @@ def plot_stocks(all_trades):
     start_time = min([sti for sti in purchase_dates])
     end_time = max([eti for eti in sell_dates])
     full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
-    # print(full_df['CVX']['Close'])
 
     df_list = []
     for i, ticker in enumerate(ticker_list):
@@ -185,22 +186,16 @@ def plot_stocks(all_trades):
         purchase_date = make_np_date(purchase_dates[i])
         sell_date = make_np_date(sell_dates[i])
 
-        individual_df[ticker] = full_df.loc[(full_df.index.values >= purchase_date) & (full_df.index.values <= sell_date), ticker]['Close'].copy()
-        shares = purchase_values[i]/individual_df[ticker][0]
-        individual_df[ticker] = individual_df[ticker]*shares
+        individual_df[ticker+f'-{i}'] = full_df.loc[(full_df.index.values >= purchase_date) & (full_df.index.values < sell_date), ticker]['Close'].copy(deep=True)
+        shares = purchase_values[i]/individual_df[ticker+f'-{i}'][0]
+        individual_df[ticker+f'-{i}'] = individual_df[ticker+f'-{i}']*shares
 
         df_list.append(individual_df)
-    print(df_list[1])
-    df = pd.concat(df_list)
 
-    print(df)
-
-    for ticker, purchase_date in zip(ticker_list, purchase_dates):
-        df.loc[pd.to_datetime(df.index.values) < purchase_date, ticker] = np.nan
-
-    for ticker, sell_date in zip(ticker_list, sell_dates):
-        df.loc[pd.to_datetime(df.index.values) > sell_date, ticker] = np.nan
-
+    df1 = pd.DataFrame()
+    #This is only in place to keep the dataframe from losing rows.
+    df1['remove'] = full_df[ticker_list[0]]['Close'].copy(deep=True)
+    df = pd.concat([df1, *df_list], axis=1)
 
     cash_list = []
     invested_list = []
@@ -224,23 +219,29 @@ def plot_stocks(all_trades):
         invested_list.append(invested)
 
     df['cash'] = cash_list
+    del df['remove']
+    df['total'] = df.sum(axis=1)
     df['invested'] = invested_list
-    # df['total'] =
-    # print(df)
+    df['roi'] = df['total']/df['invested']
 
-    df['roi']
-    donezo
-    # pxdf, total, roi = flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, all_cash)
-    if not pxdf.empty:
-        pxdf.reset_index(level=0, inplace=True)
-        i_graph = px.line(pxdf, x='Date', y='Close', color='ticker')
-        i_graph.update_layout(title="Individual Closing Values")
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(df)
 
-        t_graph = px.line(total, x=total.index, y='Close', color='ticker')
-        t_graph.update_layout(title="Total Portfolio Value", xaxis_title='Date')
+    if not df.empty:
+        i_graph = go.Figure()
+        for i, ticker in enumerate(ticker_list):
+            i_graph.add_trace(go.Scatter(x=df.index, y=df[ticker+f'-{i}'], name=ticker+f'-{i}'))
+        i_graph.add_trace(go.Scatter(x=df.index, y=df['cash'], name='Cash'))
+        i_graph.update_layout(legend_orientation='h')
 
-        r_graph = px.line(roi, x=roi.index, y='Close', color='ticker')
-        r_graph.update_layout(title="Return on Investment", xaxis_title='Date')
+        t_graph = go.Figure()
+        t_graph.add_trace(go.Scatter(x=df.index, y=df['total'], name='Total'))
+        t_graph.add_trace(go.Scatter(x=df.index, y=df['invested'], name='Invested'))
+        t_graph.update_layout(xaxis_title='Date', legend_orientation='h')
+
+        r_graph = go.Figure()
+        r_graph.add_trace(go.Scatter(x=df.index, y=df['roi'], name='ROI'))
+        r_graph.update_layout(xaxis_title='Date', legend_orientation='h')
 
         return i_graph, t_graph, r_graph
     else:

@@ -114,9 +114,10 @@ def register_manual(server):
         [Input('portfolio_input', 'value'),
          Input('sell_alert', 'children'),
          Input('purchase_alert', 'children'),
-         Input('return_radio', 'value')]
+         Input('return_radio', 'value'),
+         Input('delete_alert', 'children')]
     )
-    def update_total_graph(portfolio_name, sell_alert, purchase_alert, return_radio):
+    def update_total_graph(portfolio_name, sell_alert, purchase_alert, return_radio, del_alert):
         if not portfolio_name:
             return px.line(), px.line(), px.line()
         user_name = session.get('user_name', None)
@@ -141,8 +142,9 @@ def register_manual(server):
     @app.callback(Output('portfolio_entries', 'data'),
                   [Input('portfolio_input', 'value'),
                    Input('sell_alert', 'children'),
-                   Input('purchase_alert', 'children')])
-    def update_sell_list(portfolio_name, n_sell, n_purchase):
+                   Input('purchase_alert', 'children'),
+                   Input('delete_alert', 'children')])
+    def update_sell_list(portfolio_name, n_sell, n_purchase, n_del):
         print(portfolio_name)
         if not portfolio_name:
             return []
@@ -222,31 +224,24 @@ def register_manual(server):
         db.session.commit()
         return "Portfolio Updated", "success", True
 
-            # added_cash = Dollar.query.filter(
-            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.added == True).all()
-            # de_invested_cash = Dollar.query.filter(
-            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.de_invested == True).all()
-            # invested_cash = Dollar.query.filter(
-            #     Dollar.portfolio_id == portfolio.id, Dollar.purchase_date <= purchase_date, Dollar.invested == True).all()
-            #
-            # ac_sum = sum([row.value for row in added_cash])
-            # di_sum = sum([ac.value for ac in de_invested_cash])
-            # ic_sum = (sum([ac.value for ac in invested_cash]))
-            #
-            # available_cash = ac_sum-ic_sum+di_sum
-            # if available_cash < value:
-            #
-            #
-            # cash_invested = Dollar(portfolio_id=portfolio.id,
-            #                        value=value,
-            #                        purchase_date=purchase_datetime,
-            #                        invested=True)
-            # db.session.add(cash_invested)
-            # db.session.commit()
+    @app.callback([Output('delete_alert', 'children'),
+                   Output('delete_alert', 'color'),
+                   Output('delete_alert', 'is_open')],
+                  [Input('delete_input', 'n_clicks')],
+                  [State('portfolio_entries', 'data'),
+                   State('portfolio_entries', 'selected_rows'),
+                   State('portfolio_input', 'value')])
+    def delete_from_portfolio(n_input, data, selected_rows, portfolio_name):
 
+        if selected_rows is None:
+            return "Select a row to delete", "danger", True
 
+        del_row = data[selected_rows[0]]
 
-        db.session.add(trade)
+        trade = Trade.query.filter_by(id=del_row['id']).one_or_none()
+        db.session.delete(trade)
+        db.session.commit()
+        return "Trade Deleted", "success", True
 
     @app.callback([Output('sell_alert', 'children'),
                    Output('sell_alert', 'color'),
@@ -279,8 +274,8 @@ def register_manual(server):
 
         trade.sell_date = datetime.strptime(sell_date, '%Y-%m-%d')
 
-        #TODO:  Fix a bug with this being off by one day?
-        df = stock_calculations.get_yahoo_stock_data([trade.security], trade.purchase_date, trade.sell_date)
+        df = stock_calculations.get_yahoo_stock_data([trade.security], trade.purchase_date, trade.sell_date+timedelta(days=1))
+        print(df)
         value_factor = float(trade.purchase_value) / df['Close'][0]
         sell_value = df['Close'][-1] * value_factor
 

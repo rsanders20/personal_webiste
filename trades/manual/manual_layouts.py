@@ -271,6 +271,7 @@ def make_manual_controls():
 def make_sell_controls():
     sell_input = dbc.FormGroup([
         dbc.Button(id='sell_input', children="Sell", block=True),
+        dbc.Button(id='delete_input', children="Delete", block=True)
     ])
 
     sell_date = dbc.FormGroup([
@@ -283,6 +284,12 @@ def make_sell_controls():
 def make_sell_layout():
 
     sell_alert = dbc.Alert(id='sell_alert',
+                           children="Sell or Delete Stocks from the Selected Portfolio",
+                           color='warning',
+                           is_open=False,
+                           duration=4000)
+
+    delete_alert = dbc.Alert(id='delete_alert',
                            children="Sell or Delete Stocks from the Selected Portfolio",
                            color='warning',
                            is_open=False,
@@ -313,6 +320,11 @@ def make_sell_layout():
         dbc.Row([
             dbc.Col([
                 sell_alert
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                delete_alert
             ]),
         ]),
     ],

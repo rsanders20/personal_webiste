@@ -97,7 +97,7 @@ def register_automatic(server):
         for trade in trades:
             ticker_list.append(trade.security)
             start_dates.append(trade.purchase_date)
-            value_list.append(trade.value)
+            value_list.append(trade.purchase_value)
             if trade.sell_date:
                 sell_dates.append(trade.sell_date)
             else:
