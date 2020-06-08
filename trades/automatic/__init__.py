@@ -86,7 +86,7 @@ def register_automatic(server):
         if not portfolio:
             return html.Div()
         all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
-        trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+        trades = Trade.query.filter_by(portfolio_id=portfolio.id, purchase_internal=False).all()
         strategies = get_strategies()
         end_date = datetime.now()
 
@@ -137,8 +137,6 @@ def register_automatic(server):
                   )
     def get_auto_data(rows, active_tab, cols, data):
         #TODO:  Keep track of "external" and "internal" money flow.
-        #TODO:  eliminate dollars?
-        #TODO:  Add a way to delete trades from manual
         #TODO:  Add a way to save stragies to individual trades.
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()

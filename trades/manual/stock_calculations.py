@@ -175,7 +175,6 @@ def plot_stocks(all_trades):
             sell_dates.append(now_time)
             sell_values.append(None)
 
-    print(purchase_dates)
     start_time = min([sti for sti in purchase_dates])
     end_time = max([eti for eti in sell_dates])
     full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
@@ -224,8 +223,8 @@ def plot_stocks(all_trades):
     df['invested'] = invested_list
     df['roi'] = df['total']/df['invested']
 
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-        print(df)
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    #     print(df)
 
     if not df.empty:
         i_graph = go.Figure()

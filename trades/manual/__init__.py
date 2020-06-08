@@ -14,6 +14,7 @@ from trades.manual import manual_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
 from trades import protect_dash_route
+from trades.strategy import strategy_calculations
 
 
 def get_manual_portfolios():
@@ -27,7 +28,6 @@ def get_manual_portfolios():
 
 
 def register_manual(server):
-    # TODO:  Add delete portfolio button, update the warning message
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
     # TODO:  Add a footer, with copyright protection.
 
@@ -85,59 +85,78 @@ def register_manual(server):
     #
     #     return security_options
 
-    @app.callback(Output('portfolio_graph', 'figure'),
-                  [Input('manage_security_input', 'value'),
-                   Input('purchase_date_input', 'date')]
-                  )
-    def update_individual_graph(company_name, purchase_date):
-        now_time = datetime.now()
-        if not purchase_date:
-            start_dates = []
-        else:
-            print(purchase_date)
-            start_dates = [purchase_date]
-            # start_dates = []
-        print(start_dates)
-        ticker_list = [company_name]
-        sell_dates = [datetime.strftime(now_time, '%Y-%m-%d')]
-
-        security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
-        security_graph.update_layout(xaxis=dict(title='Date'),
-                                     yaxis=dict(title='Closing Value ($)'),
-                                     margin=dict(t=0, b=0),
-                                     paper_bgcolor='#f9f9f9')
-        return security_graph
+    # @app.callback(Output('portfolio_graph', 'figure'),
+    #               [Input('manage_security_input', 'value'),
+    #                Input('purchase_date_input', 'date')]
+    #               )
+    # def update_individual_graph(company_name, purchase_date):
+    #     now_time = datetime.now()
+    #     if not purchase_date:
+    #         start_dates = []
+    #     else:
+    #         print(purchase_date)
+    #         start_dates = [purchase_date]
+    #         # start_dates = []
+    #     print(start_dates)
+    #     ticker_list = [company_name]
+    #     sell_dates = [datetime.strftime(now_time, '%Y-%m-%d')]
+    #
+    #     security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
+    #     security_graph.update_layout(xaxis=dict(title='Date'),
+    #                                  yaxis=dict(title='Closing Value ($)'),
+    #                                  margin=dict(t=0, b=0),
+    #                                  paper_bgcolor='#f9f9f9')
+    #     return security_graph
 
     @app.callback(
-        [Output('individual_graph', 'figure'),
-         Output('roi_graph', 'figure')],
+        Output('daily-graph', 'figure'),
         [Input('portfolio_input', 'value'),
+         Input('tabs', 'active_tab'),
          Input('sell_alert', 'children'),
          Input('purchase_alert', 'children'),
-         Input('return_radio', 'value'),
-         Input('delete_alert', 'children')]
+         Input('delete_alert', 'children'),
+         Input('portfolio_entries', 'selected_rows')],
+         [State('portfolio_entries', 'data')]
     )
-    def update_total_graph(portfolio_name, sell_alert, purchase_alert, return_radio, del_alert):
+    def update_total_graph(portfolio_name, active_tab, sell_alert, purchase_alert, del_alert, rows, data):
         if not portfolio_name:
-            return px.line(), px.line(), px.line()
+            return px.line()
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
         all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(all_trades)
 
-        # i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
-        # r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
+        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
+        t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'))
+        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
+
         i_graph.update_layout(margin=dict(t=0, b=0),
                                      paper_bgcolor='#f9f9f9')
         r_graph.update_layout(margin=dict(t=0, b=0),
                                      paper_bgcolor='#f9f9f9')
         t_graph.update_layout(margin=dict(t=0, b=0),
                                      paper_bgcolor='#f9f9f9')
-        if return_radio==1:
-            return i_graph, t_graph,
+        if active_tab == 'tab-1':
+            return i_graph
+        elif active_tab == 'tab-2':
+            if rows:
+                row_dict = data[rows[0]]
+                ticker = row_dict['security']
+                row_data = {'Name': row_dict['security'],
+                            'Value': row_dict['purchase_value'],
+                            'Strategy': 'S1',
+                            'Start Date': row_dict['purchase_date']}
+                values_df = strategy_calculations.get_values_df(row_data, user)
+                trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
+                return trading_decisions_graph
+            return px.line()
+        elif active_tab == 'tab-3':
+            return t_graph
+        elif active_tab == 'tab-4':
+            return r_graph
         else:
-            return i_graph, r_graph
+            return px.line()
 
     @app.callback(Output('portfolio_entries', 'data'),
                   [Input('portfolio_input', 'value'),

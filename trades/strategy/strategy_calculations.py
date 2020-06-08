@@ -392,7 +392,8 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
     now_time = end_date
     interval = 1
     day_step = 30
-    values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
+    portfolio_value = 1000
+    values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, portfolio_value)
     historic_performance = []
     last_day = base_time
 
@@ -626,23 +627,27 @@ def get_data(ticker_list, start_time, end_time):
 
 def make_spy_graph(ticker, values_df):
     spy_value = go.Figure()
+    factor = values_df['simple_values'][0]/values_df['Close'][0]
     spy_value.add_trace(go.Scatter(
-        x=values_df.index, y=values_df['Close'], name=ticker
+        x=values_df.index, y=values_df['simple_values'], name='Simple'
     ))
     spy_value.add_trace(go.Scatter(
-        x=values_df.index, y=values_df['200'], name='200'
+        x=values_df.index, y=values_df['strategic_values'], name='Strategic'
     ))
-    spy_value.add_trace(go.Scatter(
-        x=values_df.index, y=values_df['50'], name='50'
-    ))
+    # spy_value.add_trace(go.Scatter(
+    #     x=values_df.index, y=values_df['200']*factor, name='200'
+    # ))
+    # spy_value.add_trace(go.Scatter(
+    #     x=values_df.index, y=values_df['50']*factor, name='50'
+    # ))
     spy_value.add_trace(go.Scatter(
         x=values_df.loc[values_df['strategic_decisions'] == 'Sell'].index,
-        y=values_df.loc[values_df['strategic_decisions'] == 'Sell', 'Close'],
+        y=values_df.loc[values_df['strategic_decisions'] == 'Sell', 'Close']*factor,
         mode='markers', name='Sell', marker_symbol='triangle-down', marker_color='Red', marker_size=12
     ))
     spy_value.add_trace(go.Scatter(
         x=values_df.loc[values_df['strategic_decisions'] == 'Buy'].index,
-        y=values_df.loc[values_df['strategic_decisions'] == 'Buy', 'Close'],
+        y=values_df.loc[values_df['strategic_decisions'] == 'Buy', 'Close']*factor,
         mode='markers', name='Buy', marker_symbol='triangle-up', marker_color='Green', marker_size=12
     ))
     spy_value.update_layout(showlegend=True,

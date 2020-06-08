@@ -52,6 +52,8 @@ class Trade(db.Model):
     sell_value = db.Column(db.Float)
     sell_date = db.Column(db.DateTime, default = None)
 
+    strategy = db.Column(db.String(50))
+
 
 class Signal(db.Model):
     __tablename__ = 'signals'

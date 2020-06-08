@@ -249,8 +249,9 @@ def register_strategy(server):
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
+        portfolio_value = 1000
         values_df = strategy_calculations.get_roi(ticker, base_time, now_time,
-                                                  rules_list, buy_threshold, sell_threshold)
+                                                  rules_list, buy_threshold, sell_threshold, portfolio_value)
 
         # SPY Value Graph
         spy_value = strategy_calculations.make_spy_graph(ticker, values_df)

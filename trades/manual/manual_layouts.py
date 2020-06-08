@@ -7,12 +7,15 @@ import plotly.express as px
 from dash_table.Format import Format
 
 from trades.manual import stock_calculations
+from trades.strategy import get_strategies
 
 
 def make_manual_dashboard(portfolio_list):
     individual_graph, total_graph, roi_graph = make_total_graph_layout("Total", portfolio_list)
     single_graph = make_individual_graph_layout("Individual", portfolio_list)
-    controls = make_manual_controls()
+    table = make_manual_table()
+    sell_input, del_input, sell_date = make_sell_controls()
+
     return_toggle = make_return_toggle()
     purchase = make_purchase_layout()
 
@@ -20,50 +23,82 @@ def make_manual_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Total Portfolio Value or Return",
+                    html.H4(children="Sell or Delete Stocks",
                             style={'text-align': 'center'}),
-                    return_toggle,
-                    roi_graph,
+                    table,
+                    dbc.Row([
+                        dbc.Col([
+                            sell_date
+                        ]),
+                        dbc.Col([
+                            sell_input
+                        ]),
+                        dbc.Col([
+                            del_input
+                        ])
+                    ]),
+                    # single_graph,
                 ],
                     className='pretty_container'
                 )
-            ],
-                width=6),
-            dbc.Col([
-                html.Div([
-                    html.H4(children='Individual Stocks',
-                            style={'text-align': 'center',
-                                   'margin-bottom': '27.5px'}),
-                    individual_graph
-                ],
-                    className='pretty_container')
-            ],
-            width=6)
+            ]),
         ]),
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children="Purchase Stocks",
+                    html.H4(children="Buy Stocks",
                             style={'text-align': 'center'}),
                     purchase,
-                    single_graph,
+                    # single_graph,
                 ],
                     className='pretty_container'
                 )
-            ],
-                width=6),
+            ]),
+        ]),
+        dbc.Row([
+
             dbc.Col([
                 html.Div([
-                    html.H4(children="Sell Stocks",
-                            style={'text-align': 'center'}),
-                    controls
+                    dbc.Tabs([
+                        dbc.Tab(label='Manual', tab_id='tab-1'),
+                        dbc.Tab(label='Automatic', tab_id='tab-2'),
+                        dbc.Tab(label='Performance', tab_id='tab-3'),
+                        dbc.Tab(label='Returns', tab_id='tab-4')
+
+                    ],
+                        id='tabs',
+                        active_tab='tab-1'),
+                    dcc.Graph(id='daily-graph')
                 ],
                     className='pretty_container'
+
                 )
-            ],
-            width=6)
+            ]),
+
+                # dbc.Col([
+                #     html.Div([
+                #         html.H4(children="Total Portfolio Value or Return",
+                #                 style={'text-align': 'center'}),
+                #         return_toggle,
+                #         roi_graph,
+                #     ],
+                #         className='pretty_container'
+                #     )
+                # ],
+                #     width=6),
+                # dbc.Col([
+                #     html.Div([
+                #         html.H4(children='Individual Stocks',
+                #                 style={'text-align': 'center',
+                #                        'margin-bottom': '27.5px'}),
+                #         individual_graph
+                #     ],
+                #         className='pretty_container')
+                # ],
+                #     width=6)
         ]),
-    ])
+    ]),
+
     return dashboard_div
 
 
@@ -186,6 +221,7 @@ def make_purchase_layout():
     ])
 
     submit_input = dbc.FormGroup([
+        dbc.Label("Buy"),
         dbc.Button(id='submit_input',
                    children="Purchase",
                    block=True)
@@ -223,46 +259,22 @@ def make_purchase_layout():
     return form_div
 
 
-def make_manual_controls():
+def make_manual_table():
     purchase_div = make_purchase_layout()
     sell_div = make_sell_layout()
-    sell_input, sell_date = make_sell_controls()
     return_toggle = make_return_toggle()
 
     controls = dbc.Form([
         dbc.Row([
             dbc.Col([
                 dbc.FormGroup([
-                    dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
+                    # dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
                     sell_div
                 ],
-                    style={'margin-top': '15px'},
+                    # style={'margin-top': '15px'},
                 )
             ]),
-            dbc.Col([
-                dbc.FormGroup([
-                    dbc.Label("Choose the date to sell the selected Stocks", color="success"),
-                    dbc.Row([
-                        dbc.Col([sell_date]),
-                        dbc.Col([sell_input])
-                    ])
-                ],
-                    style={'margin-top': '15px'},
-                ),
-                # dbc.FormGroup([
-                #     dbc.Label("Toggle Between Portfolio Value and Portfolio Returns", color="success"),
-                #     return_toggle
-                # ]),
-            ])
         ]),
-        # dbc.Row([
-        #     dbc.Col([
-        #         dbc.FormGroup([
-        #             dbc.Label("Purchase New Stocks from the S&P500", color="success"),
-        #             purchase_div
-        #         ])
-        #     ])
-        # ]),
     ])
 
     return controls
@@ -271,6 +283,9 @@ def make_manual_controls():
 def make_sell_controls():
     sell_input = dbc.FormGroup([
         dbc.Button(id='sell_input', children="Sell", block=True),
+    ])
+
+    del_input = dbc.FormGroup([
         dbc.Button(id='delete_input', children="Delete", block=True)
     ])
 
@@ -278,7 +293,7 @@ def make_sell_controls():
         dcc.DatePickerSingle(id='sell_date'),
     ])
 
-    return sell_input, sell_date
+    return sell_input, del_input, sell_date,
 
 
 def make_sell_layout():
@@ -295,6 +310,17 @@ def make_sell_layout():
                            is_open=False,
                            duration=4000)
 
+    strategies = get_strategies()
+
+    dropdown = {
+        'Strategy': {
+            'options': [
+                {'label': i.name, 'value': i.name}
+                for i in strategies
+            ]
+        }
+    }
+
     table_input = dbc.FormGroup([
         dash_table.DataTable(id='portfolio_entries',
                              columns=(
@@ -304,9 +330,11 @@ def make_sell_layout():
                                   {'id': 'purchase_date', 'name': 'Purchase Date'},
                                   {'id': 'purchase_internal', 'name': 'Internal?'},
                                   {'id': 'sell_value', 'name': 'Sell Value', 'type': 'numeric', 'format': Format(precision=5)},
-                                  {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
+                                  {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'},
+                                  {'id': 'Strategy', 'name': 'Strategy', 'presentation': 'dropdown', 'editable': True},
                                   ]),
-                             row_selectable='single'),
+                             row_selectable='single',
+                             dropdown=dropdown),
         dbc.FormText("Select the Secruity to Sell, or Delete"),
     ])
 
