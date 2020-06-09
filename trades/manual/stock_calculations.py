@@ -8,6 +8,9 @@ import yfinance as yf
 import plotly.express as px
 import plotly.graph_objs as go
 
+from trades.strategy import strategy_calculations
+from trades.strategy.strategy_calculations import signal_to_dict
+
 
 def get_securities_list():
     dirpath = os.getcwd()
@@ -154,7 +157,39 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
     return pxdf, ti_df, roi
 
 
-def plot_stocks(all_trades):
+def trade_to_dict(trade):
+    trade_dict = {'Name': trade.security,
+                  'Value': trade.purchase_value,
+                  'Strategy': 'S1',
+                  'Start Date': datetime.strftime(trade.purchase_date, '%Y-%m-%d'),
+                  'purchase_internal': trade.purchase_internal}
+    return trade_dict
+
+
+def get_auto_data(user, trades):
+    # TODO:  Keep track of "external" and "internal" money flow.
+    # TODO:  Add a way to save strategies to individual trades.
+    data = []
+    for trade in trades:
+        data.append(trade_to_dict(trade))
+
+    df_strat_dict = {}
+    for row in data:
+        if not row['purchase_internal']:
+            df_strat = pd.DataFrame()
+            value_df = strategy_calculations.get_values_df(row, user)
+            ticker = row['Name']
+            df_strat['strategic'] = value_df['strategic_values']
+            df_strat_dict[ticker] = df_strat
+
+    full_strat_df = pd.concat(df_strat_dict, axis=1)
+    full_strat_df['sum'] = full_strat_df[list(full_strat_df.columns)].sum(axis=1)
+    total_strat = go.Scatter(x=full_strat_df.index, y=full_strat_df['sum'], name='Strategic')
+
+    return full_strat_df
+
+
+def plot_stocks(user, all_trades):
     #TODO:  Handle the one or no-stock case
     now_time = datetime.now()
     ticker_list = []
@@ -192,7 +227,6 @@ def plot_stocks(all_trades):
         df_list.append(individual_df)
 
     df1 = pd.DataFrame()
-    #This is only in place to keep the dataframe from losing rows.
     df1['remove'] = full_df[ticker_list[0]]['Close'].copy(deep=True)
     df = pd.concat([df1, *df_list], axis=1)
 
@@ -226,6 +260,8 @@ def plot_stocks(all_trades):
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     #     print(df)
 
+    full_strat_df = get_auto_data(user, all_trades)
+
     if not df.empty:
         i_graph = go.Figure()
         for i, ticker in enumerate(ticker_list):
@@ -234,12 +270,14 @@ def plot_stocks(all_trades):
         i_graph.update_layout(legend_orientation='h')
 
         t_graph = go.Figure()
-        t_graph.add_trace(go.Scatter(x=df.index, y=df['total'], name='Total'))
+        t_graph.add_trace(go.Scatter(x=df.index, y=df['total'], name='Simple'))
+        t_graph.add_trace(go.Scatter(x=full_strat_df.index, y=full_strat_df['sum'], name='Strategic'))
         t_graph.add_trace(go.Scatter(x=df.index, y=df['invested'], name='Invested'))
         t_graph.update_layout(xaxis_title='Date', legend_orientation='h')
 
         r_graph = go.Figure()
-        r_graph.add_trace(go.Scatter(x=df.index, y=df['roi'], name='ROI'))
+        r_graph.add_trace(go.Scatter(x=df.index, y=df['roi'], name='Simple ROI'))
+        r_graph.add_trace(go.Scatter(x=full_strat_df.index, y=full_strat_df['sum']/df['invested'], name='Strategic ROI'))
         r_graph.update_layout(xaxis_title='Date', legend_orientation='h')
 
         return i_graph, t_graph, r_graph

@@ -125,17 +125,17 @@ def register_manual(server):
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
         all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
-        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(all_trades)
+        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(user, all_trades)
 
         i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
         t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'))
         r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
 
-        i_graph.update_layout(margin=dict(t=0, b=0),
+        i_graph.update_layout(margin=dict(r=0, l=0, b=0),
                                      paper_bgcolor='#f9f9f9')
-        r_graph.update_layout(margin=dict(t=0, b=0),
+        r_graph.update_layout(margin=dict(r=0, l=0, b=0),
                                      paper_bgcolor='#f9f9f9')
-        t_graph.update_layout(margin=dict(t=0, b=0),
+        t_graph.update_layout(margin=dict(r=0, l=0, b=0),
                                      paper_bgcolor='#f9f9f9')
         if active_tab == 'tab-1':
             return i_graph
@@ -150,7 +150,7 @@ def register_manual(server):
                 values_df = strategy_calculations.get_values_df(row_data, user)
                 trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
                 return trading_decisions_graph
-            return px.line()
+            return px.line(title='Select a Stock to View Automatic Trading Decisions')
         elif active_tab == 'tab-3':
             return t_graph
         elif active_tab == 'tab-4':

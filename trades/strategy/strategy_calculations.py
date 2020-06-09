@@ -9,12 +9,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
 from trades.models import Portfolio, Dollar, Strategy, Signal
-from trades.manual.stock_calculations import flatten_df, make_np_date
 import plotly.express as px
 import plotly.graph_objs as go
 import pathlib
 import numpy as np
 import scipy
+
+
+def make_np_date(date_str):
+    np_date = np.array(pd.to_datetime(date_str, format='%Y-%m-%d'), dtype=np.datetime64)
+    return np_date
 
 
 def make_simple_portfolio(all_weeks, spy_full_df):
@@ -653,7 +657,7 @@ def make_spy_graph(ticker, values_df):
     spy_value.update_layout(showlegend=True,
                             legend_orientation='h',
                             yaxis=dict(title=f'{ticker} Closing Value ($)'),
-                            margin=dict(t=0, b=0, r=0, l=0),
+                            margin=dict(b=0, r=0, l=0),
                             paper_bgcolor='#f9f9f9'
                             )
     return spy_value
