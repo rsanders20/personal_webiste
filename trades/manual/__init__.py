@@ -112,13 +112,10 @@ def register_manual(server):
         Output('daily-graph', 'figure'),
         [Input('portfolio_input', 'value'),
          Input('tabs', 'active_tab'),
-         Input('sell_alert', 'children'),
-         Input('purchase_alert', 'children'),
-         Input('delete_alert', 'children'),
-         Input('portfolio_entries', 'selected_rows')],
-         [State('portfolio_entries', 'data')]
+         Input('portfolio_entries', 'selected_rows'),
+         Input('portfolio_entries', 'data')]
     )
-    def update_total_graph(portfolio_name, active_tab, sell_alert, purchase_alert, del_alert, rows, data):
+    def update_total_graph(portfolio_name, active_tab, rows, data):
         if not portfolio_name:
             return px.line()
         user_name = session.get('user_name', None)
@@ -314,7 +311,7 @@ def register_manual(server):
                    State('portfolio_entries', 'data'),
                    State('portfolio_entries', 'selected_rows')]
                   )
-    def sell_from_portfolio(n_input, strategy, data, selected_rows):
+    def update_strategy(n_input, strategy, data, selected_rows):
 
         if selected_rows is None:
             return "Select a row to Update the Strategy", "danger", True

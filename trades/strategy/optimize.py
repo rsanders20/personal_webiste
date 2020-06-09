@@ -55,8 +55,8 @@ def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, 
         def optimize_weights(weight_list):
             for i, weight in enumerate(weight_list):
                 rules_list[i]["Percentage"] = weight
-
-            values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
+            starting_value = 1000
+            values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, starting_value)
             roi = -1 * values_df['strategic_values'][-1] / values_df['strategic_values'][0]
             print(weight_list, roi)
             return roi

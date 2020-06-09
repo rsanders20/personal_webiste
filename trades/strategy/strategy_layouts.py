@@ -33,7 +33,8 @@ def make_automatic_dashboard():
                               children="No Ticker Data Found on Yahoo Finance",
                               color="warning",
                               is_open=False,
-                              duration=4000)
+                              duration=4000,
+                              style={"position": "fixed", "top": 0})
                 ],
                     className='pretty_container')
             ]),
@@ -161,6 +162,7 @@ def make_dashboard_controls():
         dbc.FormText("Run the analysis")
     ])
 
+    #TODO:  Remove the loading, and add update to status on the alert
     controls_form = dbc.FormGroup([
             dbc.Label("Weighted Signals"),
             dcc.Loading(id='loading_signal',
@@ -224,19 +226,22 @@ def make_dashboard_controls():
                         duration=4000,
                         is_open=False,
                         children="",
-                        color='warning'),
+                        color='warning',
+                        style={"position": "fixed", "top": 0}),
                     dbc.Alert(
                         id='row_alert',
                         duration=1000,
                         is_open=False,
                         children="",
-                        color='success'),
+                        color='success',
+                        style={"position": "fixed", "top": 0}),
                     dbc.Alert(
                         id='opt_alert',
                         duration=4000,
                         is_open=False,
                         children="",
-                        color='success'),
+                        color='success',
+                        style = {"position": "fixed", "top": 0}),
                 ]),
             ])
         ])
@@ -278,7 +283,8 @@ def make_weekly_graph():
 def make_weekly_progress():
     progress_alert = dbc.Alert(id='progress_alert',
                            is_open=False,
-                           duration=4000)
+                           duration=4000,
+                           style={"position": "fixed", "top": 0})
 
     now_time = datetime.datetime.now()
     start_time = now_time-datetime.timedelta(days=365)
@@ -452,15 +458,17 @@ def make_auto_navbar():
                 duration=4000,
                 is_open=False,
                 children="No Portfolio Created",
-                color="warning"
-            ),
+                color="warning",
+                style={"position": "fixed", "top": 0}
+        ),
             dbc.Alert(
                 id='delete_strategy_alert',
                 duration=4000,
                 is_open=False,
                 children="No Portfolio Deleted",
-                color="warning"
-            )
+                color="warning",
+                style={"position": "fixed", "top": 0}
+        )
         ])
     ])
 

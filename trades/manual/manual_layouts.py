@@ -25,6 +25,18 @@ def make_manual_dashboard(portfolio_list):
         dbc.Row([
             dbc.Col([
                 html.Div([
+                    html.H4(children="Buy Stocks",
+                            style={'text-align': 'center'}),
+                    purchase,
+                    # single_graph,
+                ],
+                    className='pretty_container'
+                )
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                html.Div([
                     html.H4(children="Sell or Delete Stocks",
                             style={'text-align': 'center'}),
                     table,
@@ -45,18 +57,6 @@ def make_manual_dashboard(portfolio_list):
                             del_input
                         ])
                     ]),
-                    # single_graph,
-                ],
-                    className='pretty_container'
-                )
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Buy Stocks",
-                            style={'text-align': 'center'}),
-                    purchase,
                     # single_graph,
                 ],
                     className='pretty_container'
@@ -325,19 +325,22 @@ def make_sell_layout():
                            children="Sell or Delete Stocks from the Selected Portfolio",
                            color='warning',
                            is_open=False,
-                           duration=4000)
+                           duration=4000,
+                           style={"position": "fixed", "top": 0})
 
     delete_alert = dbc.Alert(id='delete_alert',
                            children="Sell or Delete Stocks from the Selected Portfolio",
                            color='warning',
                            is_open=False,
-                           duration=4000)
+                           duration=4000,
+                           style={"position": "fixed", "top": 0})
 
     strategy_alert = dbc.Alert(id='strategy_alert',
                            children="Update the Strategy of the Selected Trade",
                            color='warning',
                            is_open=False,
-                           duration=4000)
+                           duration=4000,
+                           style={"position": "fixed", "top": 0})
 
     strategies = get_strategies()
 

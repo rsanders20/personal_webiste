@@ -160,7 +160,7 @@ def flatten_df(df, ticker_symbol, value_list, start_time_list, end_time_list, al
 def trade_to_dict(trade):
     trade_dict = {'Name': trade.security,
                   'Value': trade.purchase_value,
-                  'Strategy': 'S1',
+                  'Strategy': trade.strategy,
                   'Start Date': datetime.strftime(trade.purchase_date, '%Y-%m-%d'),
                   'purchase_internal': trade.purchase_internal}
     return trade_dict
@@ -184,7 +184,6 @@ def get_auto_data(user, trades):
 
     full_strat_df = pd.concat(df_strat_dict, axis=1)
     full_strat_df['sum'] = full_strat_df[list(full_strat_df.columns)].sum(axis=1)
-    total_strat = go.Scatter(x=full_strat_df.index, y=full_strat_df['sum'], name='Strategic')
 
     return full_strat_df
 

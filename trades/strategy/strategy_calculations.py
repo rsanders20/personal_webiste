@@ -469,7 +469,6 @@ def get_values(all_days, ticker_full_df, rule_df, buy_threshold, sell_threshold,
     ticker_full_df.loc[:, "sum"] = rule_df['sum']
     sum_array = ticker_full_df['sum'].values
     value_array = ticker_full_df['Close'].values
-    # starting_value = 1000.00
     strategic_value_list = []
     strategic_decision_list = []
     strategic_state_list = []
@@ -549,42 +548,38 @@ def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
             offset = ie
 
     rule_results = []
-    for rule in rules_list:
+    if rules_list:
+        for rule in rules_list:
+            weight_list = []
+            larger_array = ticker_extra_df[rule["Larger: What?"]].to_numpy()
+            smaller_array = ticker_extra_df[rule["Smaller: What?"]].to_numpy()
+            # time_array = ticker_extra_df.index.to_numpy()
+            for i, day in enumerate(all_days):
+                larger_value = larger_array[i+offset+rule['Larger: When?']]
+                smaller_value = smaller_array[i+offset+rule['Smaller: When?']]
+                weight = 0
+                if larger_value > smaller_value*(1+rule['Percentage']/100):
+                    weight = rule['Weight']
+
+                weight_list.append(weight)
+
+            rule_results.append(weight_list)
+    else:
         weight_list = []
-        larger_array = ticker_extra_df[rule["Larger: What?"]].to_numpy()
-        smaller_array = ticker_extra_df[rule["Smaller: What?"]].to_numpy()
-        # time_array = ticker_extra_df.index.to_numpy()
         for i, day in enumerate(all_days):
-            # larger_time = all_extra_days[i+offset+rule['Larger: When?']]
-            # smaller_time = all_extra_days[i+offset+rule['Smaller: When?']]
-
-            larger_value = larger_array[i+offset+rule['Larger: When?']]
-            smaller_value = smaller_array[i+offset+rule['Smaller: When?']]
-
-            # larger_time = all_days[i+rule['Larger: When?']]
-            # smaller_time = all_days[i+rule['Smaller: When?']]
-
-            # larger_value = ticker_extra_df.loc[ticker_extra_df.index==larger_time, rule['Larger: What?']].values[0]
-            # smaller_value = ticker_extra_df.loc[ticker_extra_df.index==smaller_time, rule['Smaller: What?']].values[0]
-
-            # larger_value_orig = ticker_extra_df.iloc[ticker_extra_df.index==larger_time][rule['Larger: What?']].values
-            # smaller_value_orig = ticker_extra_df.iloc[ticker_extra_df.index.values==smaller_time][rule['Smaller: What?']].values
-
-            # print(larger_value-larger_value_orig)
-            # print(smaller_value-smaller_value_orig)
-
             weight = 0
-            if larger_value > smaller_value*(1+rule['Percentage']/100):
-                weight = rule['Weight']
-
             weight_list.append(weight)
 
         rule_results.append(weight_list)
 
     rule_df = pd.DataFrame.from_records(rule_results).T
     rule_df.index = all_days
-    rule_df.columns = ["{}".format(i) for i in range(len(rules_list))]
-    rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
+    if rules_list:
+        rule_df.columns = ["{}".format(i) for i in range(len(rules_list))]
+        rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
+    else:
+        rule_df.columns = ['0']
+        rule_df['sum'] = rule_df[list(rule_df.columns)].sum(axis=1)
     # profile.disable()
     # s = io.StringIO()
     # ps = pstats.Stats(profile, stream=s).sort_stats("cumtime")
@@ -593,6 +588,7 @@ def make_decisions(ticker_extra_df, all_extra_days, all_days, rules_list):
     #     f.write(s.getvalue())
 
     return rule_df
+
 
 
 def get_data(ticker_list, start_time, end_time):
@@ -714,10 +710,15 @@ def get_values_df(row_data, user):
     start_date = datetime.datetime.strptime(row_data['Start Date'][0:10], '%Y-%m-%d')
     end_date = datetime.datetime.now()
     print(start_date, end_date)
-    strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
-    buy_threshold = strategy.buy_threshold
-    sell_threshold = strategy.sell_threshold
-    rules_list = signal_to_dict(Signal.query.filter_by(strategy_id=strategy.id).all())
+    if strategy_name:
+        strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
+        buy_threshold = strategy.buy_threshold
+        sell_threshold = strategy.sell_threshold
+        rules_list = signal_to_dict(Signal.query.filter_by(strategy_id=strategy.id).all())
+    else:
+        rules_list = []
+        buy_threshold = 0
+        sell_threshold = 0
 
     print(rules_list)
     values_df = get_roi(ticker, start_date, end_date, rules_list, buy_threshold, sell_threshold, value)
