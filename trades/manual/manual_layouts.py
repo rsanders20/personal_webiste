@@ -15,6 +15,8 @@ def make_manual_dashboard(portfolio_list):
     single_graph = make_individual_graph_layout("Individual", portfolio_list)
     table = make_manual_table()
     sell_input, del_input, sell_date = make_sell_controls()
+    strategy_input, strategy_dropdown = make_strategy_controls()
+
 
     return_toggle = make_return_toggle()
     purchase = make_purchase_layout()
@@ -28,10 +30,16 @@ def make_manual_dashboard(portfolio_list):
                     table,
                     dbc.Row([
                         dbc.Col([
-                            sell_date
+                            html.Div([
+                                sell_input,
+                                sell_date,
+                            ])
                         ]),
                         dbc.Col([
-                            sell_input
+                            html.Div([
+                                strategy_input,
+                                strategy_dropdown,
+                            ])
                         ]),
                         dbc.Col([
                             del_input
@@ -280,6 +288,21 @@ def make_manual_table():
     return controls
 
 
+def make_strategy_controls():
+    strategy_input = dbc.FormGroup([
+        dbc.Button(id='strategy_input', children='Update Strategy', block=True)
+    ])
+
+    strategy_list = get_strategies()
+
+    strategy_dropdown = dbc.FormGroup([
+        dcc.Dropdown(
+            id='strategy_dropdown',
+            options=[{'label': i.name, 'value': i.name} for i in strategy_list])
+    ])
+
+    return strategy_input, strategy_dropdown
+
 def make_sell_controls():
     sell_input = dbc.FormGroup([
         dbc.Button(id='sell_input', children="Sell", block=True),
@@ -310,16 +333,14 @@ def make_sell_layout():
                            is_open=False,
                            duration=4000)
 
+    strategy_alert = dbc.Alert(id='strategy_alert',
+                           children="Update the Strategy of the Selected Trade",
+                           color='warning',
+                           is_open=False,
+                           duration=4000)
+
     strategies = get_strategies()
 
-    dropdown = {
-        'Strategy': {
-            'options': [
-                {'label': i.name, 'value': i.name}
-                for i in strategies
-            ]
-        }
-    }
 
     table_input = dbc.FormGroup([
         dash_table.DataTable(id='portfolio_entries',
@@ -331,10 +352,9 @@ def make_sell_layout():
                                   {'id': 'purchase_internal', 'name': 'Internal?'},
                                   {'id': 'sell_value', 'name': 'Sell Value', 'type': 'numeric', 'format': Format(precision=5)},
                                   {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'},
-                                  {'id': 'Strategy', 'name': 'Strategy', 'presentation': 'dropdown', 'editable': True},
+                                  {'id': 'strategy', 'name': 'Strategy'},
                                   ]),
-                             row_selectable='single',
-                             dropdown=dropdown),
+                             row_selectable='single'),
         dbc.FormText("Select the Secruity to Sell, or Delete"),
     ])
 
@@ -353,6 +373,11 @@ def make_sell_layout():
         dbc.Row([
             dbc.Col([
                 delete_alert
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                strategy_alert
             ]),
         ]),
     ],

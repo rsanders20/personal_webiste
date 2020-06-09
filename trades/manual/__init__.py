@@ -145,7 +145,7 @@ def register_manual(server):
                 ticker = row_dict['security']
                 row_data = {'Name': row_dict['security'],
                             'Value': row_dict['purchase_value'],
-                            'Strategy': 'S1',
+                            'Strategy': row_dict['strategy'],
                             'Start Date': row_dict['purchase_date']}
                 values_df = strategy_calculations.get_values_df(row_data, user)
                 trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
@@ -162,8 +162,9 @@ def register_manual(server):
                   [Input('portfolio_input', 'value'),
                    Input('sell_alert', 'children'),
                    Input('purchase_alert', 'children'),
-                   Input('delete_alert', 'children')])
-    def update_sell_list(portfolio_name, n_sell, n_purchase, n_del):
+                   Input('delete_alert', 'children'),
+                   Input('strategy_alert', 'children')])
+    def update_sell_list(portfolio_name, n_sell, n_purchase, n_del, n_strat):
         print(portfolio_name)
         if not portfolio_name:
             return []
@@ -190,7 +191,8 @@ def register_manual(server):
                          'purchase_date': datetime.strftime(trade.purchase_date, '%Y-%m-%d'),
                          'purchase_internal': trade.purchase_internal,
                          'sell_date': sell_date,
-                         'sell_value': sell_value
+                         'sell_value': sell_value,
+                         'strategy': trade.strategy
                          })
 
         return data
@@ -303,3 +305,23 @@ def register_manual(server):
 
         db.session.commit()
         return "Stock Sold", "success", True
+
+    @app.callback([Output('strategy_alert', 'children'),
+                   Output('strategy_alert', 'color'),
+                   Output('strategy_alert', 'is_open')],
+                  [Input('strategy_input', 'n_clicks')],
+                  [State('strategy_dropdown', 'value'),
+                   State('portfolio_entries', 'data'),
+                   State('portfolio_entries', 'selected_rows')]
+                  )
+    def sell_from_portfolio(n_input, strategy, data, selected_rows):
+
+        if selected_rows is None:
+            return "Select a row to Update the Strategy", "danger", True
+
+        sell_row = data[selected_rows[0]]
+        trade = Trade.query.filter_by(id=sell_row['id']).one_or_none()
+        trade.strategy = strategy
+        db.session.commit()
+        return "Strategy Updated", "success", True
+
