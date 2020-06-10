@@ -189,7 +189,6 @@ def get_auto_data(user, trades):
 
 
 def plot_stocks(user, all_trades):
-    #TODO:  Handle the one or no-stock case
     now_time = datetime.now()
     ticker_list = []
     purchase_dates = []
@@ -212,6 +211,19 @@ def plot_stocks(user, all_trades):
     start_time = min([sti for sti in purchase_dates])
     end_time = max([eti for eti in sell_dates])
     full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
+    if len(ticker_list) == 1:
+        new_df = pd.concat({ticker_list[0]: full_df}, axis=1)
+        full_df = new_df
+
+    new_dict = {}
+    if ticker_list[:1] == ticker_list[:-1]:
+        for ticker in ticker_list:
+            print(ticker)
+            new_dict[ticker] = full_df
+        new_df = pd.concat(new_dict, axis=1)
+        full_df = new_df
+
+    print(full_df)
 
     df_list = []
     for i, ticker in enumerate(ticker_list):

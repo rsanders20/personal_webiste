@@ -51,11 +51,6 @@ def register_strategy(server):
     ],
     style={'width': '97%'})
 
-    # TODO:
-    #       12)  Add in a way to apply a strategy to a portfolio
-    #           (For each stock, add dropdown to select strategy as well as the date the strategy starts working)
-    #       13)  Add in more than just the moving averages...alpha, beta, theta, etc.
-
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):

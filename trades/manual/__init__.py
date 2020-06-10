@@ -28,8 +28,22 @@ def get_manual_portfolios():
 
 
 def register_manual(server):
+    # TODO:  Before Release:
+        # 1)  Handle the zero and 1 stock case elegantly
+            #) Enforce that internal trades are kept with "blank" strategy.
+        # 2)  Add titles to all of the manual graphs
+        # 3)  Rename Manual to just "portfolio"
+        # 4)  Remove reference to "strategy" on the home page
+            # clean up the code that is no longer used
+    # TODO:  For next release
+        # 5)  Put all of the strategy graphs on a tab.
+            #  Make the historic alert part of the graph title
+        # 6) Remove the optimize button from this release
+        # 7) Consider removing "get data" method.
     # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
     # TODO:  Add a footer, with copyright protection.
+    # TODO:  Add in more than just the moving averages...alpha, beta, theta, etc.
+
 
     custom_css = r'/static/css/custom.css'
     external_stylesheets = [dbc.themes.FLATLY, custom_css]
@@ -118,6 +132,8 @@ def register_manual(server):
     def update_total_graph(portfolio_name, active_tab, rows, data):
         if not portfolio_name:
             return px.line()
+        if not data:
+            return px.line()
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
         portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
@@ -128,12 +144,9 @@ def register_manual(server):
         t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'))
         r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
 
-        i_graph.update_layout(margin=dict(r=0, l=0, b=0),
-                                     paper_bgcolor='#f9f9f9')
-        r_graph.update_layout(margin=dict(r=0, l=0, b=0),
-                                     paper_bgcolor='#f9f9f9')
-        t_graph.update_layout(margin=dict(r=0, l=0, b=0),
-                                     paper_bgcolor='#f9f9f9')
+        i_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
+        r_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
+        t_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
         if active_tab == 'tab-1':
             return i_graph
         elif active_tab == 'tab-2':
