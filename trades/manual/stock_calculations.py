@@ -167,20 +167,18 @@ def trade_to_dict(trade):
 
 
 def get_auto_data(user, trades):
-    # TODO:  Keep track of "external" and "internal" money flow.
-    # TODO:  Add a way to save strategies to individual trades.
     data = []
     for trade in trades:
         data.append(trade_to_dict(trade))
 
     df_strat_dict = {}
-    for row in data:
+    for i,row in enumerate(data):
         if not row['purchase_internal']:
             df_strat = pd.DataFrame()
             value_df = strategy_calculations.get_values_df(row, user)
             ticker = row['Name']
             df_strat['strategic'] = value_df['strategic_values']
-            df_strat_dict[ticker] = df_strat
+            df_strat_dict[ticker+f'-{i}'] = df_strat
 
     full_strat_df = pd.concat(df_strat_dict, axis=1)
     full_strat_df['sum'] = full_strat_df[list(full_strat_df.columns)].sum(axis=1)
@@ -211,19 +209,9 @@ def plot_stocks(user, all_trades):
     start_time = min([sti for sti in purchase_dates])
     end_time = max([eti for eti in sell_dates])
     full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
-    if len(ticker_list) == 1:
+    if len(ticker_list) == 1 or ticker_list[:1] == ticker_list[:-1]:
         new_df = pd.concat({ticker_list[0]: full_df}, axis=1)
         full_df = new_df
-
-    new_dict = {}
-    if ticker_list[:1] == ticker_list[:-1]:
-        for ticker in ticker_list:
-            print(ticker)
-            new_dict[ticker] = full_df
-        new_df = pd.concat(new_dict, axis=1)
-        full_df = new_df
-
-    print(full_df)
 
     df_list = []
     for i, ticker in enumerate(ticker_list):
