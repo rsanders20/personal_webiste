@@ -29,17 +29,17 @@ def get_dashboard_layout(content_div):
 def make_about_layout():
     jumbotron = dbc.Jumbotron(
         [
-            html.H1("Stock Plotting Tool", className="display-8"),
+            html.H1("Algo-Rhythm", className="display-8"),
             html.P(
-                "Asses investment strategies by creating multiple portfolios and comparing their performance",
+                "Its all about timing!",
                 className="lead",
             ),
             html.Hr(className="my-2"),
             html.P("Start by creating a New Portfolio"),
             html.Hr(className="my-2"),
-            html.P("Select when to Buy and Sell using the Automatic Portfolio tools"),
+            html.P("Predict when to buy and sell by developing a strategy for each trade"),
             html.Hr(className="my-2"),
-            html.P("Monitor portfolio performance with the Manual Portfolio options"),
+            html.P("Compare the strategic decisions to the base portfolio to refine decision making"),
             html.Hr(className="my-2"),
         ]
     )
@@ -60,16 +60,6 @@ def make_about_layout():
         dbc.FormText("Name this Portfolio"),
     ])
 
-    strategy_input = dbc.FormGroup([
-        dbc.Label("Strategy"),
-        dcc.Dropdown(
-            id='strategy_input',
-            options=[{'label': i, 'value': i} for i in ['Manual', 'Automatic']],
-        ),
-        dbc.FormText("Manual or Automatic"),
-
-    ])
-
     create_input = dbc.FormGroup([
         dbc.Label("Create"),
         dbc.Button(id='create_input',
@@ -87,9 +77,6 @@ def make_about_layout():
         dbc.Row([
             dbc.Col([
                 name_input
-            ]),
-            dbc.Col([
-                strategy_input
             ]),
             dbc.Col([
                 create_input
@@ -123,14 +110,10 @@ def register_home_dashapp(server):
                    Output('create_alert', 'color'),
                    Output('create_alert', 'is_open')],
                   [Input('create_input', 'n_clicks')],
-                  [State('name_input', 'value'),
-                   State('strategy_input', 'value')])
-    def create_portfolio(_, name, strategy):
+                  [State('name_input', 'value')])
+    def create_portfolio(_, name):
         if not _:
             return "", "danger", False
-
-        if not name or not strategy:
-            return "All fields must be filled in", "danger", True
 
         user_name = session.get('user_name', None)
         user = User.query.filter_by(user_name=user_name).one_or_none()
@@ -140,8 +123,7 @@ def register_home_dashapp(server):
 
         portfolio = Portfolio(
             user_id=user.id,
-            name=name,
-            strategy = strategy)
+            name=name)
         db.session.add(portfolio)
         db.session.commit()
         return "Portfolio Created!", "success", True

@@ -17,21 +17,19 @@ from trades import protect_dash_route
 from trades.strategy import strategy_calculations
 
 
-def get_manual_portfolios():
+def get_portfolios():
     user_name = session.get('user_name', None)
     user = User.query.filter_by(user_name=user_name).one_or_none()
     portfolio_list = []
     if user:
-        portfolio_list = Portfolio.query.filter_by(user_id=user.id, strategy='Manual').all()
+        portfolio_list = Portfolio.query.filter_by(user_id=user.id).all()
 
     return portfolio_list
 
 
 def register_manual(server):
     # TODO:  Before Release:
-        # 3)  Rename Manual to just "portfolio"
-        # 4)  Remove reference to "strategy" on the home page
-            # clean up the code that is no longer used
+        # clean up the code that is no longer used
     # TODO:  For next release
         # 5)  Put all of the strategy graphs on a tab.
             #  Make the historic alert part of the graph title
@@ -65,7 +63,7 @@ def register_manual(server):
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        portfolio_list = get_manual_portfolios()
+        portfolio_list = get_portfolios()
 
         if pathname == "/purchase/":
             return manual_layouts.make_manual_dashboard(portfolio_list)
@@ -75,49 +73,11 @@ def register_manual(server):
                    Output('portfolio_input', 'value')],
                   [Input('url', 'pathname')])
     def display_nav(pathname):
-        portfolio_list = get_manual_portfolios()
+        portfolio_list = get_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Portfolio"
         return options, brand_name, portfolio_list[-1].name
 
-    # @app.callback(Output('security_input', 'options'),
-    #                [Input('portfolio_input', 'value')])
-    # def update_company_dd(portfolio_name):
-    #     if not portfolio_name:
-    #         return []
-    #     user_name = session.get('user_name', None)
-    #     user = User.query.filter_by(user_name=user_name).one_or_none()
-    #     portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
-    #     trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
-    #     security_options = []
-    #     for stock in trades:
-    #         stock_string = stock.security + ", " + datetime.strftime(stock.purchase_date, '%Y-%m-%d') + ", " + str(stock.value)
-    #         security_options.append({'label': stock_string, 'value': stock_string})
-    #
-    #     return security_options
-
-    # @app.callback(Output('portfolio_graph', 'figure'),
-    #               [Input('manage_security_input', 'value'),
-    #                Input('purchase_date_input', 'date')]
-    #               )
-    # def update_individual_graph(company_name, purchase_date):
-    #     now_time = datetime.now()
-    #     if not purchase_date:
-    #         start_dates = []
-    #     else:
-    #         print(purchase_date)
-    #         start_dates = [purchase_date]
-    #         # start_dates = []
-    #     print(start_dates)
-    #     ticker_list = [company_name]
-    #     sell_dates = [datetime.strftime(now_time, '%Y-%m-%d')]
-    #
-    #     security_graph = stock_calculations.plot_individual_stocks(ticker_list, start_dates, sell_dates)
-    #     security_graph.update_layout(xaxis=dict(title='Date'),
-    #                                  yaxis=dict(title='Closing Value ($)'),
-    #                                  margin=dict(t=0, b=0),
-    #                                  paper_bgcolor='#f9f9f9')
-    #     return security_graph
 
     @app.callback(
         Output('daily-graph', 'figure'),

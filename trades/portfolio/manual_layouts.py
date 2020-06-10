@@ -11,14 +11,10 @@ from trades.strategy import get_strategies
 
 
 def make_manual_dashboard(portfolio_list):
-    individual_graph, total_graph, roi_graph = make_total_graph_layout("Total", portfolio_list)
-    single_graph = make_individual_graph_layout("Individual", portfolio_list)
     table = make_manual_table()
     sell_input, del_input, sell_date = make_sell_controls()
     strategy_input, strategy_dropdown = make_strategy_controls()
 
-
-    return_toggle = make_return_toggle()
     purchase = make_purchase_layout()
 
     dashboard_div = html.Div([
@@ -82,28 +78,6 @@ def make_manual_dashboard(portfolio_list):
 
                 )
             ]),
-
-                # dbc.Col([
-                #     html.Div([
-                #         html.H4(children="Total Portfolio Value or Return",
-                #                 style={'text-align': 'center'}),
-                #         return_toggle,
-                #         roi_graph,
-                #     ],
-                #         className='pretty_container'
-                #     )
-                # ],
-                #     width=6),
-                # dbc.Col([
-                #     html.Div([
-                #         html.H4(children='Individual Stocks',
-                #                 style={'text-align': 'center',
-                #                        'margin-bottom': '27.5px'}),
-                #         individual_graph
-                #     ],
-                #         className='pretty_container')
-                # ],
-                #     width=6)
         ]),
     ]),
 
@@ -132,17 +106,6 @@ def make_return_toggle():
 
 def make_individual_graph_layout(brand_name, portfolio_list):
 
-    table_input = dbc.FormGroup([
-        dash_table.DataTable(id='portfolio_entries',
-                             columns=(
-                                 [{'id': 'security', 'name': 'Company'},
-                                  {'id': 'value', 'name': 'Value'},
-                                  {'id': 'purchase_date', 'name': 'Purchase Date'},
-                                  {'id': 'sell_date', 'name': 'Sell Date', 'type': 'datetime'}
-                                  ]),
-                             row_selectable='single'),
-    ])
-
     graph = px.line()
 
     graph_div = html.Div([
@@ -166,22 +129,6 @@ def make_individual_graph_layout(brand_name, portfolio_list):
     ])
 
     return graph_div
-
-
-def make_total_graph_layout(brand_name, portfolio_list):
-
-    graph = px.line()
-
-    individual_graph = dcc.Graph(id='individual_graph',
-                      figure=graph)
-
-    total_graph = dcc.Graph(id='total_graph',
-                      figure=graph)
-
-    roi_graph = dcc.Graph(id='roi_graph',
-                      figure=graph)
-
-    return individual_graph, total_graph, roi_graph
 
 
 def make_purchase_layout():
@@ -268,18 +215,14 @@ def make_purchase_layout():
 
 
 def make_manual_table():
-    purchase_div = make_purchase_layout()
     sell_div = make_sell_layout()
-    return_toggle = make_return_toggle()
 
     controls = dbc.Form([
         dbc.Row([
             dbc.Col([
                 dbc.FormGroup([
-                    # dbc.Label("Portfolio List with Purchase and Sale Dates", color="success"),
                     sell_div
                 ],
-                    # style={'margin-top': '15px'},
                 )
             ]),
         ]),
@@ -302,6 +245,7 @@ def make_strategy_controls():
     ])
 
     return strategy_input, strategy_dropdown
+
 
 def make_sell_controls():
     sell_input = dbc.FormGroup([

@@ -40,9 +40,6 @@ def create_app():
     from . import portfolio
     portfolio.register_manual(server)
 
-    from . import automatic
-    automatic.register_automatic(server)
-
     return server
 
 
