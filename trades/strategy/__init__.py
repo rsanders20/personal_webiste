@@ -203,44 +203,53 @@ def register_strategy(server):
 
         return fig,  score_str, score_color
 
-    @app.callback([Output('weekly_roi_graph', 'figure'),
-                   Output('spy_graph', 'figure'),
+    @app.callback([Output('daily-graph', 'figure'),
                    Output('ticker_alert', 'is_open')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
                    Input('run_analysis', 'n_clicks'),
-                   Input('weekly_roi_radio', 'value')],
-                  [State('buy_threshold', 'value'),
-                   State('sell_threshold', 'value'),
-                   State('ticker_input', 'value'),
-                   State('ticker_sp500_input', 'value'),
-                   State('ticker_input_radio', 'value'),
-                   # State('signal_table', 'rows'),
-                   State('signal_table', 'data')]
+                   Input('tabs', 'active_tab'),
+                   Input('buy_threshold', 'value'),
+                   Input('sell_threshold', 'value'),
+                   Input('ticker_input', 'value'),
+                   Input('ticker_sp500_input', 'value'),
+                   Input('ticker_input_radio', 'value'),
+                   Input('signal_table', 'data')]
                   )
-    def weekly_roi(start_date, end_date, n_clicks, weekly_roi_radio,
+    def weekly_roi(start_date, end_date, n_clicks, active_tab,
                    buy_threshold, sell_threshold, ticker_input, ticker_sp500_input,
                    ticker_input_radio,  data):
-        rules_list = []
-        if not data:
-            return px.line(), px.line(), False
 
-        # print(selected_rows)
-        # for i in selected_rows:
-        #     rules_list.append(data[i])
-        #     print(rules_list)
+        if not data:
+            return px.line(),  False
+
+        if not start_date or not end_date:
+            return px.line(), False
+
         rules_list = data
+
+        data_error = False
+        for rule in rules_list:
+            for key in rule:
+                if rule[key] == '':
+                    data_error = True
+        if data_error:
+            return px.line(), False
 
         if ticker_input_radio == "SP500":
             ticker = ticker_sp500_input
+            if not ticker:
+                return px.line(), False
         else:
             ticker = ticker_input
+            if not ticker:
+                return px.line(), False
             check_start = datetime.now() - timedelta(days=5)
             check_end = datetime.now()
             df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
                                                          check_end.strftime('%Y-%m-%d'))
             if df.empty:
-                return px.line(), px.line(), True
+                return px.line(), True
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
@@ -248,13 +257,18 @@ def register_strategy(server):
         values_df = strategy_calculations.get_roi(ticker, base_time, now_time,
                                                   rules_list, buy_threshold, sell_threshold, portfolio_value)
 
-        # SPY Value Graph
-        spy_value = strategy_calculations.make_spy_graph(ticker, values_df)
+        if active_tab == 'tab-1':
+            spy_value = strategy_calculations.make_spy_graph(ticker, values_df)
+            return spy_value, False
+        elif active_tab == 'tab-2':
+            portfolio = strategy_calculations.make_portfolio_graph(values_df, 1)
+            return portfolio, False
+        elif active_tab == 'tab-3':
+            portfolio = strategy_calculations.make_portfolio_graph(values_df, 2)
+            return portfolio, False
+        else:
+            return px.line(), False
 
-        # Portfolio Graph
-        portfolio = strategy_calculations.make_portfolio_graph(values_df, weekly_roi_radio)
-
-        return portfolio, spy_value, False
 
     @app.callback(
         [Output('date_range', 'start_date'),

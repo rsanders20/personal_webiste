@@ -42,28 +42,52 @@ def make_automatic_dashboard():
         dbc.Row([
             dbc.Col([
                 html.Div([
-                    html.H4(children='Daily Closing Value',
-                            style={'text-align': 'center'}),
-                    weekly_progress,
-                    spy_graph
+                    dbc.Tabs([
+                        dbc.Tab(label='Decisions', tab_id='tab-1'),
+                        dbc.Tab(label='Performance', tab_id='tab-2'),
+                        dbc.Tab(label='Returns', tab_id='tab-3'),
+                        dbc.Tab(label='Historic', tab_id='tab-4')
 
+                    ],
+                        id='tabs',
+                        active_tab='tab-1'),
+                    dcc.Graph(id='daily-graph')
                 ],
-                    className='pretty_container')
-            ],
-                width=6
-            ),
-            dbc.Col([
-                html.Div([
-                    html.H4(children="Total Portfolio Value or Return",
-                            style={'text-align': 'center',
-                                   'margin-bottom': '20px'}),
-                    weekly_toggle,
-                    weekly_roi
-                ],
-                    className='pretty_container')
-            ],
-            width=6)
+                    className='pretty_container'
+
+                ),
+            ]),
         ]),
+        dbc.Row([
+            dbc.Col([
+                weekly_progress
+            ])
+        ]),
+        # dbc.Row([
+        #     dbc.Col([
+        #         html.Div([
+        #             html.H4(children='Daily Closing Value',
+        #                     style={'text-align': 'center'}),
+        #             weekly_progress,
+        #             spy_graph
+        #
+        #         ],
+        #             className='pretty_container')
+        #     ],
+        #         width=6
+        #     ),
+        #     dbc.Col([
+        #         html.Div([
+        #             html.H4(children="Total Portfolio Value or Return",
+        #                     style={'text-align': 'center',
+        #                            'margin-bottom': '20px'}),
+        #             weekly_toggle,
+        #             weekly_roi
+        #         ],
+        #             className='pretty_container')
+        #     ],
+        #     width=6)
+        # ]),
         dbc.Row([
             dbc.Col([
                 html.Div([
@@ -148,26 +172,8 @@ def make_dashboard_controls():
         dbc.FormText("Choose from SP500 or Custom")
     ])
 
-    run_analysis = dbc.FormGroup([
-        dbc.Label("Run"),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Button(
-                        id='run_analysis',
-                        children='Run',
-                        block=True,
-                    )
-                ]),
-            ]),
-        dbc.FormText("Run the analysis")
-    ])
-
-    #TODO:  Remove the loading, and add update to status on the alert
     controls_form = dbc.FormGroup([
-            dbc.Label("Weighted Signals"),
-            dcc.Loading(id='loading_signal',
-                        children=[signal_div],
-                        type='default'),
+            signal_div,
             dbc.FormText("Create weighted signals that determine when to buy or sell. "
                          " Select When (how many days ago) what (open, close, or a moving average) "
                          "and how important (weight) each event is.")
@@ -178,12 +184,7 @@ def make_dashboard_controls():
         dbc.Form([
             dbc.Row([
                 dbc.Col([
-                    controls_form
-                ])
-            ]),
-            dbc.Row([
-                dbc.Col([
-                   security_radio
+                    security_radio
                 ]),
                 dbc.Col([
                     security_input
@@ -194,8 +195,10 @@ def make_dashboard_controls():
                 dbc.Col([
                     sell_threshold
                 ]),
+            ]),
+            dbc.Row([
                 dbc.Col([
-                    run_analysis
+                    controls_form
                 ])
             ]),
             dbc.Row([
@@ -215,9 +218,16 @@ def make_dashboard_controls():
                 ]),
                 dbc.Col([
                     dbc.Button(id='save_button',
-                               children='Save Signals to Database',
+                               children='Save Signals',
                                block=True)
-                ])
+                ]),
+                dbc.Col([
+                    dbc.Button(
+                        id='run_analysis',
+                        children='Run',
+                        block=True,
+                    )
+                ]),
             ]),
             dbc.Row([
                 dbc.Col([

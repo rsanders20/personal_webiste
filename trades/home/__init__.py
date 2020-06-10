@@ -29,7 +29,7 @@ def get_dashboard_layout(content_div):
 def make_about_layout():
     jumbotron = dbc.Jumbotron(
         [
-            html.H1("Algo-Rhythm", className="display-8"),
+            html.H1("Algo-rhythm", className="display-8"),
             html.P(
                 "Its all about timing!",
                 className="lead",

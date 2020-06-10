@@ -346,8 +346,9 @@ def make_portfolio_graph(values_df, weekly_roi_radio):
 
         portfolio.update_layout(legend_orientation='h',
                                 yaxis=dict(title='Portfolio Value ($)'),
-                                margin=dict(t=0, b=0, r=0, l=0),
-                                paper_bgcolor='#f9f9f9'
+                                margin=dict(t=66, b=0, r=0, l=0),
+                                paper_bgcolor='#f9f9f9',
+                                title = "Total Portfolio Performance",
                                 )
     else:
         portfolio.add_trace(go.Scatter(
@@ -359,8 +360,9 @@ def make_portfolio_graph(values_df, weekly_roi_radio):
 
         portfolio.update_layout(legend_orientation='h',
                                 yaxis=dict(title='Portfolio ROI []'),
-                                margin=dict(t=0, b=0, r=0, l=0),
-                                paper_bgcolor='#f9f9f9'
+                                margin=dict(t=66, b=0, r=0, l=0),
+                                paper_bgcolor='#f9f9f9',
+                                title = "Total Portfolio Returns"
                                 )
     return portfolio
 
