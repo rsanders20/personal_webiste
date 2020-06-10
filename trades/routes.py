@@ -82,11 +82,11 @@ def login_required(route_function):
     return decorated_function
 
 
-@bp.route('/manual/', methods=('GET', 'POST'))
+@bp.route('/portfolio/', methods=('GET', 'POST'))
 @login_required
-def manual():
-    url = '/dash/manual'
-    print("This is manual:  "+session.get('user_name', None))
+def portfolio():
+    url = '/dash/portfolio'
+    print("This is portfolio:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 
@@ -95,14 +95,6 @@ def manual():
 def strategy():
     url = '/dash/strategy'
     print("This is strategy:  "+session.get('user_name', None))
-    return render_template('dash_iframe.html', url=url)
-
-
-@bp.route('/automatic/', methods=('GET', 'POST'))
-@login_required
-def automatic():
-    url = '/dash/automatic'
-    print("This is automatic:  "+session.get('user_name', None))
     return render_template('dash_iframe.html', url=url)
 
 

@@ -4,7 +4,7 @@ import io
 import os
 import pstats
 
-from trades.manual import stock_calculations
+from trades.portfolio import stock_calculations
 import matplotlib.pyplot as plt
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -653,8 +653,9 @@ def make_spy_graph(ticker, values_df):
     spy_value.update_layout(showlegend=True,
                             legend_orientation='h',
                             yaxis=dict(title=f'{ticker} Closing Value ($)'),
-                            margin=dict(b=0, r=0, l=0),
-                            paper_bgcolor='#f9f9f9'
+                            margin=dict(b=0, r=0, l=0, t=66),
+                            paper_bgcolor='#f9f9f9',
+                            title='Daily Strategic Decisions'
                             )
     return spy_value
 

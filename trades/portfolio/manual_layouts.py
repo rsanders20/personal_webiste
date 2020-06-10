@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash_table.Format import Format
 
-from trades.manual import stock_calculations
+from trades.portfolio import stock_calculations
 from trades.strategy import get_strategies
 
 

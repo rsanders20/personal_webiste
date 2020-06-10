@@ -10,7 +10,7 @@ import numpy as np
 
 from trades.strategy import strategy_calculations
 from trades.strategy.optimize import create_optimize_function, optimize_roi
-from trades.manual import stock_calculations
+from trades.portfolio import stock_calculations
 
 np.random.seed(237)
 import datetime

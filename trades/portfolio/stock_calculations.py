@@ -209,7 +209,9 @@ def plot_stocks(user, all_trades):
     start_time = min([sti for sti in purchase_dates])
     end_time = max([eti for eti in sell_dates])
     full_df = get_yahoo_stock_data(ticker_list, start_time, end_time)
-    if len(ticker_list) == 1 or ticker_list[:1] == ticker_list[:-1]:
+
+    if len(ticker_list) == 1 or ticker_list.count(ticker_list[0]) == len(ticker_list):
+        print('Modifying yahoo data')
         new_df = pd.concat({ticker_list[0]: full_df}, axis=1)
         full_df = new_df
 

@@ -17,7 +17,7 @@ import pandas as pd
 from trades import db
 from trades.strategy import strategy_layouts, strategy_calculations
 from trades.strategy.optimize import create_single_solutions
-from trades.manual import manual_layouts, stock_calculations, get_manual_portfolios
+from trades.portfolio import manual_layouts, stock_calculations, get_manual_portfolios
 from trades.models import User, Trade, Portfolio, Dollar, Strategy, Signal
 
 from trades import protect_dash_route

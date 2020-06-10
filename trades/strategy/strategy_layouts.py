@@ -9,7 +9,7 @@ import pandas as pd
 
 import plotly.express as px
 
-from trades.manual import stock_calculations
+from trades.portfolio import stock_calculations
 
 
 def make_automatic_dashboard():

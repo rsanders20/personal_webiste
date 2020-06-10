@@ -10,7 +10,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 from trades import db
-from trades.manual import manual_layouts, stock_calculations
+from trades.portfolio import manual_layouts, stock_calculations
 from trades.models import User, Trade, Portfolio, Dollar
 
 from trades import protect_dash_route
@@ -29,9 +29,6 @@ def get_manual_portfolios():
 
 def register_manual(server):
     # TODO:  Before Release:
-        # 1)  Handle the zero and 1 stock case elegantly
-            #) Enforce that internal trades are kept with "blank" strategy.
-        # 2)  Add titles to all of the manual graphs
         # 3)  Rename Manual to just "portfolio"
         # 4)  Remove reference to "strategy" on the home page
             # clean up the code that is no longer used
@@ -50,7 +47,7 @@ def register_manual(server):
 
     app = dash.Dash(__name__,
                     server=server,
-                    url_base_pathname='/dash/manual/',
+                    url_base_pathname='/dash/portfolio/',
                     external_stylesheets=external_stylesheets,
                     suppress_callback_exceptions=True)
 
@@ -80,7 +77,7 @@ def register_manual(server):
     def display_nav(pathname):
         portfolio_list = get_manual_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
-        brand_name = "Manual Portfolio"
+        brand_name = "Portfolio"
         return options, brand_name, portfolio_list[-1].name
 
     # @app.callback(Output('security_input', 'options'),
@@ -140,13 +137,16 @@ def register_manual(server):
         all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
         i_graph, t_graph, r_graph = stock_calculations.plot_stocks(user, all_trades)
 
-        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'))
-        t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'))
-        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'))
+        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'),
+                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                              title="Individual Closing Values")
+        t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'),
+                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                              title="Total Portfolio Closing Daily Value")
+        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'),
+                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                              title="Total Portfolio Returns (ROI)")
 
-        i_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
-        r_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
-        t_graph.update_layout(margin=dict(r=0, l=0, b=0), paper_bgcolor='#f9f9f9')
         if active_tab == 'tab-1':
             return i_graph
         elif active_tab == 'tab-2':
@@ -232,7 +232,7 @@ def register_manual(server):
             all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
             # all_cash = Dollar.query.filter_by(portfolio_id=portfolio.id).all()
             if not all_trades:
-                return "No cash is currently in the portfolio.  Sell manual or add more", "danger", True
+                return "No cash is currently in the portfolio.  Sell portfolio or add more", "danger", True
 
             cash = 0
             for trade in all_trades:
@@ -243,6 +243,7 @@ def register_manual(server):
                     if trade.purchase_internal:
                         cash += -1 * trade.purchase_value
 
+            print(cash)
             if cash < value:
                 return "Only ${:.2f} cash.  Please add more funds.".format(cash), "danger", True
 
@@ -330,6 +331,8 @@ def register_manual(server):
             return "Select a row to Update the Strategy", "danger", True
 
         sell_row = data[selected_rows[0]]
+        if sell_row['purchase_internal']:
+            return "Strategies can only track stocks purchased with external funds", "danger", True
         trade = Trade.query.filter_by(id=sell_row['id']).one_or_none()
         trade.strategy = strategy
         db.session.commit()

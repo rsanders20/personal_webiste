@@ -37,8 +37,8 @@ def create_app():
     from . import strategy
     strategy.register_strategy(server)
 
-    from . import manual
-    manual.register_manual(server)
+    from . import portfolio
+    portfolio.register_manual(server)
 
     from . import automatic
     automatic.register_automatic(server)

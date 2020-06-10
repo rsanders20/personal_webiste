@@ -2,8 +2,8 @@ import datetime
 import os
 import time
 
-from trades.manual import stock_calculations
-from trades.manual.stock_calculations import get_securities_list
+from trades.portfolio import stock_calculations
+from trades.portfolio.stock_calculations import get_securities_list
 from trades.strategy.optimize import create_starting_values, create_single_solutions
 import pandas as pd
 
