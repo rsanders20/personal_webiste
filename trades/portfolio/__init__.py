@@ -28,8 +28,6 @@ def get_portfolios():
 
 
 def register_manual(server):
-    # TODO:  Before Release:
-        # clean up the code that is no longer used
     # TODO:  For next release
         # 5)  Put all of the strategy graphs on a tab.
             #  Make the historic alert part of the graph title
