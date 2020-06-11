@@ -203,31 +203,60 @@ def register_strategy(server):
 
         return fig,  score_str, score_color
 
+    @app.callback(Output('hidden-data', 'children'),
+                   [Input('buy_threshold', 'value'),
+                   Input('sell_threshold', 'value'),
+                   Input('ticker_input', 'value'),
+                   Input('ticker_sp500_input', 'value'),
+                   Input('ticker_input_radio', 'value')]
+                  )
+    def make_hidden_data(buy_threshold, sell_threshold, ticker_input, ticker_sp500_input, ticker_input_radio):
+        if not buy_threshold or not sell_threshold:
+            return {}
+
+        if ticker_input_radio == "SP500":
+            ticker = ticker_sp500_input
+            if not ticker:
+                return {}
+        else:
+            ticker = ticker_input
+            if not ticker:
+                return {}
+            # check_start = datetime.now() - timedelta(days=365)
+            # check_end = datetime.now()
+            # df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
+            #                                              check_end.strftime('%Y-%m-%d'))
+            # if df.empty:
+            #     return {}
+
+        hidden_dict = {
+            'buy_threshold': buy_threshold,
+            'sell_threshold': sell_threshold,
+            'ticker': ticker
+        }
+        return json.dumps(hidden_dict)
+
     @app.callback([Output('daily-graph', 'figure'),
                    Output('ticker_alert', 'is_open')],
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
-                   Input('run_analysis', 'n_clicks'),
                    Input('tabs', 'active_tab'),
-                   Input('buy_threshold', 'value'),
-                   Input('sell_threshold', 'value'),
-                   Input('ticker_input', 'value'),
-                   Input('ticker_sp500_input', 'value'),
-                   Input('ticker_input_radio', 'value'),
-                   Input('signal_table', 'data')]
+                   Input('hidden-data', 'children'),
+                   Input('signal_table', 'data')
+                   ]
                   )
-    def weekly_roi(start_date, end_date, n_clicks, active_tab,
-                   buy_threshold, sell_threshold, ticker_input, ticker_sp500_input,
-                   ticker_input_radio,  data):
-
-        if not data:
-            return px.line(),  False
-
-        if not start_date or not end_date:
+    def weekly_roi(start_date, end_date, active_tab, hidden_json, data):
+        if not hidden_json or not start_date or not end_date or not active_tab or not data:
             return px.line(), False
 
-        rules_list = data
+        hidden_data = json.loads(hidden_json)
+        # print(hidden_data)
 
+        buy_threshold = hidden_data['buy_threshold']
+        sell_threshold = hidden_data['sell_threshold']
+        ticker = hidden_data['ticker']
+
+        rules_list = data
         data_error = False
         for rule in rules_list:
             for key in rule:
@@ -236,26 +265,12 @@ def register_strategy(server):
         if data_error:
             return px.line(), False
 
-        if ticker_input_radio == "SP500":
-            ticker = ticker_sp500_input
-            if not ticker:
-                return px.line(), False
-        else:
-            ticker = ticker_input
-            if not ticker:
-                return px.line(), False
-            check_start = datetime.now() - timedelta(days=5)
-            check_end = datetime.now()
-            df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
-                                                         check_end.strftime('%Y-%m-%d'))
-            if df.empty:
-                return px.line(), True
-
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
         portfolio_value = 1000
-        values_df = strategy_calculations.get_roi(ticker, base_time, now_time,
-                                                  rules_list, buy_threshold, sell_threshold, portfolio_value)
+
+        # print(base_time, now_time)
+        values_df = strategy_calculations.get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, portfolio_value)
 
         if active_tab == 'tab-1':
             spy_value = strategy_calculations.make_spy_graph(ticker, values_df)

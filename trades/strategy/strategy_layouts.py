@@ -99,6 +99,11 @@ def make_automatic_dashboard():
                 className='pretty_container')
             ]),
         ]),
+        dbc.Row([
+            dbc.Col([
+                html.Div(id='hidden-data', style={'display': None})
+            ])
+        ])
     ])
     return dashboard_div
     # return html.Div(children="Hello!")
@@ -131,16 +136,14 @@ def make_dashboard_controls():
     buy_threshold = dbc.FormGroup([
         dbc.Label("Buy Threshold"),
         dbc.Input(id="buy_threshold",
-                  type='number',
-                  value=-0.5),
+                  type='number'),
         dbc.FormText("Buy if the weighted sum is greater than this threshold")
 
     ])
     sell_threshold = dbc.FormGroup([
         dbc.Label("Sell Threshold"),
         dbc.Input(id="sell_threshold",
-                  type='number',
-                  value=-2.5),
+                  type='number'),
         dbc.FormText("Sell if the weighted sum is less than this threshold")
 
     ])
@@ -149,12 +152,10 @@ def make_dashboard_controls():
         dbc.Input(
             id='ticker_input',
             type='text',
-            value='SPY',
         ),
         dcc.Dropdown(
             id='ticker_sp500_input',
             options=securities_list,
-            value='CVX',
             style={'display': 'none'}
         ),
     ])
