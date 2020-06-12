@@ -29,13 +29,13 @@ def get_portfolios():
 
 def register_manual(server):
     # TODO:  For next release
-        # 5)  Put all of the strategy graphs on a tab.
-            #  Make the historic alert part of the graph title
+        # 5) Add Historic to tabs - Make the historic alert part of the graph title
         # 6) Remove the optimize button from this release, or at least speed it up
-        # 7) Consider removing "get data" method, or back with real db.
-    # TODO:  Add vanguard funds, VWX, VIX, VTSAX  (Add custom dropdown)
-    # TODO:  Add a footer, with copyright protection.
-    # TODO:  Add in more than just the moving averages...alpha, beta, theta, etc.
+            #  Find a way to show its progress.
+        # 7) Add custom dropdown for stocks in portfolio page
+    # TODO: For Next Release
+    #  Add a footer, with copyright protection.
+    #  Add in more than just the moving averages...alpha, beta, theta, etc.
 
 
     custom_css = r'/static/css/custom.css'

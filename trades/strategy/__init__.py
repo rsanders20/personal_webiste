@@ -222,12 +222,20 @@ def register_strategy(server):
             ticker = ticker_input
             if not ticker:
                 return {}
-            # check_start = datetime.now() - timedelta(days=365)
-            # check_end = datetime.now()
-            # df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
-            #                                              check_end.strftime('%Y-%m-%d'))
-            # if df.empty:
-            #     return {}
+            # TODO:  Figure out why this affects the final graph
+            check_start = datetime.now() - timedelta(days=365)
+            check_end = datetime.now()
+            try:
+                check_df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
+                                                         check_end.strftime('%Y-%m-%d'))
+            except:
+                print("Ticker Not Recognized")
+                return {}
+
+            if check_df.empty:
+                print("No Data Available")
+                return {}
+
 
         hidden_dict = {
             'buy_threshold': buy_threshold,

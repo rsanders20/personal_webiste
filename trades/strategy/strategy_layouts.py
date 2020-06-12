@@ -17,12 +17,23 @@ def make_automatic_dashboard():
     weekly_roi = make_weekly_graph()
     spy_graph = make_spy_graph()
     dashboard_controls = make_dashboard_controls()
+    optimize_controls = make_optimize_controls()
 
     weekly_progress = make_weekly_progress()
     weekly_toggle = make_weekly_toggle()
     historic_button = make_historic_button()
 
     dashboard_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H4(children="Optimize Percentages",
+                            style={'text-align': 'center'}),
+                    optimize_controls,
+                ],
+                    className='pretty_container')
+            ]),
+        ]),
         dbc.Row([
             dbc.Col([
                 html.Div([
@@ -129,6 +140,56 @@ def make_spy_graph():
     return spy_graph
 
 
+def make_optimize_controls():
+
+    optimize_type = dbc.FormGroup([
+        dbc.Label("Realizations/ROI"),
+        dbc.RadioItems(
+            id='optimize-type-radio',
+            options=[
+                {'label': 'Realizations', 'value': 'Realizations'},
+                {'label': 'ROI', 'value': 'ROI'}
+            ],
+            value='Realizations',
+        ),
+        dbc.FormText("Choose to optimize for total return (ROI) or number of times the strategy has worked (Realizations)")
+    ])
+
+    optimize_time = dbc.FormGroup([
+        dbc.Label("Optimize Dates"),
+        dcc.DatePickerRange(id='optimize-dates',
+                            start_date = datetime.datetime.now()-datetime.timedelta(days=365*10),
+                            end_date = datetime.datetime.now()),
+        dbc.FormText(
+            "Choose the time over which to optimize")
+    ])
+
+    optimize_button = dbc.FormGroup([
+        dbc.Label("Optimize Percentages"),
+        dbc.Button(
+            id='opt_button',
+            children="Optimize",
+            block=True),
+        dbc.FormText("Optimization can take >1 Min.")
+    ])
+
+    optimize_controls = html.Div([
+        dbc.Row([
+            dbc.Col([
+                optimize_type
+            ],width=4),
+            dbc.Col([
+                optimize_time
+            ], width=4),
+            dbc.Col([
+                optimize_button
+            ], width=4),
+        ]),
+    ])
+
+    return optimize_controls
+
+
 def make_dashboard_controls():
     signal_div = make_signal_table()
     securities_list = stock_calculations.get_securities_list()
@@ -208,13 +269,6 @@ def make_dashboard_controls():
                         id='editing-rows-button',
                         children='Add row',
                         block=True,
-                    )
-                ]),
-                dbc.Col([
-                    dbc.Button(
-                        id='opt_button',
-                        children='Optimize Percentages',
-                        block=True
                     )
                 ]),
                 dbc.Col([
