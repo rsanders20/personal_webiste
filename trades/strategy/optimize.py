@@ -51,7 +51,7 @@ def create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, b
 
 
 def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, goal):
-    if goal == "roi":
+    if goal == "ROI":
         def optimize_weights(weight_list):
             for i, weight in enumerate(weight_list):
                 rules_list[i]["Percentage"] = weight
@@ -63,7 +63,7 @@ def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, 
 
         return optimize_weights
 
-    elif goal == "realizations":
+    elif goal == "Realizations":
         def optimize_weights(weight_list):
             for i, weight in enumerate(weight_list):
                 rules_list[i]["Percentage"] = weight
@@ -82,7 +82,7 @@ def optimize_roi(optimize_weights_function, bounds):
                       bounds,  # the bounds on each dimension of x
                       acq_func="EI",  # the acquisition function
                       n_calls=50,  # the number of evaluations of f
-                      n_random_starts=15,  # the number of random initialization points
+                      n_random_starts=25,  # the number of random initialization points
                       random_state=1234)  # the random seed
 
     # fig = plot_evaluations(res, bins=20)

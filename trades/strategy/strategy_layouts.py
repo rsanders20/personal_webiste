@@ -13,7 +13,6 @@ from trades.portfolio import stock_calculations
 
 
 def make_automatic_dashboard():
-    historic_roi = make_historic_roi_graph()
     weekly_roi = make_weekly_graph()
     spy_graph = make_spy_graph()
     dashboard_controls = make_dashboard_controls()
@@ -22,6 +21,9 @@ def make_automatic_dashboard():
     weekly_progress = make_weekly_progress()
     weekly_toggle = make_weekly_toggle()
     historic_button = make_historic_button()
+
+    now_time = datetime.datetime.now()
+    start_time = now_time-datetime.timedelta(days=20*365)
 
     dashboard_div = html.Div([
         dbc.Row([
@@ -62,7 +64,7 @@ def make_automatic_dashboard():
                     ],
                         id='tabs',
                         active_tab='tab-1'),
-                    dcc.Graph(id='daily-graph')
+                    dcc.Graph(id='daily-graph'),
                 ],
                     className='pretty_container'
 
@@ -74,40 +76,19 @@ def make_automatic_dashboard():
                 weekly_progress
             ])
         ]),
-        # dbc.Row([
-        #     dbc.Col([
-        #         html.Div([
-        #             html.H4(children='Daily Closing Value',
-        #                     style={'text-align': 'center'}),
-        #             weekly_progress,
-        #             spy_graph
-        #
-        #         ],
-        #             className='pretty_container')
-        #     ],
-        #         width=6
-        #     ),
-        #     dbc.Col([
-        #         html.Div([
-        #             html.H4(children="Total Portfolio Value or Return",
-        #                     style={'text-align': 'center',
-        #                            'margin-bottom': '20px'}),
-        #             weekly_toggle,
-        #             weekly_roi
-        #         ],
-        #             className='pretty_container')
-        #     ],
-        #     width=6)
-        # ]),
         dbc.Row([
             dbc.Col([
-                html.Div([
-                    html.H4(children="Returns Over 1 Yr. of Investment",
-                            style={'text-align': 'center'}),
-                    historic_button,
-                    historic_roi
-                ],
-                className='pretty_container')
+                historic_button
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dbc.FormGroup([
+                    dcc.DatePickerRange(id='historic_date',
+                                        start_date=start_time,
+                                        end_date=now_time)
+                ], style={'text-align': 'center'})
+
             ]),
         ]),
         dbc.Row([
@@ -158,7 +139,7 @@ def make_optimize_controls():
     optimize_time = dbc.FormGroup([
         dbc.Label("Optimize Dates"),
         dcc.DatePickerRange(id='optimize-dates',
-                            start_date = datetime.datetime.now()-datetime.timedelta(days=365*10),
+                            start_date = datetime.datetime.now()-datetime.timedelta(days=365*20),
                             end_date = datetime.datetime.now()),
         dbc.FormText(
             "Choose the time over which to optimize")
@@ -414,31 +395,29 @@ def make_signal_table():
 
 
 def make_historic_button():
-    now_time = datetime.datetime.now()
-    start_time = now_time-datetime.timedelta(days=2*365)
+    historic_roi = make_historic_roi_graph()
 
-    historic_input = dbc.FormGroup([
+    historic_div = html.Div([
+        html.H4(children="Returns Over 1 Yr. of Investment",
+                style={'text-align': 'center'}),
         dbc.Row([
-            dbc.Col([
-                dcc.DatePickerRange(id='historic_date',
-                                    start_date=start_time,
-                                    end_date=now_time)
-            ]),
-            dbc.Col([
-               dbc.Alert(id='historic_alert',
-                         children='Strategy Score:  ',
-                         color='primary')
-            ]),
             dbc.Col([
                 dbc.Button(id='historic_input',
                            children='Run Statistical Comparison',
                            block=True)
             ]),
-        ])
+        ]),
+        historic_roi,
+        dbc.Col([
+            dbc.Alert(id='historic_alert',
+                      children='Strategy Score:  ',
+                      color='primary')
+        ]),
 
-    ])
+    ],
+        className='pretty_container')
 
-    return historic_input
+    return historic_div
 
 
 def get_rules():

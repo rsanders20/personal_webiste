@@ -67,7 +67,7 @@ def register_strategy(server):
     def make_new_strategy(n_clicks, new_strategy_name, new_strategy_type,
                           old_strategy_name):
         if n_clicks:
-            if new_strategy_name=="":
+            if new_strategy_name=="" or new_strategy_name is None:
                 return True, "Strategy Name Cannot Be Blank", "danger"
             user_name = session.get('user_name', None)
             user = User.query.filter_by(user_name=user_name).one_or_none()
@@ -79,26 +79,26 @@ def register_strategy(server):
                 user_id=user.id,
                 name=new_strategy_name,
                 stock_ticker='SPY',
-                buy_threshold=-3.5,
-                sell_threshold=-3.5)
+                buy_threshold=-2.5,
+                sell_threshold=-2.5)
             db.session.add(strategy)
             db.session.commit()
             if new_strategy_type == 'Empty':
                 return True, "Empty Strategy Created!", "success"
             elif new_strategy_type == 'Default':
                 rules_list = [
-                    {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-                     'Percentage': 10.0, "Weight": -2.0},
+                    # {'Larger: When?': -15, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
+                    #  'Percentage': 10.0, "Weight": -2.0},
                     {'Larger: When?': -10, 'Larger: What?': 'Close', 'Smaller: When?': 0, 'Smaller: What?': 'Close',
-                     'Percentage': 1.0, "Weight": -1.0},
+                     'Percentage': 1.0, "Weight": -2.0},
                     {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -1, 'Smaller: What?': 'Close',
-                     'Percentage': 1.5, "Weight": -2.0},
+                     'Percentage': 1.0, "Weight": -1.0},
                     {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -3, 'Smaller: What?': 'Close',
                      'Percentage': 1.0, "Weight": -1.0},
                     {'Larger: When?': 0, 'Larger: What?': 'Close', 'Smaller: When?': -5, 'Smaller: What?': 'Close',
-                     'Percentage': 0.0, "Weight": -1.0},
-                    {'Larger: When?': -5, 'Larger: What?': 'Close', 'Smaller: When?': -6, 'Smaller: What?': 'Close',
-                     'Percentage': 0.0, "Weight": -1.0},
+                     'Percentage': 1.0, "Weight": -1.0},
+                    # {'Larger: When?': -5, 'Larger: What?': 'Close', 'Smaller: When?': -6, 'Smaller: What?': 'Close',
+                    #  'Percentage': 0.0, "Weight": -1.0},
                 ]
                 for row in rules_list:
                     signal = Signal(strategy_id=strategy.id,
@@ -222,20 +222,6 @@ def register_strategy(server):
             ticker = ticker_input
             if not ticker:
                 return {}
-            # TODO:  Figure out why this affects the final graph
-            check_start = datetime.now() - timedelta(days=365)
-            check_end = datetime.now()
-            try:
-                check_df = stock_calculations.get_yahoo_stock_data([ticker], check_start.strftime("%Y-%m-%d"),
-                                                         check_end.strftime('%Y-%m-%d'))
-            except:
-                print("Ticker Not Recognized")
-                return {}
-
-            if check_df.empty:
-                print("No Data Available")
-                return {}
-
 
         hidden_dict = {
             'buy_threshold': buy_threshold,
@@ -279,6 +265,8 @@ def register_strategy(server):
 
         # print(base_time, now_time)
         values_df = strategy_calculations.get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, portfolio_value)
+        if values_df.empty:
+            return px.line(), False
 
         if active_tab == 'tab-1':
             spy_value = strategy_calculations.make_spy_graph(ticker, values_df)
@@ -291,7 +279,6 @@ def register_strategy(server):
             return portfolio, False
         else:
             return px.line(), False
-
 
     @app.callback(
         [Output('date_range', 'start_date'),
@@ -420,28 +407,24 @@ def register_strategy(server):
          State('buy_threshold', 'value'),
          State('sell_threshold', 'value'),
          State('ticker_input', 'value'),
-         State('date_range', 'start_date'),
-         State('date_range', 'end_date')
+         State('optimize-type-radio', 'value'),
+         State('optimize-dates', 'start_date'),
+         State('optimize-dates', 'end_date'),
          ]
     )
     def get_data(save_alert, strategy_name, row_children, opt_children, is_rows, is_opt,
                  existing_data, columns, buy_threshold, sell_threshold, ticker_input,
-                 daily_start, daily_end):
+                 optimize_type, optimize_start, optimize_end):
 
         if is_opt:
-            # now_time = datetime.now()
-            now_time = datetime.strptime(daily_end[0:10], '%Y-%m-%d')
-            # base_time = now_time-timedelta(days=365*10)
-            base_time = datetime.strptime(daily_start[0:10], '%Y-%m-%d')
+            now_time = datetime.strptime(optimize_end[0:10], '%Y-%m-%d')
+            base_time = datetime.strptime(optimize_start[0:10], '%Y-%m-%d')
             bounds = []
             for rule in existing_data:
                 lower_bound = rule['Percentage'] * 0.75
                 upper_bound = rule['Percentage'] * 1.5
-                # lower_bound = 0.0
-                # upper_bound = 20.0
-
                 bounds.append((lower_bound, upper_bound))
-            goal = "roi"
+            goal = optimize_type
             results, performance = create_single_solutions(
                 existing_data, buy_threshold, sell_threshold, ticker_input,
                 base_time, now_time, bounds, goal)

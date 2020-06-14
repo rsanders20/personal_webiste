@@ -117,6 +117,8 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
 def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, starting_value):
     early_time = base_time-datetime.timedelta(days=365)
     ticker_extra_df = stock_calculations.get_yahoo_stock_data([ticker], early_time.strftime("%Y-%m-%d"), now_time.strftime('%Y-%m-%d'))
+    if ticker_extra_df.empty:
+        return pd.DataFrame()
     # ticker_extra_df = get_data([ticker], early_time, now_time)
     ticker_extra_df['50'] = ticker_extra_df.Close.rolling(window=50).mean()
     ticker_extra_df['200'] = ticker_extra_df.Close.rolling(window=200).mean()
