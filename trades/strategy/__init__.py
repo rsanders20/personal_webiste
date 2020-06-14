@@ -395,7 +395,8 @@ def register_strategy(server):
         [Output('signal_table', 'data'),
          Output('buy_threshold', 'value'),
          Output('sell_threshold', 'value'),
-         Output('ticker_input', 'value')],
+         Output('ticker_input', 'value'),
+         Output('ticker_input_radio', 'style')],
         [Input('save_alert', 'children'),
          Input('strategy_name', 'value'),
          Input('row_alert', 'children'),
@@ -421,8 +422,8 @@ def register_strategy(server):
             base_time = datetime.strptime(optimize_start[0:10], '%Y-%m-%d')
             bounds = []
             for rule in existing_data:
-                lower_bound = rule['Percentage'] * 0.75
-                upper_bound = rule['Percentage'] * 1.5
+                lower_bound = rule['Percentage'] * 0.5
+                upper_bound = rule['Percentage'] * 3.0
                 bounds.append((lower_bound, upper_bound))
             goal = optimize_type
             results, performance = create_single_solutions(
@@ -432,11 +433,11 @@ def register_strategy(server):
             for i, row in enumerate(existing_data):
                 row['Percentage'] = results[i]
 
-            return existing_data, buy_threshold, sell_threshold, ticker_input
+            return existing_data, buy_threshold, sell_threshold, ticker_input, {}
 
         if is_rows:
             existing_data.append({c['id']: '' for c in columns})
-            return existing_data, buy_threshold, sell_threshold, ticker_input
+            return existing_data, buy_threshold, sell_threshold, ticker_input, {}
 
         data = []
         user_name = session.get('user_name', None)
@@ -455,6 +456,6 @@ def register_strategy(server):
                 buy_threshold = is_strategy.buy_threshold
                 sell_threshold = is_strategy.sell_threshold
                 ticker_input = is_strategy.stock_ticker
-            return data, buy_threshold, sell_threshold, ticker_input
+            return data, buy_threshold, sell_threshold, ticker_input, {}
 
-        return data, buy_threshold, sell_threshold, ticker_input
+        return data, buy_threshold, sell_threshold, ticker_input, {}

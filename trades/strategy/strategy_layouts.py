@@ -17,6 +17,7 @@ def make_automatic_dashboard():
     spy_graph = make_spy_graph()
     dashboard_controls = make_dashboard_controls()
     optimize_controls = make_optimize_controls()
+    new_strategy = make_new_strategy()
 
     weekly_progress = make_weekly_progress()
     weekly_toggle = make_weekly_toggle()
@@ -26,6 +27,16 @@ def make_automatic_dashboard():
     start_time = now_time-datetime.timedelta(days=20*365)
 
     dashboard_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H4(children="New Stragety",
+                            style={'text-align': 'center'}),
+                    new_strategy,
+                ],
+                    className='pretty_container')
+            ]),
+        ]),
         dbc.Row([
             dbc.Col([
                 html.Div([
@@ -106,7 +117,10 @@ def make_historic_roi_graph():
     historic_roi = dcc.Loading(
         type='circle',
         fullscreen=True,
-        children = [html.Div([dcc.Graph(id='historic_roi')])
+        children = [html.Div(
+            [dcc.Graph(id='historic_roi'),
+             dbc.FormText("Click on a point to view the buy/sell decisions on the upper graph")]
+        )
         ]
     )
 
@@ -131,7 +145,7 @@ def make_optimize_controls():
                 {'label': 'Realizations', 'value': 'Realizations'},
                 {'label': 'ROI', 'value': 'ROI'}
             ],
-            value='Realizations',
+            value='ROI',
         ),
         dbc.FormText("Choose to optimize for total return (ROI) or number of times the strategy has worked (Realizations)")
     ])
@@ -139,8 +153,9 @@ def make_optimize_controls():
     optimize_time = dbc.FormGroup([
         dbc.Label("Optimize Dates"),
         dcc.DatePickerRange(id='optimize-dates',
-                            start_date = datetime.datetime.now()-datetime.timedelta(days=365*20),
-                            end_date = datetime.datetime.now()),
+                            start_date = datetime.datetime.now()-datetime.timedelta(days=365*1),
+                            end_date = datetime.datetime.now(),
+                            style={'display': 'block'}),
         dbc.FormText(
             "Choose the time over which to optimize")
     ])
@@ -204,14 +219,16 @@ def make_dashboard_controls():
 
     security_radio = dbc.FormGroup([
         dbc.Label("SP500/Custom"),
-        dbc.RadioItems(
-            id='ticker_input_radio',
-            options=[
-                {'label': 'SP500', 'value': 'SP500'},
-                {'label': 'Custom', 'value': 'Custom'}
-            ],
-            value='Custom',
-        ),
+        dcc.Loading([
+            dbc.RadioItems(
+                id='ticker_input_radio',
+                options=[
+                    {'label': 'SP500', 'value': 'SP500'},
+                    {'label': 'Custom', 'value': 'Custom'}
+                ],
+                value='Custom',
+            ),
+        ]),
         dbc.FormText("Choose from SP500 or Custom")
     ])
 
@@ -402,17 +419,18 @@ def make_historic_button():
                 style={'text-align': 'center'}),
         dbc.Row([
             dbc.Col([
+                dbc.Alert(id='historic_alert',
+                          children='Strategy Score:  ',
+                          color='primary')
+            ]),
+            dbc.Col([
                 dbc.Button(id='historic_input',
                            children='Run Statistical Comparison',
-                           block=True)
+                           block=True,
+                           style={'min-height': '45px'}),
             ]),
         ]),
         historic_roi,
-        dbc.Col([
-            dbc.Alert(id='historic_alert',
-                      children='Strategy Score:  ',
-                      color='primary')
-        ]),
 
     ],
         className='pretty_container')
@@ -440,47 +458,52 @@ def get_rules():
     return rules_list
 
 
+def make_new_strategy():
+
+    new_strat = dbc.Row([
+        dbc.Col([
+            dbc.RadioItems(
+                id='new_strategy_type',
+                options=[
+                    {'label': 'Empty Strategy', 'value': 'Empty'},
+                    {'label': 'Copy Current Strategy', 'value': 'Copy'},
+                    {'label': 'Default Strategy', 'value': 'Default'}
+                ],
+                value='Default'),
+        ]),
+        dbc.Col([
+            dbc.Input(
+                id='new_strategy_name',
+                placeholder='New Strategy Name',
+            ),
+        ]),
+        dbc.Col([
+            dbc.Button(
+                id='new_strategy_button',
+                children='Make New Strategy',
+                block=True
+            )
+        ])
+    ])
+
+    return new_strat
+
+
 def make_auto_navbar():
     navbar_div = dbc.Navbar(
         [
-                dbc.Col([
-                    dbc.NavbarBrand("Strategy", className="ml-2")
-                ],
-                    width=2),
-                dbc.Col([
-                    dbc.RadioItems(
-                        id='new_strategy_type',
-                        options=[
-                            {'label': 'Empty', 'value': 'Empty'},
-                            {'label': 'Copy', 'value': 'Copy'},
-                            {'label': 'Default', 'value': 'Default'}
-                        ],
-                        value='Default',
-                        style={'color': 'white'},
-                    ),
-                ]),
-                dbc.Col([
-                    dcc.Dropdown(
-                        id='strategy_name',
-                        placeholder='Select Existing Strategy'
-                    ),
-                ],
-                    width=2),
-                dbc.Col([
-                    dbc.Input(
-                        id='new_strategy_name',
-                        placeholder='New Strategy Name',
-                    ),
-                ],
-                    width=2),
-                dbc.Col([
-                    dbc.Button(
-                        id='new_strategy_button',
-                        children='Make New Strategy',
-                        block=True
-                    )
-                ],
-                    width=2),
+            dbc.Col([
+                dbc.NavbarBrand("Strategy", className="ml-2")
+            ],
+                width=4),
+
+            dbc.Col([
+                dcc.Dropdown(
+                    id='strategy_name',
+                    placeholder='Select Existing Strategy'
+                ),
+            ],
+                width=4),
             dbc.Col([
                 dbc.Button(
                     id='delete_strategy_button',
@@ -488,7 +511,7 @@ def make_auto_navbar():
                     block=True
                 )
             ],
-                width=2),
+                width=4),
         ],
         id='stock_navbar',
         color="primary",

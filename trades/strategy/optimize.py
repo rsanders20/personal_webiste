@@ -82,7 +82,7 @@ def optimize_roi(optimize_weights_function, bounds):
                       bounds,  # the bounds on each dimension of x
                       acq_func="EI",  # the acquisition function
                       n_calls=50,  # the number of evaluations of f
-                      n_random_starts=25,  # the number of random initialization points
+                      n_random_starts=15,  # the number of random initialization points
                       random_state=1234)  # the random seed
 
     # fig = plot_evaluations(res, bins=20)

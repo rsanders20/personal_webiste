@@ -101,6 +101,8 @@ def get_historic_roi(ticker, start_date, end_date, rules_list, buy_threshold, se
     historic_df.columns = ['start_time', 'end_time', 'roi', 'strategy', 'interval']
     fig = px.scatter(historic_df, x = 'start_time', y='roi', color='strategy', marginal_y='box')
     fig.update_layout(clickmode='event')
+    fig.update_layout(yaxis=dict(title='Return on Investment (ROI)'),
+                      xaxis=dict(title='Start Date'))
 
     score_string = f"Improved {strategic_score}/{total_score} realizations"
     if strategic_score/total_score < 0.5:

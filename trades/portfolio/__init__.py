@@ -29,14 +29,11 @@ def get_portfolios():
 
 def register_manual(server):
     # TODO:  For next release
-        # 5) Add Historic to tabs - Make the historic alert part of the graph title
-        # 6) Remove the optimize button from this release, or at least speed it up
-            #  Find a way to show its progress.
         # 7) Add custom dropdown for stocks in portfolio page
+        # 8) Add the new portfolio and delete portfolio buttons
     # TODO: For Next Release
     #  Add a footer, with copyright protection.
     #  Add in more than just the moving averages...alpha, beta, theta, etc.
-
 
     custom_css = r'/static/css/custom.css'
     external_stylesheets = [dbc.themes.FLATLY, custom_css]
@@ -75,7 +72,6 @@ def register_manual(server):
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Portfolio"
         return options, brand_name, portfolio_list[-1].name
-
 
     @app.callback(
         Output('daily-graph', 'figure'),
