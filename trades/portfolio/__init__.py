@@ -65,13 +65,19 @@ def register_manual(server):
                    Output('stock_navbar', 'brand'),
                    Output('portfolio_input', 'value')],
                   [Input('url', 'pathname'),
-                   Input('delete-portfolio-alert', 'children')
+                   Input('delete-portfolio-alert', 'children'),
+                   Input('new-portfolio-alert', 'children')
                    ])
-    def display_nav(pathname, del_alert):
+    def display_nav(pathname, del_alert, new_alert):
         portfolio_list = get_portfolios()
-        options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Portfolio"
-        return options, brand_name, portfolio_list[-1].name
+        if portfolio_list:
+            print("list is not empty", portfolio_list)
+            options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
+            return options, brand_name, portfolio_list[-1].name
+        else:
+            print("list is empty")
+            return [], brand_name, ""
 
     @app.callback(
         Output('daily-graph', 'figure'),
@@ -316,4 +322,26 @@ def register_manual(server):
                 db.session.commit()
                 return "Portfolio Removed!", "success", True
             return "Portfolio Not Found", "danger", True
+        return "", "danger", False
 
+    @app.callback([Output('new-portfolio-alert', 'children'),
+                   Output('new-portfolio-alert', 'color'),
+                   Output('new-portfolio-alert', 'is_open')],
+                  [Input('new-portfolio-button', 'n_clicks')],
+                  [State('new-portfolio-input', 'value')])
+    def create_portfolio(_, name):
+        if not _:
+            return "", "danger", False
+
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+        is_portfolio = Portfolio.query.filter_by(user_id= user.id, name=name).one_or_none()
+        if is_portfolio:
+            return "Please select a new Portfolio Name.  This one already exists.", "danger", True
+
+        portfolio = Portfolio(
+            user_id=user.id,
+            name=name)
+        db.session.add(portfolio)
+        db.session.commit()
+        return "Portfolio Created!", "success", True

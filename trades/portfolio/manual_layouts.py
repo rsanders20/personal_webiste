@@ -275,12 +275,6 @@ def make_sell_controls():
 
 
 def make_new_layout():
-    create_alert = dbc.FormGroup([
-        dbc.Alert(id='new-portfolio-alert',
-                  is_open=False,
-                  duration=4000
-                  )
-    ])
 
     name_input = dbc.FormGroup([
         dbc.Label("Name"),
@@ -308,11 +302,6 @@ def make_new_layout():
                 create_input
             ])
         ]),
-        dbc.Row([
-            dbc.Col([
-                create_alert
-            ])
-        ])
     ])
 
     return new_layout
@@ -423,6 +412,17 @@ def make_navbar_view():
                           duration=4000,
                           style={"position": "fixed", "top": 0})
 
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dbc.Alert(id='new-portfolio-alert',
+                          children='New Portfolio Created',
+                          color='warning',
+                          is_open=False,
+                          duration=4000,
+                          style={"position": "fixed", "top": 0},
+                          )
             ])
         ])
     ])
