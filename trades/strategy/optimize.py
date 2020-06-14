@@ -58,7 +58,7 @@ def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, 
             starting_value = 1000
             values_df = get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, starting_value)
             roi = -1 * values_df['strategic_values'][-1] / values_df['strategic_values'][0]
-            print(weight_list, roi)
+            # print(weight_list, roi)
             return roi
 
         return optimize_weights
@@ -70,7 +70,7 @@ def create_optimize_function(rules_list, buy_threshold, sell_threshold, ticker, 
 
             fig, score_string, score_color, opt_score = get_historic_roi(
                 ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold)
-            print(weight_list, opt_score)
+            # print(weight_list, opt_score)
             return opt_score
 
         return optimize_weights
@@ -91,7 +91,7 @@ def optimize_roi(optimize_weights_function, bounds):
     # plot_evaluations(res)
     # plt.savefig("test_evaluations.png")
     toc=time.time()
-    print(f"Optimize Time {toc-tic}")
+    # print(f"Optimize Time {toc-tic}")
     # results_dict = {'res_x1': res.x[0], 'res_x2': res.x[1], 'res_x3': res.x[2], 'res_x4': res.x[3], 'res_fun': res.fun}
     return res.x, res.fun
 
@@ -112,11 +112,11 @@ def combine_df():
     print(df3)
 
 
-if __name__ == "__main__":
-    # rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal = create_starting_values()
-    # create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal)
-
-    combine_df()
+# if __name__ == "__main__":
+#     # rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal = create_starting_values()
+#     # create_single_solutions(rules_list, buy_threshold, sell_threshold, ticker, base_time, now_time, bounds, goal)
+#
+#     combine_df()
 
     # create_yearly_solutions(rules_list, buy_threshold, sell_threshold, ticker)
     # run_yearly_solutions(rules_list, buy_threshold, sell_threshold, ticker)

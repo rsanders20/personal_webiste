@@ -30,8 +30,8 @@ def get_portfolios():
 def register_manual(server):
     # TODO:  For next release
         # 7) Add custom dropdown for stocks in portfolio page
-        # 8) Add the new portfolio and delete portfolio buttons
     # TODO: For Next Release
+    #  Figure out the concat error that sometimes happen at the end of optimize
     #  Add a footer, with copyright protection.
     #  Add in more than just the moving averages...alpha, beta, theta, etc.
 
@@ -172,12 +172,19 @@ def register_manual(server):
                    Output('purchase_alert', 'is_open')],
                   [Input('submit_input', 'n_clicks')],
                   [State('portfolio_input', 'value'),
-                   State('manage_security_input', 'value'),
+                   State('ticker_input', 'value'),
+                   State('ticker_input_radio', 'value'),
+                   State('ticker_sp500_input', 'value'),
                    State('value_input', 'value'),
                    State('purchase_date_input', 'date'),
                    State('source_input', 'value')])
-    def add_to_portfolio(_, portfolio, security, value, purchase_date, source):
-        if not portfolio or not security or not value or not purchase_date:
+    def add_to_portfolio(_, portfolio, ticker_input, ticker_input_radio, ticker_sp500_input, value, purchase_date, source):
+        if ticker_input_radio == "SP500":
+            ticker = ticker_sp500_input
+        else:
+            ticker = ticker_input
+
+        if not portfolio or not ticker or not value or not purchase_date:
             return "All fields must be filled in", "danger", True
         purchase_datetime = datetime.strptime(purchase_date, '%Y-%m-%d')
         user_name = session.get('user_name', None)
@@ -208,7 +215,7 @@ def register_manual(server):
                 return "Only ${:.2f} cash.  Please add more funds.".format(cash), "danger", True
 
         trade = Trade(portfolio_id=portfolio.id,
-                      security=security,
+                      security=ticker,
                       purchase_value=value,
                       purchase_date=purchase_datetime,
                       purchase_internal=purchase_internal)
@@ -345,3 +352,16 @@ def register_manual(server):
         db.session.add(portfolio)
         db.session.commit()
         return "Portfolio Created!", "success", True
+
+    @app.callback(
+        [Output('ticker_input', 'style'),
+         Output('ticker_sp500_input', 'style')],
+        [Input('ticker_input_radio', 'value')]
+    )
+    def change_ticker_input(ticker_input_radio):
+        hidden_style = {'display': 'none'}
+        visible_style = {'display': 'block'}
+        if ticker_input_radio == 'SP500':
+            return hidden_style, visible_style
+        else:
+            return visible_style, hidden_style

@@ -155,13 +155,39 @@ def make_purchase_layout():
     securities_list = stock_calculations.get_securities_list()
 
     security_input = dbc.FormGroup([
-        dbc.Label("Company"),
+        dbc.Label("Stock Ticker"),
+        dbc.Input(
+            id='ticker_input',
+            placeholder='SPY',
+            type='text',
+        ),
         dcc.Dropdown(
-            id='manage_security_input',
+            id='ticker_sp500_input',
             options=securities_list,
-            value='CVX',
+            style={'display': 'none'}
         ),
     ])
+
+    security_radio = dbc.FormGroup([
+        dbc.Label("SP500/Custom"),
+            dbc.RadioItems(
+                id='ticker_input_radio',
+                options=[
+                    {'label': 'SP500', 'value': 'SP500'},
+                    {'label': 'Custom', 'value': 'Custom'}
+                ],
+                value='Custom',
+            ),
+    ])
+
+    # security_input = dbc.FormGroup([
+    #     dbc.Label("Company"),
+    #     dcc.Dropdown(
+    #         id='manage_security_input',
+    #         options=securities_list,
+    #         value='CVX',
+    #     ),
+    # ])
 
     value_input = dbc.FormGroup([
         dbc.Label("Value (US $)"),
@@ -196,6 +222,9 @@ def make_purchase_layout():
     form_div = html.Div([
         dbc.Form([
             dbc.Row([
+                dbc.Col([
+                    security_radio,
+                ]),
                 dbc.Col([
                     security_input
                 ]),
