@@ -58,16 +58,16 @@ def register_manual(server):
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        portfolio_list = get_portfolios()
-
         if pathname == "/purchase/":
-            return manual_layouts.make_manual_dashboard(portfolio_list)
+            return manual_layouts.make_manual_dashboard()
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand'),
                    Output('portfolio_input', 'value')],
-                  [Input('url', 'pathname')])
-    def display_nav(pathname):
+                  [Input('url', 'pathname'),
+                   Input('delete-portfolio-alert', 'children')
+                   ])
+    def display_nav(pathname, del_alert):
         portfolio_list = get_portfolios()
         options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
         brand_name = "Portfolio"
@@ -291,4 +291,29 @@ def register_manual(server):
         trade.strategy = strategy
         db.session.commit()
         return "Strategy Updated", "success", True
+
+    @app.callback([Output('delete-portfolio-alert', 'children'),
+                   Output('delete-portfolio-alert', 'color'),
+                   Output('delete-portfolio-alert', 'is_open')],
+                  [Input('delete-portfolio-button', 'n_clicks')],
+                  [State('portfolio_input', 'value')]
+                  )
+    def delete_portfolio(n_clicks, portfolio_name):
+        if n_clicks:
+            if portfolio_name is None:
+                return "Select a portfolio to delete", "danger", True
+
+            user_name = session.get('user_name', None)
+            user = User.query.filter_by(user_name=user_name).one_or_none()
+            is_portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+            if is_portfolio:
+                # delete all existing trades
+                trades_list = Trade.query.filter_by(portfolio_id=is_portfolio.id).all()
+                if trades_list:
+                    for trade in trades_list:
+                        db.session.delete(trade)
+                db.session.delete(is_portfolio)
+                db.session.commit()
+                return "Portfolio Removed!", "success", True
+            return "Portfolio Not Found", "danger", True
 

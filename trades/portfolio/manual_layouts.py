@@ -10,14 +10,25 @@ from trades.portfolio import stock_calculations
 from trades.strategy import get_strategies
 
 
-def make_manual_dashboard(portfolio_list):
+def make_manual_dashboard():
     table = make_manual_table()
     sell_input, del_input, sell_date = make_sell_controls()
     strategy_input, strategy_dropdown = make_strategy_controls()
-
+    new_layout = make_new_layout()
     purchase = make_purchase_layout()
 
     dashboard_div = html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H4(children="New Portfolio",
+                            style={'text-align': 'center'}),
+                    new_layout,
+                ],
+                    className='pretty_container'
+                )
+            ]),
+        ]),
         dbc.Row([
             dbc.Col([
                 html.Div([
@@ -263,6 +274,50 @@ def make_sell_controls():
     return sell_input, del_input, sell_date,
 
 
+def make_new_layout():
+    create_alert = dbc.FormGroup([
+        dbc.Alert(id='new-portfolio-alert',
+                  is_open=False,
+                  duration=4000
+                  )
+    ])
+
+    name_input = dbc.FormGroup([
+        dbc.Label("Name"),
+        dbc.Input(id='new-portfolio-input',
+                  type='text',
+                  placeholder='Portfolio Name',
+                  ),
+        dbc.FormText("Name this Portfolio"),
+    ])
+
+    create_input = dbc.FormGroup([
+        dbc.Label("Create"),
+        dbc.Button(id='new-portfolio-button',
+                   children="Create Portfolio",
+                   block=True),
+        dbc.FormText("Make a New Portfolio")
+    ])
+
+    new_layout = html.Div([
+        dbc.Row([
+            dbc.Col([
+                name_input
+            ]),
+            dbc.Col([
+                create_input
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                create_alert
+            ])
+        ])
+    ])
+
+    return new_layout
+
+
 def make_sell_layout():
 
     sell_alert = dbc.Alert(id='sell_alert',
@@ -273,18 +328,19 @@ def make_sell_layout():
                            style={"position": "fixed", "top": 0})
 
     delete_alert = dbc.Alert(id='delete_alert',
-                           children="Sell or Delete Stocks from the Selected Portfolio",
-                           color='warning',
-                           is_open=False,
-                           duration=4000,
-                           style={"position": "fixed", "top": 0})
+                             children="Sell or Delete Stocks from the Selected Portfolio",
+                             color='warning',
+                             is_open=False,
+                             duration=4000,
+                             style={"position": "fixed", "top": 0})
 
     strategy_alert = dbc.Alert(id='strategy_alert',
-                           children="Update the Strategy of the Selected Trade",
-                           color='warning',
-                           is_open=False,
-                           duration=4000,
-                           style={"position": "fixed", "top": 0})
+                               children="Update the Strategy of the Selected Trade",
+                               color='warning',
+                               is_open=False,
+                               duration=4000,
+                               style={"position": "fixed", "top": 0})
+
 
     strategies = get_strategies()
 
@@ -340,15 +396,34 @@ def make_navbar_view():
                 dbc.NavbarSimple(
                     id='stock_navbar',
                     children=[
-                        dcc.Dropdown(
-                            id='portfolio_input',
-                            placeholder="Select Portfolio",
-                            style={'min-width': '200px'})
+                        dbc.Row([
+                            dbc.Col([
+                                dcc.Dropdown(
+                                    id='portfolio_input',
+                                    placeholder="Select Portfolio",
+                                    style={'min-width': '200px'}),
+                            ]),
+                            dbc.Col([
+                                dbc.Button(id='delete-portfolio-button',
+                                           children='Delete Portfolio',
+                                           block=True)
+                            ])
+                        ]),
                     ],
                     color="primary",
                     dark=True)
-            ],
-                width=12)
+            ]),
         ]),
+        dbc.Row([
+            dbc.Col([
+                dbc.Alert(id='delete-portfolio-alert',
+                          children="Delete Entire Portfolio",
+                          color='warning',
+                          is_open=False,
+                          duration=4000,
+                          style={"position": "fixed", "top": 0})
+
+            ])
+        ])
     ])
     return navbar_div
