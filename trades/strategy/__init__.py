@@ -204,44 +204,48 @@ def register_strategy(server):
         return fig,  score_str, score_color
 
     @app.callback(Output('hidden-data', 'children'),
-                   [Input('buy_threshold', 'value'),
+                  [Input('buy_threshold', 'value'),
                    Input('sell_threshold', 'value'),
                    Input('ticker_input', 'value'),
                    Input('ticker_sp500_input', 'value'),
-                   Input('ticker_input_radio', 'value')]
+                   Input('ticker_input_radio', 'value'),
+                   Input('signal_table', 'data')
+                   ]
                   )
-    def make_hidden_data(buy_threshold, sell_threshold, ticker_input, ticker_sp500_input, ticker_input_radio):
+    def make_hidden_data(buy_threshold, sell_threshold, ticker_input, ticker_sp500_input, ticker_input_radio, data):
         if not buy_threshold or not sell_threshold:
-            return {}
+            return dash.no_update
 
         if ticker_input_radio == "SP500":
             ticker = ticker_sp500_input
             if not ticker:
-                return {}
+                return dash.no_update
         else:
             ticker = ticker_input
             if not ticker:
-                return {}
+                return dash.no_update
+
+        if not data:
+            return dash.no_update
 
         hidden_dict = {
             'buy_threshold': buy_threshold,
             'sell_threshold': sell_threshold,
-            'ticker': ticker
+            'ticker': ticker,
+            'data': data
         }
         return json.dumps(hidden_dict)
 
-    @app.callback([Output('daily-graph', 'figure'),
-                   Output('ticker_alert', 'is_open')],
+    @app.callback(Output('daily-graph', 'figure'),
                   [Input('date_range', 'start_date'),
                    Input('date_range', 'end_date'),
                    Input('tabs', 'active_tab'),
                    Input('hidden-data', 'children'),
-                   Input('signal_table', 'data')
                    ]
                   )
-    def weekly_roi(start_date, end_date, active_tab, hidden_json, data):
-        if not hidden_json or not start_date or not end_date or not active_tab or not data:
-            return px.line(), False
+    def weekly_roi(start_date, end_date, active_tab, hidden_json):
+        if not hidden_json or not start_date or not end_date or not active_tab:
+            return dash.no_update
 
         hidden_data = json.loads(hidden_json)
         # print(hidden_data)
@@ -249,6 +253,7 @@ def register_strategy(server):
         buy_threshold = hidden_data['buy_threshold']
         sell_threshold = hidden_data['sell_threshold']
         ticker = hidden_data['ticker']
+        data = hidden_data['data']
 
         rules_list = data
         data_error = False
@@ -257,7 +262,7 @@ def register_strategy(server):
                 if rule[key] == '':
                     data_error = True
         if data_error:
-            return px.line(), False
+            return dash.no_update
 
         base_time = datetime.strptime(start_date[0:10], "%Y-%m-%d")
         now_time = datetime.strptime(end_date[0:10], "%Y-%m-%d")+timedelta(days=1)
@@ -266,19 +271,19 @@ def register_strategy(server):
         # print(base_time, now_time)
         values_df = strategy_calculations.get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_threshold, portfolio_value)
         if values_df.empty:
-            return px.line(), False
+            return dash.no_update
 
         if active_tab == 'tab-1':
             spy_value = strategy_calculations.make_spy_graph(ticker, values_df)
-            return spy_value, False
+            return spy_value
         elif active_tab == 'tab-2':
             portfolio = strategy_calculations.make_portfolio_graph(values_df, 1)
-            return portfolio, False
+            return portfolio
         elif active_tab == 'tab-3':
             portfolio = strategy_calculations.make_portfolio_graph(values_df, 2)
-            return portfolio, False
+            return portfolio
         else:
-            return px.line(), False
+            return px.line()
 
     @app.callback(
         [Output('date_range', 'start_date'),
@@ -433,11 +438,11 @@ def register_strategy(server):
             for i, row in enumerate(existing_data):
                 row['Percentage'] = results[i]
 
-            return existing_data, buy_threshold, sell_threshold, ticker_input, {}
+            return existing_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
         if is_rows:
             existing_data.append({c['id']: '' for c in columns})
-            return existing_data, buy_threshold, sell_threshold, ticker_input, {}
+            return existing_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
         data = []
         user_name = session.get('user_name', None)
@@ -456,6 +461,6 @@ def register_strategy(server):
                 buy_threshold = is_strategy.buy_threshold
                 sell_threshold = is_strategy.sell_threshold
                 ticker_input = is_strategy.stock_ticker
-            return data, buy_threshold, sell_threshold, ticker_input, {}
+            return data, buy_threshold, sell_threshold, ticker_input, dash.no_update
 
-        return data, buy_threshold, sell_threshold, ticker_input, {}
+        return data, buy_threshold, sell_threshold, ticker_input, dash.no_update

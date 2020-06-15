@@ -28,8 +28,9 @@ def get_yahoo_stock_data(ticker_symbol, start_time, end_time):
 
     try:
         df = yf.download(ticker_symbol_string, start=start_time, end=end_time, group_by="ticker")
+        print(f"Data found for {ticker_symbol}, {start_time}, {end_time}")
     except KeyError:
-        print("Key Error Caught")
+        print(f"Key Error Caught for {ticker_symbol}, {start_time}, {end_time}")
     return df
 
 

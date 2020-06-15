@@ -104,7 +104,7 @@ def make_automatic_dashboard():
         ]),
         dbc.Row([
             dbc.Col([
-                html.Div(id='hidden-data', style={'display': None})
+                html.Div(id='hidden-data', style={'display': 'None'})
             ])
         ])
     ])
@@ -274,13 +274,13 @@ def make_dashboard_controls():
                                children='Save Signals',
                                block=True)
                 ]),
-                dbc.Col([
-                    dbc.Button(
-                        id='run_analysis',
-                        children='Run',
-                        block=True,
-                    )
-                ]),
+                # dbc.Col([
+                #     dbc.Button(
+                #         id='run_analysis',
+                #         children='Run',
+                #         block=True,
+                #     )
+                # ]),
             ]),
             dbc.Row([
                 dbc.Col([
