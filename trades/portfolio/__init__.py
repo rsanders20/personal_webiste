@@ -28,10 +28,7 @@ def get_portfolios():
 
 
 def register_manual(server):
-    # TODO:  For next release
-        # 7) Add custom dropdown for stocks in portfolio page
     # TODO: For Next Release
-    #  Figure out the concat error that sometimes happen at the end of optimize
     #  Add a footer, with copyright protection.
     #  Add in more than just the moving averages...alpha, beta, theta, etc.
 

@@ -128,8 +128,7 @@ def get_roi(ticker, base_time, now_time, rules_list, buy_threshold, sell_thresho
     # Trim the dataframe to remove the extra time
     np_end_date = stock_calculations.make_np_date(now_time)
     np_start_date = stock_calculations.make_np_date(base_time)
-    ticker_full_df = ticker_extra_df.loc[
-        (ticker_extra_df.index.values <= np_end_date) & (ticker_extra_df.index.values >= np_start_date)]
+    ticker_full_df = ticker_extra_df.loc[(ticker_extra_df.index.values <= np_end_date) & (ticker_extra_df.index.values >= np_start_date), :]
 
     # Create a list of each trading day
     all_days = ticker_full_df.index.values
