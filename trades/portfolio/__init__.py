@@ -69,11 +69,11 @@ def register_manual(server):
         portfolio_list = get_portfolios()
         brand_name = "Portfolio"
         if portfolio_list:
-            print("list is not empty", portfolio_list)
+            # print("list is not empty", portfolio_list)
             options = [{'label': i.name, 'value': i.name} for i in portfolio_list]
             return options, brand_name, portfolio_list[-1].name
         else:
-            print("list is empty")
+            # print("list is empty")
             return [], brand_name, ""
 
     @app.callback(
@@ -84,29 +84,15 @@ def register_manual(server):
          Input('portfolio_entries', 'data')]
     )
     def update_total_graph(portfolio_name, active_tab, rows, data):
+        user_name = session.get('user_name', None)
+        user = User.query.filter_by(user_name=user_name).one_or_none()
+
         if not portfolio_name:
             return px.line()
         if not data:
             return px.line()
-        user_name = session.get('user_name', None)
-        user = User.query.filter_by(user_name=user_name).one_or_none()
-        portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
-        all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
-        i_graph, t_graph, r_graph = stock_calculations.plot_stocks(user, all_trades)
 
-        i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'),
-                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
-                              title="Individual Closing Values")
-        t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'),
-                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
-                              title="Total Portfolio Closing Daily Value")
-        r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'),
-                              margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
-                              title="Total Portfolio Returns (ROI)")
-
-        if active_tab == 'tab-1':
-            return i_graph
-        elif active_tab == 'tab-2':
+        if active_tab == 'tab-2':
             if rows:
                 row_dict = data[rows[0]]
                 ticker = row_dict['security']
@@ -118,6 +104,23 @@ def register_manual(server):
                 trading_decisions_graph = strategy_calculations.make_spy_graph(ticker, values_df)
                 return trading_decisions_graph
             return px.line(title='Select a Stock to View Automatic Trading Decisions')
+        else:
+            portfolio = Portfolio.query.filter_by(user_id=user.id, name=portfolio_name).one_or_none()
+            all_trades = Trade.query.filter_by(portfolio_id=portfolio.id).all()
+            i_graph, t_graph, r_graph = stock_calculations.plot_stocks(user, all_trades)
+
+            i_graph.update_layout(yaxis=dict(title='Individual Closing Value ($)'),
+                                  margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                                  title="Individual Closing Values")
+            t_graph.update_layout(yaxis=dict(title='Total Portfolio Closing Value ($)'),
+                                  margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                                  title="Total Portfolio Closing Daily Value")
+            r_graph.update_layout(yaxis=dict(title='Return on Investment (ROI)'),
+                                  margin=dict(r=0, l=0, b=0, t=66), paper_bgcolor='#f9f9f9',
+                                  title="Total Portfolio Returns (ROI)")
+
+        if active_tab == 'tab-1':
+            return i_graph
         elif active_tab == 'tab-3':
             return t_graph
         elif active_tab == 'tab-4':

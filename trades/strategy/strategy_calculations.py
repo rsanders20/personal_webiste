@@ -388,8 +388,8 @@ def get_values_df(row_data, user):
     value = row_data['Value']
     strategy_name = row_data['Strategy']
     start_date = datetime.datetime.strptime(row_data['Start Date'][0:10], '%Y-%m-%d')
-    end_date = datetime.datetime.now()
-    print(start_date, end_date)
+    end_date = datetime.datetime.now()+datetime.timedelta(days=1)
+    # print(start_date, end_date)
     if strategy_name:
         strategy = Strategy.query.filter_by(user_id=user.id, name=strategy_name).one_or_none()
         buy_threshold = strategy.buy_threshold
@@ -400,7 +400,7 @@ def get_values_df(row_data, user):
         buy_threshold = 0
         sell_threshold = 0
 
-    print(rules_list)
+    # print(rules_list)
     values_df = get_roi(ticker, start_date, end_date, rules_list, buy_threshold, sell_threshold, value)
 
     return values_df
