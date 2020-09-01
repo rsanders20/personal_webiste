@@ -1,3 +1,5 @@
+import os
+
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,9 +9,13 @@ import datetime
 
 import pandas as pd
 
-import plotly.express as px
 
-from trades.portfolio import stock_calculations
+def get_securities_list():
+    dirpath = os.getcwd()
+    file_path = os.path.join(dirpath, "assets", "sp500.csv")
+    ticker_df = pd.read_csv(file_path)
+    ticker_df.columns = ['value', 'label']
+    return ticker_df.to_dict("rows")
 
 
 def make_automatic_dashboard():
@@ -188,7 +194,7 @@ def make_optimize_controls():
 
 def make_dashboard_controls():
     signal_div = make_signal_table()
-    securities_list = stock_calculations.get_securities_list()
+    securities_list = get_securities_list()
 
     buy_threshold = dbc.FormGroup([
         dbc.Label("Buy Threshold"),

@@ -7,13 +7,12 @@ import plotly.express as px
 from dash_table.Format import Format
 
 from trades.portfolio import stock_calculations
-from trades.strategy import get_strategies
 
 
-def make_manual_dashboard():
+def make_manual_dashboard(strategy_list):
     table = make_manual_table()
     sell_input, del_input, sell_date = make_sell_controls()
-    strategy_input, strategy_dropdown = make_strategy_controls()
+    strategy_input, strategy_dropdown = make_strategy_controls(strategy_list)
     new_layout = make_new_layout()
     purchase = make_purchase_layout()
 
@@ -271,12 +270,10 @@ def make_manual_table():
     return controls
 
 
-def make_strategy_controls():
+def make_strategy_controls(strategy_list):
     strategy_input = dbc.FormGroup([
         dbc.Button(id='strategy_input', children='Update Strategy', block=True)
     ])
-
-    strategy_list = get_strategies()
 
     strategy_dropdown = dbc.FormGroup([
         dcc.Dropdown(
@@ -358,9 +355,6 @@ def make_sell_layout():
                                is_open=False,
                                duration=4000,
                                style={"position": "fixed", "top": 0})
-
-
-    strategies = get_strategies()
 
 
     table_input = dbc.FormGroup([

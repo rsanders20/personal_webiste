@@ -11,10 +11,20 @@ import dash_bootstrap_components as dbc
 
 from trades import db
 from trades.portfolio import manual_layouts, stock_calculations
-from trades.models import User, Trade, Portfolio, Dollar
+from trades.models import User, Trade, Portfolio, Dollar, Strategy
 
 from trades import protect_dash_route
 from trades.strategy import strategy_calculations
+
+
+def get_strategies():
+    user_name = session.get('user_name', None)
+    user = User.query.filter_by(user_name=user_name).one_or_none()
+    strategy_list = []
+    if user:
+        strategy_list = Strategy.query.filter_by(user_id=user.id).all()
+
+    return strategy_list
 
 
 def get_portfolios():
@@ -55,8 +65,9 @@ def register_manual(server):
     @app.callback(Output('page_content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
+        strategy_list = get_strategies()
         if pathname == "/purchase/":
-            return manual_layouts.make_manual_dashboard()
+            return manual_layouts.make_manual_dashboard(strategy_list)
 
     @app.callback([Output('portfolio_input', 'options'),
                    Output('stock_navbar', 'brand'),

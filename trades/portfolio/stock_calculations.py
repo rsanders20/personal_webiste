@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 from datetime import timedelta
 
@@ -9,7 +10,6 @@ import plotly.express as px
 import plotly.graph_objs as go
 
 from trades.strategy import strategy_calculations
-from trades.strategy.strategy_calculations import signal_to_dict
 
 
 def get_securities_list():
@@ -25,9 +25,9 @@ def get_yahoo_stock_data(ticker_symbol, start_time, end_time):
         return pd.DataFrame()
     ticker_symbol_string = make_ticker_string(ticker_symbol)
     df = pd.DataFrame()
-
+    time.sleep(1)
     try:
-        df = yf.download(ticker_symbol_string, start=start_time, end=end_time, group_by="ticker")
+        df = yf.download(ticker_symbol_string, start=start_time, end=end_time, group_by="ticker", threads=False)
         # print(f"Data found for {ticker_symbol}, {start_time}, {end_time}")
     except KeyError:
         print(f"Key Error Caught for {ticker_symbol}, {start_time}, {end_time}")

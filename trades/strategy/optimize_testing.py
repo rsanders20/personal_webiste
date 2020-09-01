@@ -8,14 +8,11 @@ from skopt.acquisition import gaussian_ei
 import plotly.express as px
 import numpy as np
 
-from trades.strategy import strategy_calculations
-from trades.strategy.optimize import create_optimize_function, optimize_roi
-from trades.portfolio import stock_calculations
+from trades.strategy.strategy_calculations import get_roi, get_historic_roi
 
 np.random.seed(237)
 import datetime
 import matplotlib.pyplot as plt
-from trades.strategy.strategy_calculations import get_roi, get_historic_roi
 import pandas as pd
 from functools import partial
 import cProfile
@@ -186,3 +183,6 @@ def test_data_speed():
     print(df2.head())
     toc = time.time()
     print(f"With downloaded data: {toc-tic}")
+
+
+
