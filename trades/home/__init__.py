@@ -27,29 +27,57 @@ def get_dashboard_layout(content_div):
 
 
 def make_about_layout():
+
     jumbotron = dbc.Jumbotron(
         [
-            html.H1("Algo-rhythm", className="display-8"),
+            html.H1("Ryan Sanders", className='display-3'),
             html.P(
-                "Its all about timing!",
+                "I am an engineer at Chevron who likes finding"
+                " creative ways to collect and visualize data.  "
+                "Recently I have been building a toolbox"
+                " of classic data science techniques for stock trading and investing.  ",
                 className="lead",
             ),
-            html.Hr(className="my-2"),
-            html.P("Step 1:  Start by creating a New Portfolio"),
-            html.Hr(className="my-2"),
-            html.P("Step 2:  Predict when to buy and sell by developing strategies"),
-            html.Hr(className="my-2"),
-            html.P("Step 3:  Profit!"),
-            html.Hr(className="my-2"),
         ]
     )
+
+    algo_rhythm = dbc.Card([
+        html.A(
+            dbc.CardBody([
+                html.H4("Algo-Rhythm", className='card-title'),
+                html.P("Basic data science toolbox for trading stocks.  ", className='card-text')
+
+            ]), href='http://algo-rhythm.money', target='_blank'
+        )
+    ], color='primary', inverse=True)
+
+    portfolio_tracker = dbc.Card([
+        html.A(
+            dbc.CardBody([
+                html.H4("Portfolio Tracker", className='card-title'),
+                html.P("Simple toolbox for visualizing multiple portfolios.  ",
+                       className='card-text')
+
+            ]), href='/portfolio/', target='_blank'
+        ),
+    ], color='primary', inverse=True)
 
     about_layout = html.Div([
         dbc.Row([
             dbc.Col([
                 jumbotron
             ])
-        ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                algo_rhythm
+            ])
+        ],style = {"margin": "25px"}),
+        # dbc.Row([
+        #     dbc.Col([
+        #         portfolio_tracker
+        #     ])
+        # ],style = {"margin": "25px"})
     ])
 
     return about_layout

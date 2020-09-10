@@ -58,7 +58,7 @@ def login():
             return render_template('login.html', form=login_form, message="User name or password not correct")
 
         session['user_name'] = login_form.user_name.data
-        return redirect(url_for('routes.home'))
+        return redirect(url_for('routes.portfolio'))
 
     return render_template('login.html', form=login_form, message="Enter your user name and password")
 
@@ -101,7 +101,7 @@ def strategy():
 @bp.route("/", methods=('GET', 'POST'))
 def home():
     url = '/dash/home'
-    return render_template('dash_iframe.html', url=url)
+    return render_template('home_dash_iframe.html', url=url)
 
 
 
