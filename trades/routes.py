@@ -98,10 +98,20 @@ def strategy():
     return render_template('dash_iframe.html', url=url)
 
 
+@bp.route('/handwriting/', methods=('GET', 'POST'))
+def handwriting():
+    url = '/dash/handwriting'
+    print("This is handwriting")
+    return render_template('home_dash_iframe.html', url=url)
+
+
 @bp.route("/", methods=('GET', 'POST'))
 def home():
     url = '/dash/home'
     return render_template('home_dash_iframe.html', url=url)
+
+
+
 
 
 

@@ -40,6 +40,9 @@ def create_app():
     from . import portfolio
     portfolio.register_manual(server)
 
+    from . import handwriting
+    handwriting.register_handwriting_dashapp(server)
+
     return server
 
 
