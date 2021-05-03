@@ -58,7 +58,7 @@ def login():
             return render_template('login.html', form=login_form, message="User name or password not correct")
 
         session['user_name'] = login_form.user_name.data
-        return redirect(url_for('routes.portfolio'))
+        return redirect(url_for('routes.handwriting'))
 
     return render_template('login.html', form=login_form, message="Enter your user name and password")
 
@@ -99,6 +99,7 @@ def strategy():
 
 
 @bp.route('/handwriting/', methods=('GET', 'POST'))
+@login_required
 def handwriting():
     url = '/dash/handwriting'
     print("This is handwriting")

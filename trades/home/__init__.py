@@ -32,10 +32,10 @@ def make_about_layout():
         [
             html.H1("Ryan Sanders", className='display-3'),
             html.P(
-                "I am an engineer at Chevron who likes finding"
+                "I am a data scientist who likes to find"
                 " creative ways to collect and visualize data.  "
-                "Recently I have been building a toolbox"
-                " of classic data science techniques for stock trading and investing.  ",
+                "I use this website to explore and demonstrate new technologies.  Most recently "
+                "I have been exploring the google cloud (GC) Machine Learning APIs ",
                 className="lead",
             ),
         ]
@@ -48,6 +48,16 @@ def make_about_layout():
                 html.P("Basic data science toolbox for trading stocks.  ", className='card-text')
 
             ]), href='http://algo-rhythm.money', target='_blank'
+        )
+    ], color='primary', inverse=True)
+
+    handwriting = dbc.Card([
+        html.A(
+            dbc.CardBody([
+                html.H4("Handwriting Parser", className='card-title'),
+                html.P("Send images of handwriting to Google API for interpretation.  ", className='card-text')
+
+            ]), href='/handwriting/', target='_blank'
         )
     ], color='primary', inverse=True)
 
@@ -70,7 +80,7 @@ def make_about_layout():
         ]),
         dbc.Row([
             dbc.Col([
-                algo_rhythm
+                handwriting
             ])
         ],style = {"margin": "25px"}),
         # dbc.Row([

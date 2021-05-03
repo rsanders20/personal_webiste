@@ -9,35 +9,13 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/ryan/keys/nodal-deck-31250
 
 def detect_document(content_string):
     """Detects document features in an image."""
-    # decoded = base64.b64decode(content_string)
-    # # content = decoded
-    # file_like_object = io.BytesIO(decoded)
-    # # content = file_like_object
-    # content = file_like_object.read()
-    #
     client = vision.ImageAnnotatorClient()
     image = vision.Image()
-    content_strings = content_string.split(",")
-    print(content_strings[0])
-    image.content = base64.b64decode(content_strings[1])
-    # req = {
-    #     'image': {'content': content},
-    #     'features': [{'type': 'DOCUMENT_TEXT_DETECTION'}],
-    # }
-    #
 
-    # json_data = {
-    #     "requests": [
-    #         {"image": {"content": content_string},
-    #          "features": [{"type": "DOCUMENT_TEXT_DETECTION"}]
-    #          }
-    #     ]
-    # }
-    #
-    # response = client.document_text_detection(requests=json_data)
+    content_strings = content_string.split(",")
+    image.content = base64.b64decode(content_strings[1])
 
     response = client.document_text_detection(image=image)
-
 
     word_list = []
     for page in response.full_text_annotation.pages:
@@ -68,8 +46,3 @@ def detect_document(content_string):
     else:
         word_string = ' '.join(word_list)
         return word_string
-
-
-if __name__ == "__main__":
-    path = r'/home/ryan/Desktop/dev/personal_website/assets/handwriting/ab92e0bc80aaa280f73bef31d099bf39.jpg'
-    detect_document(path)

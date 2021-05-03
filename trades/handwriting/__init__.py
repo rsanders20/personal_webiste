@@ -56,8 +56,10 @@ def make_handwriting_layout():
             html.H1("Handwriting Parser", className='display-3'),
             html.P(
                 "Drag and drop an image file (*.PNG or *.JPG) to the upload zone.  "
-                "Once the image has been uploaded, it will be sent to Google AI for interpretation."
-                "If the results are acceptable, download the file as text :)",
+                "Once the image has been uploaded, a preview of the image will be displayed.  "
+                "If the image is correct, click 'Convert Handwriting' to detect handwriting "
+                "using the Google Vision API.  The results will be displayed as text that can be copied"
+                "for further use.  ",
                 className="lead",
             ),
         ],
@@ -91,9 +93,11 @@ def make_handwriting_layout():
         html.Div(id='output-data-upload'),
     ])
 
-    results = html.Div([
-        html.Div(id='output-data-text')
-    ])
+    results = dcc.Loading(
+        html.Div([
+            html.Div(id='output-data-text')
+        ])
+    )
 
     convert_button = dbc.Button('Convert Handwriting', id='convert_button', color='primary',block=True, n_clicks=0)
 
